@@ -1,0 +1,20 @@
+{
+  "project": "Azure Private AI Assurance",
+  "baseline_date": "2026-11-13",
+  "construction_steps": 78,
+  "cases_per_step": 22,
+  "test_cases": 1716,
+  "positive_cases": 858,
+  "deviation_detection_cases": 858,
+  "draft_procedures": 1716,
+  "stage9_synthetic_checks": 330,
+  "stage10_offline_unit_tests": 18,
+  "stage11_offline_unit_tests": 21,
+  "azure_live_passes": 0,
+  "azure_acceptance_not_ready": 1716,
+  "formally_closed_p0": 0,
+  "release_decision": "NO_GO",
+  "source_validated": false,
+  "deployment_verified": false,
+  "github_publication_verified": false
+}

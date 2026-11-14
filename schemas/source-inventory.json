@@ -1,0 +1,22 @@
+{
+  "generated_at_utc": "2026-11-13",
+  "provenance_type": "local_input_identification_only",
+  "files": {
+    "report_stage11": {
+      "sha256": "68c690fbc038c022ff9d7cac5e333a1c6f95fdfebede9c010b8c793a798274d5",
+      "bytes": 17451
+    },
+    "stage11_handoff_zip": {
+      "sha256": "f6f2acdafbe87ae01b71607b3c3a37cdd5e078770bbe0f150a866ff185342d38",
+      "bytes": 4716154
+    },
+    "construction_runbook": {
+      "sha256": "39557ed8fa2cdce0b9f6a144c4c547f142398349c0b599d34f0097b66ab68b06",
+      "bytes": 37242
+    },
+    "stage10_catalog": {
+      "sha256": "666a7c5419f95e6c3b75b76ab94ed4773452b97a53635406ae2fc7b480766f30",
+      "bytes": 349386
+    }
+  }
+}

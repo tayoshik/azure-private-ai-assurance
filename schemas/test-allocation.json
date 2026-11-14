@@ -1,0 +1,51 @@
+{
+  "test_id_pattern": "AZ-T{step:02d}-{case:02d}",
+  "steps": 78,
+  "cases_per_step": 22,
+  "phases": [
+    {
+      "phase": 1,
+      "step_start": 1,
+      "step_end": 10,
+      "test_cases": 220
+    },
+    {
+      "phase": 2,
+      "step_start": 11,
+      "step_end": 20,
+      "test_cases": 220
+    },
+    {
+      "phase": 3,
+      "step_start": 21,
+      "step_end": 32,
+      "test_cases": 264
+    },
+    {
+      "phase": 4,
+      "step_start": 33,
+      "step_end": 45,
+      "test_cases": 286
+    },
+    {
+      "phase": 5,
+      "step_start": 46,
+      "step_end": 58,
+      "test_cases": 286
+    },
+    {
+      "phase": 6,
+      "step_start": 59,
+      "step_end": 68,
+      "test_cases": 220
+    },
+    {
+      "phase": 7,
+      "step_start": 69,
+      "step_end": 78,
+      "test_cases": 220
+    }
+  ],
+  "live_status": "NOT_READY",
+  "source": "draft catalogue; not proof of Azure acceptance"
+}

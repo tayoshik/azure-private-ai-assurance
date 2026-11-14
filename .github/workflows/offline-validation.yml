@@ -1,0 +1,16 @@
+name: Offline validation
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate package metadata
+        run: python3 scripts/validate_package.py
+      - name: Offline regression tests
+        run: python3 -m unittest discover -s tests -v
