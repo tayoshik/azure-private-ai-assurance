@@ -11,5 +11,9 @@
   "azure_live_passes": 0,
   "release_decision": "NO_GO",
   "evidence_kind": "LOCAL_SOURCE_TEXT_CHECKS_ONLY",
-  "github_actions_status": "NOT_YET_VERIFIED"
+  "github_actions_status": "SUCCESS_VERIFIED",
+  "github_actions_stage5_run_id": 43593769818,
+  "github_actions_stage5_run_url": "https://github.com/tayoshik/azure-private-ai-assurance/actions/runs/43593769818",
+  "github_actions_verification_commit": "1e3da46170648cc349a888be51dab84bfa2c6f4d",
+  "github_actions_scope": "OFFLINE_STATIC_AND_UNIT_TESTS_ONLY"
 }
