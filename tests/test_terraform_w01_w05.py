@@ -38,8 +38,17 @@ class TestW01W05(unittest.TestCase):
    shutil.copytree(ROOT/"infra",root/"infra")
    p=root/path
    contents=p.read_text()
-   self.assertIn(old,contents,(path,old))
-   p.write_text(contents.replace(old,new,1))
+   # Terraform examples may be re-aligned without changing their meaning.
+   # Preserve the mutation's security intent: switch the exact approval value
+   # from false to true, regardless of whitespace around the equals sign.
+   if path.endswith("terraform.tfvars.example") and "application_contract_approved" in old:
+    import re
+    mutated, count = re.subn(r"(?m)^(\\s*application_contract_approved\\s*=\\s*)false(?=\\s*(?:#.*)?$)", r"\\g<1>true", contents, count=1)
+    self.assertEqual(count, 1, (path, old))
+   else:
+    self.assertIn(old,contents,(path,old))
+    mutated = contents.replace(old,new,1)
+   p.write_text(mutated)
    r=check(root)
    self.assertEqual(r["status"],"FAIL",(path,r))
    self.assertEqual(r["azure_live_passes"],0)
