@@ -43,3 +43,58 @@ variable "common_tags" {
     sensitivity  = "restricted"
   }
 }
+
+# The dev root never approves network controls implicitly.
+variable "approved_client_cidrs" {
+  type        = list(string)
+  description = "Signed client IPAM; no default."
+}
+variable "approved_dns_resolver_ips" {
+  type        = list(string)
+  default     = []
+}
+variable "approved_test_runner_cidrs" {
+  type        = list(string)
+  default     = []
+}
+variable "gateway_extra_egress_rules" {
+  type = map(object({
+    destination_cidr = string
+    destination_port = number
+    priority         = number
+  }))
+  default = {}
+}
+variable "app_extra_egress_rules" {
+  type = map(object({
+    destination_cidr = string
+    destination_port = number
+    priority         = number
+  }))
+  default = {}
+}
+variable "network_policy_approved" {
+  type    = bool
+  default = false
+}
+variable "gateway_network_isolation_approved" {
+  type    = bool
+  default = false
+}
+variable "gateway_egress_profile_approved" {
+  type    = bool
+  default = false
+}
+variable "app_egress_profile_approved" {
+  type    = bool
+  default = false
+}
+variable "enable_app_forced_tunnel" {
+  type    = bool
+  default = false
+}
+variable "approved_firewall_next_hop_ip" {
+  type     = string
+  default  = null
+  nullable = true
+}

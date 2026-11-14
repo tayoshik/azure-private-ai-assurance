@@ -1,0 +1,24 @@
+name: Terraform N04 static contract (no cloud credentials)
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_stage1.py'
+      - 'scripts/check_terraform_n04.py'
+      - 'tests/test_terraform_stage1.py'
+      - 'tests/test_terraform_n04.py'
+      - '.github/workflows/terraform-stage2-n04-static.yml'
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  contract-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage 1 security contracts
+        run: python3 scripts/check_terraform_stage1.py
+      - name: Stage 2 network policy contracts
+        run: python3 scripts/check_terraform_n04.py
+      - name: N04 and bootstrap regressions
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v

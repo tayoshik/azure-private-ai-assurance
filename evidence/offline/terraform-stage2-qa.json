@@ -1,0 +1,43 @@
+{
+  "stage": "Terraform Stage 2 / N04",
+  "date": "2026-11-14",
+  "source_baseline": "stage1 committed 7c592c57503e3970f71c426c9f2671166a7718c1",
+  "offline_stage1": {
+    "state": "PASS_OFFLINE_TEXT_REVIEW_ONLY",
+    "terraform_cli_validation": "NOT_EXECUTED",
+    "terraform_plan": "NOT_EXECUTED",
+    "terraform_apply": "NOT_EXECUTED",
+    "azure_live_passes": 0,
+    "release_decision": "NO_GO",
+    "tf_file_count": 19,
+    "checked_contract_files": 10,
+    "errors": []
+  },
+  "offline_n04": {
+    "state": "PASS_OFFLINE_N04_TEXT_ONLY",
+    "terraform_cli_validation": "NOT_EXECUTED",
+    "terraform_plan": "NOT_EXECUTED",
+    "terraform_apply": "NOT_EXECUTED",
+    "azure_live_passes": 0,
+    "live_acceptance_not_ready": 1716,
+    "release_decision": "NO_GO",
+    "terraform_file_count": 19,
+    "nsg_count": 4,
+    "nsg_rule_count": 20,
+    "errors": []
+  },
+  "python_unittest": {
+    "tests_run": 29,
+    "failed": 0,
+    "errors": 0,
+    "scope": "offline contract and mutation tests"
+  },
+  "terraform_fmt": "NOT_EXECUTED",
+  "terraform_validate": "NOT_EXECUTED",
+  "terraform_plan": "NOT_EXECUTED",
+  "terraform_apply": "NOT_EXECUTED",
+  "reason": "Terraform CLI and approved provider package not present in this execution container",
+  "azure_live_passes": 0,
+  "azure_live_cases_not_ready": 1716,
+  "release_decision": "NO_GO"
+}

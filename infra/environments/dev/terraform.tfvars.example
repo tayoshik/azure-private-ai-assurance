@@ -10,3 +10,20 @@ subnet_cidrs = {
   web_private_endpoint  = "10.240.2.0/24"
   data_private_endpoint = "10.240.3.0/24"
 }
+
+# N04: EXAMPLES ONLY. CIDRs require signed IPAM + provider/network approvals.
+# Restricted enterprise values must NOT be committed to the public repository.
+approved_client_cidrs      = ["10.251.0.0/16"]
+approved_test_runner_cidrs = []
+approved_dns_resolver_ips  = []  # Fill only when needed; review platform DNS path.
+# Never mark these approved until both network and service dependencies are proven.
+network_policy_approved             = false
+gateway_network_isolation_approved  = false
+gateway_egress_profile_approved     = false
+app_egress_profile_approved         = false
+# Service endpoint/identity, CRL, package supply, monitoring and health traffic
+# must be evaluated BEFORE enabling DENY-all outbound NSG association.
+gateway_extra_egress_rules = {}
+app_extra_egress_rules     = {}
+enable_app_forced_tunnel   = false
+approved_firewall_next_hop_ip = null

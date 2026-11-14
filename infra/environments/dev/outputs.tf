@@ -19,3 +19,10 @@ output "data_private_endpoint_subnet_id" {
 output "private_dns_zone_ids" {
   value = module.private_dns.zone_ids
 }
+
+output "network_security_group_ids" {
+  value = module.network.network_security_group_ids
+}
+output "app_outbound_route_table_id" {
+  value = module.network.app_outbound_route_table_id
+}
