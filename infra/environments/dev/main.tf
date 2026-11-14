@@ -82,3 +82,88 @@ module "key_vault_private_endpoint" {
   key_vault_private_endpoint_approved = var.key_vault_private_endpoint_approved
   tags                                = local.tags
 }
+
+
+# A01/A02: OpenAI model, exact version and quota are approval-controlled.
+module "azure_openai" {
+  source                    = "../../modules/azure-openai"
+  name                      = var.openai_account_name
+  custom_subdomain_name     = var.openai_custom_subdomain
+  location                  = module.foundation.location
+  resource_group_name       = module.foundation.name
+  tags                      = local.tags
+  model_deployment_name     = var.openai_deployment_name
+  model_name                = var.openai_model_name
+  model_version             = var.openai_model_version
+  model_sku                 = var.openai_model_sku
+  model_capacity            = var.openai_model_capacity
+  openai_account_approved   = var.openai_account_approved
+  region_and_quota_approved = var.openai_region_quota_approved
+  model_deployment_approved = var.openai_model_deployment_approved
+}
+
+# A03: Azure AI Search is private-only and forbids shared API-key auth.
+module "ai_search" {
+  source                  = "../../modules/ai-search"
+  name                    = var.search_service_name
+  location                = module.foundation.location
+  resource_group_name     = module.foundation.name
+  tags                    = local.tags
+  sku                     = var.search_sku
+  replica_count           = var.search_replica_count
+  partition_count         = var.search_partition_count
+  search_approved         = var.search_service_approved
+  region_and_sku_approved = var.search_region_sku_approved
+}
+
+# A04: Cosmos for NoSQL only (Entra auth; no account keys for app).
+module "cosmos_db" {
+  source                     = "../../modules/cosmos-db"
+  name                       = var.cosmos_account_name
+  location                   = module.foundation.location
+  resource_group_name        = module.foundation.name
+  tags                       = local.tags
+  database_name              = var.cosmos_database_name
+  container_name             = var.cosmos_container_name
+  partition_key_paths        = var.cosmos_partition_key_paths
+  consistency_level          = var.cosmos_consistency_level
+  backup_tier                = var.cosmos_backup_tier
+  cosmos_account_approved    = var.cosmos_account_approved
+  backup_and_budget_approved = var.cosmos_backup_budget_approved
+}
+
+# A05: Dedicated PE module keeps earlier Key Vault PE ownership unchanged.
+module "ai_data_private_endpoints" {
+  source                     = "../../modules/ai-private-endpoints"
+  location                   = module.foundation.location
+  resource_group_name        = module.foundation.name
+  tags                       = local.tags
+  subnet_id                  = module.network.data_private_endpoint_subnet_id
+  openai_pe_name             = var.openai_private_endpoint_name
+  search_pe_name             = var.search_private_endpoint_name
+  cosmos_pe_name             = var.cosmos_private_endpoint_name
+  openai_account_id          = module.azure_openai.account_id
+  search_service_id          = module.ai_search.id
+  cosmos_account_id          = module.cosmos_db.account_id
+  openai_zone_id             = module.private_dns.zone_ids["privatelink.openai.azure.com"]
+  search_zone_id             = module.private_dns.zone_ids["privatelink.search.windows.net"]
+  cosmos_zone_id             = module.private_dns.zone_ids["privatelink.documents.azure.com"]
+  private_endpoints_approved = var.ai_private_endpoints_approved
+  depends_on                 = [module.network] # NSG/policy attachments must exist before PE resources.
+}
+
+# A06: explicit app MI and three service-specific data roles.
+module "ai_data_rbac" {
+  source                              = "../../modules/ai-data-rbac"
+  resource_group_name                 = module.foundation.name
+  app_principal_id                    = module.identity.app_principal_id
+  openai_account_id                   = module.azure_openai.account_id
+  search_service_id                   = module.ai_search.id
+  cosmos_account_id                   = module.cosmos_db.account_id
+  cosmos_account_name                 = module.cosmos_db.account_name
+  cosmos_database_name                = module.cosmos_db.database_name
+  cosmos_container_name               = module.cosmos_db.container_name
+  rbac_approved                       = var.ai_data_rbac_approved
+  cosmos_write_approved               = var.cosmos_data_write_approved
+  cosmos_write_justification_approved = var.cosmos_write_justification_approved
+}

@@ -41,3 +41,39 @@ key_vault_private_endpoint_approved = false
 app_secrets_reader_approved         = false
 gateway_certificate_reader_approved = false
 role_assignment_approval_confirmed  = false
+
+
+# A01-A06 EXAMPLES ONLY. These dummy names/versions are NOT approved.
+openai_account_name           = "oai-REPLACE-dev"
+openai_custom_subdomain       = "oai-REPLACE-dev"
+openai_deployment_name        = "model-REPLACE-dev"
+openai_model_name             = "REPLACE_MODEL_NAME"
+openai_model_version          = "REPLACE_EXACT_VERSION"
+openai_model_sku              = "Standard"
+openai_model_capacity         = 1
+search_service_name           = "search-REPLACE-dev"
+search_sku                    = "standard"
+search_replica_count          = 1
+search_partition_count        = 1
+cosmos_account_name           = "cosmos-REPLACE-dev"
+cosmos_database_name          = "appdb"
+cosmos_container_name         = "appdata"
+cosmos_partition_key_paths    = ["/pk"]
+cosmos_consistency_level      = "Session"
+cosmos_backup_tier            = "Continuous7Days"
+openai_private_endpoint_name  = "pe-REPLACE-openai-dev"
+search_private_endpoint_name  = "pe-REPLACE-search-dev"
+cosmos_private_endpoint_name  = "pe-REPLACE-cosmos-dev"
+
+# Explicit authorization from G03/G07 is required. NEVER copy true from examples.
+openai_account_approved             = false
+openai_region_quota_approved        = false
+openai_model_deployment_approved    = false
+search_service_approved            = false
+search_region_sku_approved         = false
+cosmos_account_approved            = false
+cosmos_backup_budget_approved      = false
+ai_private_endpoints_approved      = false
+ai_data_rbac_approved              = false
+cosmos_data_write_approved         = false
+cosmos_write_justification_approved = false

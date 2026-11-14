@@ -1,0 +1,19 @@
+name: Terraform Stage 4 provider schema validation (no Azure credentials)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-provider-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Terraform formatting check
+        run: terraform fmt -check -recursive infra
+      - name: Initialize providers without backend
+        run: terraform -chdir=infra/environments/dev init -backend=false -input=false -no-color
+      - name: Validate HCL using downloaded provider schema
+        run: terraform -chdir=infra/environments/dev validate -no-color

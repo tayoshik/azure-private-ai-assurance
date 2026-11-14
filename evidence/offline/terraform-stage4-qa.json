@@ -1,0 +1,33 @@
+{
+  "state": "PASS_OFFLINE_A01_A06_TEXT_ONLY",
+  "terraform_file_count": 43,
+  "covered_nodes": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06"
+  ],
+  "resources_checked": 12,
+  "azure_live_passes": 0,
+  "azure_live_acceptance": "NOT_READY",
+  "terraform_fmt": "NOT_EXECUTED",
+  "terraform_validate": "NOT_EXECUTED",
+  "terraform_plan": "NOT_EXECUTED",
+  "terraform_apply": "NOT_EXECUTED",
+  "release_decision": "NO_GO",
+  "errors": [],
+  "unit_test_output_excerpt": [
+    "----------------------------------------------------------------------",
+    "Ran 69 tests in 0.950s",
+    "",
+    "OK"
+  ],
+  "unit_tests_pass": true,
+  "source_commit": "86ae6535590635f9501f1f901e27b7ffec1c84d2",
+  "source_archive_sha256": "a3d30ab022589b86b08d82150196109549eabec1cc047da85fd5605f203f7698",
+  "updated_files": 43,
+  "github_actions_status": "NOT_CHECKED",
+  "independent_review": "NOT_READY"
+}

@@ -1,0 +1,31 @@
+name: Terraform A01-A06 offline contract
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform*.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-stage4-ai-data-static.yml'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_a01_a06.py'
+      - 'tests/test_terraform_a01_a06.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  static-source-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Existing Stage 1 regression
+        run: python3 scripts/check_terraform_stage1.py
+      - name: Existing N04 regression
+        run: python3 scripts/check_terraform_n04.py
+      - name: Existing I01-I03 regression
+        run: python3 scripts/check_terraform_i01_i03.py
+      - name: A01-A06 text-based security contract
+        run: python3 scripts/check_terraform_a01_a06.py
+      - name: Offline mutation regression (NOT live Azure)
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v

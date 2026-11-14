@@ -128,3 +128,37 @@ variable "role_assignment_approval_confirmed" {
   type    = bool
   default = false
 }
+
+
+# A01-A06 inputs: no deployable defaults for location, model or resource names.
+variable "openai_account_name" { type = string }
+variable "openai_custom_subdomain" { type = string }
+variable "openai_deployment_name" { type = string }
+variable "openai_model_name" { type = string }
+variable "openai_model_version" { type = string }
+variable "openai_model_sku" { type = string }
+variable "openai_model_capacity" { type = number }
+variable "search_service_name" { type = string }
+variable "search_sku" { type = string }
+variable "search_replica_count" { type = number }
+variable "search_partition_count" { type = number }
+variable "cosmos_account_name" { type = string }
+variable "cosmos_database_name" { type = string }
+variable "cosmos_container_name" { type = string }
+variable "cosmos_partition_key_paths" { type = list(string) }
+variable "cosmos_consistency_level" { type = string }
+variable "cosmos_backup_tier" { type = string }
+variable "openai_private_endpoint_name" { type = string }
+variable "search_private_endpoint_name" { type = string }
+variable "cosmos_private_endpoint_name" { type = string }
+variable "openai_account_approved" { type = bool, default = false }
+variable "openai_region_quota_approved" { type = bool, default = false }
+variable "openai_model_deployment_approved" { type = bool, default = false }
+variable "search_service_approved" { type = bool, default = false }
+variable "search_region_sku_approved" { type = bool, default = false }
+variable "cosmos_account_approved" { type = bool, default = false }
+variable "cosmos_backup_budget_approved" { type = bool, default = false }
+variable "ai_private_endpoints_approved" { type = bool, default = false }
+variable "ai_data_rbac_approved" { type = bool, default = false }
+variable "cosmos_data_write_approved" { type = bool, default = false }
+variable "cosmos_write_justification_approved" { type = bool, default = false }
