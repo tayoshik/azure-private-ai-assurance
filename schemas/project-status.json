@@ -16,5 +16,5 @@
   "release_decision": "NO_GO",
   "source_validated": false,
   "deployment_verified": false,
-  "github_publication_verified": false
+  "github_publication_verified": true
 }
