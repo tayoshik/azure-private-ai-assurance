@@ -98,3 +98,33 @@ variable "approved_firewall_next_hop_ip" {
   default  = null
   nullable = true
 }
+
+
+# I01-I03: Values come from G01/G03/G07 approvals, never a public tfvars file.
+variable "tenant_id" {
+  type = string
+}
+variable "app_identity_name" { type = string }
+variable "gateway_identity_name" { type = string }
+variable "key_vault_name" { type = string }
+variable "key_vault_private_endpoint_name" { type = string }
+variable "key_vault_configuration_approved" {
+  type    = bool
+  default = false
+}
+variable "key_vault_private_endpoint_approved" {
+  type    = bool
+  default = false
+}
+variable "app_secrets_reader_approved" {
+  type    = bool
+  default = false
+}
+variable "gateway_certificate_reader_approved" {
+  type    = bool
+  default = false
+}
+variable "role_assignment_approval_confirmed" {
+  type    = bool
+  default = false
+}

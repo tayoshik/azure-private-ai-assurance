@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-14",
+  "stage": "I01-I03",
+  "status": "PASS_OFFLINE_STRUCTURAL_ONLY",
+  "terraform_file_count": 28,
+  "unit_tests": 47,
+  "unit_tests_passed": 47,
+  "terraform_cli_available": false,
+  "terraform_fmt": "NOT_EXECUTED",
+  "terraform_init": "NOT_EXECUTED",
+  "terraform_validate": "NOT_EXECUTED",
+  "terraform_plan": "NOT_EXECUTED",
+  "terraform_apply": "NOT_EXECUTED",
+  "azure_live_passes": 0,
+  "azure_live_acceptance_not_ready": 1716,
+  "release_decision": "NO_GO",
+  "commands": [
+    {
+      "command": "python3 scripts/check_terraform_stage1.py",
+      "exit_code": 0,
+      "unit_test_count": null,
+      "stdout_sha256": "ef8d8682cdfbfb23a009ce5f71d83bd25a45cd410b33a8ab887305dcccec7dfc"
+    },
+    {
+      "command": "python3 scripts/check_terraform_n04.py",
+      "exit_code": 0,
+      "unit_test_count": null,
+      "stdout_sha256": "1047626624afbcdc066a450177e65442de0cc25d4050a80ce37857846321b63c"
+    },
+    {
+      "command": "python3 scripts/check_terraform_i01_i03.py",
+      "exit_code": 0,
+      "unit_test_count": null,
+      "stdout_sha256": "83e10e07b5ff1b3a0533e110e8cc0cbbd29a7257a9de7ffc5f29458f3648f8e9"
+    },
+    {
+      "command": "python3 -m unittest discover -s tests -p test_terraform*.py -v",
+      "exit_code": 0,
+      "unit_test_count": 47,
+      "stdout_sha256": "cb5b4cbedf3cc850dc285dbb636ba5df6ba6fd50c260fd6429a92cd39c7dd5c9"
+    }
+  ]
+}

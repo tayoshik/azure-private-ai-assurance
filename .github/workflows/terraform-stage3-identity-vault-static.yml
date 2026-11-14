@@ -1,0 +1,31 @@
+name: Terraform I01-I03 offline contract
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_stage1.py'
+      - 'scripts/check_terraform_n04.py'
+      - 'scripts/check_terraform_i01_i03.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-stage3-identity-vault-static.yml'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_i01_i03.py'
+      - 'tests/test_terraform_i01_i03.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage 1 regression
+        run: python3 scripts/check_terraform_stage1.py
+      - name: N04 regression
+        run: python3 scripts/check_terraform_n04.py
+      - name: I01/I02/I03 static contract check
+        run: python3 scripts/check_terraform_i01_i03.py
+      - name: Python mutation tests
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v

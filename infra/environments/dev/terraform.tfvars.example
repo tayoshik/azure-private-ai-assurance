@@ -27,3 +27,17 @@ gateway_extra_egress_rules = {}
 app_extra_egress_rules     = {}
 enable_app_forced_tunnel   = false
 approved_firewall_next_hop_ip = null
+
+
+# I01-I03 demonstration only: use approved real values from protected CI.
+tenant_id                       = "00000000-0000-0000-0000-000000000000"
+app_identity_name               = "id-REPLACE-app-dev"
+gateway_identity_name           = "id-REPLACE-gateway-dev"
+key_vault_name                  = "kv-REPLACE-dev"
+key_vault_private_endpoint_name = "pe-REPLACE-vault-dev"
+# FALSE blocks the vault/PE plan until an independent G07 approval exists.
+key_vault_configuration_approved    = false
+key_vault_private_endpoint_approved = false
+app_secrets_reader_approved         = false
+gateway_certificate_reader_approved = false
+role_assignment_approval_confirmed  = false

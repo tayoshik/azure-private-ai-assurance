@@ -42,3 +42,43 @@ module "private_dns" {
   zone_names          = var.private_dns_zone_names
   tags                = local.tags
 }
+
+
+# I01: Independent managed identities for the web app and Gateway.
+module "identity" {
+  source                = "../../modules/identity"
+  resource_group_name   = module.foundation.name
+  location              = module.foundation.location
+  app_identity_name     = var.app_identity_name
+  gateway_identity_name = var.gateway_identity_name
+  tags                  = local.tags
+}
+
+# I02: No secret or certificate material is committed to Terraform state.
+module "key_vault" {
+  source                              = "../../modules/key-vault"
+  name                                = var.key_vault_name
+  resource_group_name                 = module.foundation.name
+  location                            = module.foundation.location
+  tenant_id                           = var.tenant_id
+  tags                                = local.tags
+  app_principal_id                    = module.identity.app_principal_id
+  gateway_principal_id                = module.identity.gateway_principal_id
+  key_vault_configuration_approved    = var.key_vault_configuration_approved
+  app_secrets_reader_approved         = var.app_secrets_reader_approved
+  gateway_certificate_reader_approved = var.gateway_certificate_reader_approved
+  role_assignment_approval_confirmed  = var.role_assignment_approval_confirmed
+}
+
+# I03: existing data Private Endpoint subnet, matching vault DNS zone.
+module "key_vault_private_endpoint" {
+  source                              = "../../modules/private-endpoints"
+  name                                = var.key_vault_private_endpoint_name
+  location                            = module.foundation.location
+  resource_group_name                 = module.foundation.name
+  subnet_id                           = module.network.data_private_endpoint_subnet_id
+  key_vault_id                        = module.key_vault.id
+  key_vault_dns_zone_id               = module.private_dns.zone_ids["privatelink.vaultcore.azure.net"]
+  key_vault_private_endpoint_approved = var.key_vault_private_endpoint_approved
+  tags                                = local.tags
+}
