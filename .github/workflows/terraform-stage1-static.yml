@@ -1,0 +1,25 @@
+name: Terraform Stage 1 source guard (no Azure)
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_stage1.py'
+      - 'tests/test_terraform_stage1.py'
+      - '.github/workflows/terraform-stage1-static.yml'
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform_stage1.py'
+      - 'tests/test_terraform_stage1.py'
+      - '.github/workflows/terraform-stage1-static.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source contracts (NOT Terraform validate)
+        run: python3 scripts/check_terraform_stage1.py
+      - name: Offline mutation checks
+        run: python3 -m unittest discover -s tests -p 'test_terraform_stage1.py' -v

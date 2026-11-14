@@ -1,0 +1,9 @@
+# DO NOT run this example; all values require approved IPAM and private CI.
+subscription_id          = "00000000-0000-0000-0000-000000000000"
+location                 = "japaneast"
+resource_group_name      = "rg-REPLACE-bootstrap"
+storage_account_name     = "streplaceme123"
+bootstrap_vnet_name      = "vnet-REPLACE-management"
+bootstrap_vnet_cidr      = "10.250.0.0/16"
+bootstrap_pe_subnet_cidr = "10.250.4.0/24"
+ci_principal_object_id   = "00000000-0000-0000-0000-000000000000"

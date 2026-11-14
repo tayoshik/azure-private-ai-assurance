@@ -1,0 +1,12 @@
+# EXAMPLE ONLY. Never apply without approved region, IPAM and scoped CI.
+subscription_id     = "00000000-0000-0000-0000-000000000000"
+location            = "japaneast"
+resource_group_name = "rg-REPLACE-dev"
+vnet_name           = "vnet-REPLACE-dev"
+vnet_cidr           = "10.240.0.0/16"
+subnet_cidrs = {
+  app_gateway           = "10.240.0.0/24"
+  app_outbound          = "10.240.1.0/26"
+  web_private_endpoint  = "10.240.2.0/24"
+  data_private_endpoint = "10.240.3.0/24"
+}

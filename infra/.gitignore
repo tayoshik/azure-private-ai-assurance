@@ -1,0 +1,20 @@
+# Terraform generated state, plans, caches, credentials and environment values.
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfplan
+**/*.tfplan.*
+**/crash.log
+**/crash.*.log
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+**/terraform.tfvars
+**/terraform.tfvars.json
+**/*.auto.tfvars
+**/*.auto.tfvars.json
+**/backend.*.hcl
+!**/backend.azurerm.example.hcl
+!**/terraform.tfvars.example
+# DO NOT ignore .terraform.lock.hcl; generate/review it on approved CI.
