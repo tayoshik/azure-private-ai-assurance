@@ -1,0 +1,47 @@
+name: Azure REST03 offline resource assurance
+on:
+  push:
+    paths:
+      - 'scripts/azure_rest_reader.py'
+      - 'scripts/rest01_catalogue.py'
+      - 'scripts/rest03_resource_audit.py'
+      - 'tests/test_azure_rest_reader.py'
+      - 'tests/test_rest01_catalogue.py'
+      - 'tests/test_rest03_resource_audit.py'
+      - 'specs/english_tests_001_440.json'
+      - 'specs/phase3_264_en.json'
+      - 'specs/phase4_286_en.json'
+      - 'specs/phase5_286_en.json'
+      - 'specs/phase6_220_en.json'
+      - 'specs/phase7_220_en.json'
+      - '.github/workflows/azure-rest03-offline.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-rest03:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify synthetic resource policies (no Azure access)
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/rest03_resource_audit.py --selftest
+      - name: Confirm canonical 1716-ID catalogue
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/rest01_catalogue.py --summary > /tmp/rest03-routing.json
+          python3 - <<'PY'
+          import json
+          result=json.load(open('/tmp/rest03-routing.json'))
+          assert result['case_count']==1716
+          assert result['azure_live_passes']==0
+          print('PASS_OFFLINE_ROUTING_ONLY',result['case_count'])
+          PY
+      - name: REST client and control regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*rest*.py' -v
+      - name: Confirm Terraform regressions remain unchanged
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+# No OIDC credential request, Azure endpoint, write action, plan or apply.
