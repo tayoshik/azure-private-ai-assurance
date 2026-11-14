@@ -1,0 +1,17 @@
+name: English catalogue publication integrity
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  offline-catalogue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Offline publication verification
+        run: python3 scripts/verify_publication.py
+      - name: Regression unit tests
+        run: python3 -m unittest discover -s tests -p 'test_publication*.py' -v
