@@ -3,7 +3,7 @@
 # names below are referenced by gateway.tf rather than splitting the same
 # resource across multiple Terraform files.
 locals {
-  private_frontend_name     = "frontend-private"
+  private_frontend_name    = "frontend-private"
   frontend_https_port_name = "https-443"
   tls_certificate_name     = "cert-approved-vault"
   https_listener_name      = "listener-private-https"

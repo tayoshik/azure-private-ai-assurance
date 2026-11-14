@@ -15,13 +15,14 @@ BOOL_FALSE = {
     'azurerm_key_vault': ['public_network_access_enabled'],
     'azurerm_cognitive_account': ['public_network_access_enabled', 'local_auth_enabled'],
     'azurerm_search_service': ['public_network_access_enabled', 'local_authentication_enabled'],
-    'azurerm_cosmosdb_account': ['public_network_access_enabled', 'local_authentication_enabled', 'network_acl_bypass_for_azure_services'],
+    'azurerm_cosmosdb_account': ['public_network_access_enabled', 'network_acl_bypass_for_azure_services'],
     'azurerm_linux_web_app': ['public_network_access_enabled', 'ftp_publish_basic_authentication_enabled', 'webdeploy_publish_basic_authentication_enabled'],
     'azurerm_log_analytics_workspace': ['internet_ingestion_enabled', 'internet_query_enabled'],
 }
 BOOL_TRUE = {
     'azurerm_storage_account': ['https_traffic_only_enabled'],
     'azurerm_key_vault': ['rbac_authorization_enabled', 'purge_protection_enabled'],
+    'azurerm_cosmosdb_account': ['local_authentication_disabled'],
     'azurerm_linux_web_app': ['https_only'],
 }
 REQUIRED_DEV_TYPES = {
@@ -191,7 +192,7 @@ def fixture(scope='dev'):
     values = [
         ('azurerm_cognitive_account', {'public_network_access_enabled': False, 'local_auth_enabled': False}),
         ('azurerm_search_service', {'public_network_access_enabled': False, 'local_authentication_enabled': False}),
-        ('azurerm_cosmosdb_account', {'public_network_access_enabled': False, 'local_authentication_enabled': False, 'network_acl_bypass_for_azure_services': False}),
+        ('azurerm_cosmosdb_account', {'public_network_access_enabled': False, 'local_authentication_disabled': True, 'network_acl_bypass_for_azure_services': False}),
         ('azurerm_key_vault', {'public_network_access_enabled': False, 'rbac_authorization_enabled': True, 'purge_protection_enabled': True}),
         ('azurerm_linux_web_app', {'public_network_access_enabled': False, 'ftp_publish_basic_authentication_enabled': False, 'webdeploy_publish_basic_authentication_enabled': False, 'https_only': True, 'virtual_network_subnet_id': '/subnets/app-egress', 'identity': [{'type': 'UserAssigned'}], 'site_config': [{'minimum_tls_version':'1.2','scm_minimum_tls_version':'1.2','ftps_state':'Disabled','vnet_route_all_enabled':True}]}),
         ('azurerm_application_gateway', {'frontend_ip_configuration':[{'private_ip_address':'10.0.1.10','private_ip_address_allocation':'Static','public_ip_address_id':None}], 'sku':[{'name':'WAF_v2','tier':'WAF_v2'}], 'ssl_certificate':[{'key_vault_secret_id':'https://placeholder.invalid/secrets/cert'}]}),

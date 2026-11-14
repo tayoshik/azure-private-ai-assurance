@@ -4,6 +4,7 @@ import shutil,sys,tempfile,unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from check_terraform_gw01_gw05 import check
+from terraform_test_helpers import replace_mutation
 class TestGatewayStage6(unittest.TestCase):
     def test_clean_baseline(self):
         r=check(ROOT);self.assertFalse(r['errors'],r['errors'])
@@ -11,8 +12,8 @@ class TestGatewayStage6(unittest.TestCase):
     def mutate(self,rel,before,after):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);shutil.copytree(ROOT/'infra',root/'infra')
-            p=root/rel;s=p.read_text();self.assertIn(before,s)
-            p.write_text(s.replace(before,after,1))
+            p=root/rel;s=p.read_text()
+            p.write_text(replace_mutation(s,before,after))
             r=check(root);self.assertEqual(r['status'],'FAIL',(rel,before,r))
             self.assertEqual(r['azure_live_passes'],0)
     def test_public_frontend(self):self.mutate('infra/modules/application-gateway/gateway.tf','private_ip_address_allocation = "Static"','private_ip_address_allocation = "Dynamic"')

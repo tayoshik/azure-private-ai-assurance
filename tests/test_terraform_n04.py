@@ -7,6 +7,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from check_terraform_n04 import check, find_resource
+from terraform_test_helpers import replace_mutation
 
 class N04Tests(unittest.TestCase):
     def test_source_pass(self):
@@ -21,8 +22,7 @@ class N04Tests(unittest.TestCase):
         with TemporaryDirectory() as d:
             copytree(ROOT/'infra',Path(d)/'infra')
             p=Path(d)/rel
-            self.assertIn(old,p.read_text())
-            p.write_text(p.read_text().replace(old,new,1))
+            p.write_text(replace_mutation(p.read_text(),old,new))
             return check(d)['state']
     def test_unapproved_client_source_broadening(self):
         self.assertEqual(self.mutate('infra/modules/network/policy.tf','source_address_prefixes     = var.approved_client_cidrs','source_address_prefixes     = ["0.0.0.0/0"]'),'FAIL')

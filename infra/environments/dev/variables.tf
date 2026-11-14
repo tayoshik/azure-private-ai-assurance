@@ -27,7 +27,7 @@ variable "subnet_cidrs" {
   })
 }
 variable "private_dns_zone_names" {
-  type    = list(string)
+  type = list(string)
   default = [
     "privatelink.azurewebsites.net",
     "privatelink.openai.azure.com",
@@ -39,8 +39,8 @@ variable "private_dns_zone_names" {
 variable "common_tags" {
   type = map(string)
   default = {
-    workload     = "azure-private-ai-assurance"
-    sensitivity  = "restricted"
+    workload    = "azure-private-ai-assurance"
+    sensitivity = "restricted"
   }
 }
 
@@ -50,12 +50,12 @@ variable "approved_client_cidrs" {
   description = "Signed client IPAM; no default."
 }
 variable "approved_dns_resolver_ips" {
-  type        = list(string)
-  default     = []
+  type    = list(string)
+  default = []
 }
 variable "approved_test_runner_cidrs" {
-  type        = list(string)
-  default     = []
+  type    = list(string)
+  default = []
 }
 variable "gateway_extra_egress_rules" {
   type = map(object({
@@ -240,51 +240,51 @@ variable "gateway_private_frontend_ip" { type = string }
 variable "gateway_certificate_secret_versionless_id" { type = string }
 variable "gateway_business_fqdn" { type = string }
 variable "application_gateway_capacity" {
-  type = number
+  type    = number
   default = 2
 }
 variable "application_gateway_waf_mode" {
-  type = string
+  type    = string
   default = "Detection"
 }
 variable "application_gateway_waf_drs_version" {
-  type = string
+  type    = string
   default = "2.2"
 }
 variable "monitor_workspace_name" { type = string }
 variable "monitor_retention_days" {
-  type = number
+  type    = number
   default = 30
 }
 variable "monitoring_private_ingestion_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "private_gateway_feature_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_ipam_and_routes_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_backend_dns_tls_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_certificate_import_rbac_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_waf_policy_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_waf_prevention_approved" {
-  type = bool
+  type    = bool
   default = false
 }
 variable "gateway_logging_route_approved" {
-  type = bool
+  type    = bool
   default = false
 }

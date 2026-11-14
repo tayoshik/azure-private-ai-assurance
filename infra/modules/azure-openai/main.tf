@@ -8,7 +8,7 @@ resource "azurerm_cognitive_account" "openai" {
   sku_name                      = "S0"
   custom_subdomain_name         = var.custom_subdomain_name
   public_network_access_enabled = false
-  local_auth_enabled             = false
+  local_auth_enabled            = false
   tags                          = var.tags
 
   lifecycle {
@@ -24,8 +24,8 @@ resource "azurerm_cognitive_account" "openai" {
 }
 
 resource "azurerm_cognitive_deployment" "model" {
-  name                 = var.model_deployment_name
-  cognitive_account_id = azurerm_cognitive_account.openai.id
+  name                   = var.model_deployment_name
+  cognitive_account_id   = azurerm_cognitive_account.openai.id
   version_upgrade_option = "NoAutoUpgrade"
 
   model {

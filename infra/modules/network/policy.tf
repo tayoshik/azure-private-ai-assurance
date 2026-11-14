@@ -86,18 +86,18 @@ resource "azurerm_network_security_rule" "gateway_to_data_pe" {
 }
 
 resource "azurerm_network_security_rule" "gateway_dns_udp" {
-  count                       = length(var.approved_dns_resolver_ips) > 0 ? 1 : 0
-  name                        = "AllowApprovedDnsUdp"
-  priority                    = 120
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "Udp"
-  source_port_range           = "*"
-  destination_port_range      = "53"
-  source_address_prefix       = "*"
+  count                        = length(var.approved_dns_resolver_ips) > 0 ? 1 : 0
+  name                         = "AllowApprovedDnsUdp"
+  priority                     = 120
+  direction                    = "Outbound"
+  access                       = "Allow"
+  protocol                     = "Udp"
+  source_port_range            = "*"
+  destination_port_range       = "53"
+  source_address_prefix        = "*"
   destination_address_prefixes = var.approved_dns_resolver_ips
-  resource_group_name         = var.resource_group_name
-  network_security_group_name = azurerm_network_security_group.app_gateway.name
+  resource_group_name          = var.resource_group_name
+  network_security_group_name  = azurerm_network_security_group.app_gateway.name
 }
 
 resource "azurerm_network_security_rule" "gateway_dns_tcp" {

@@ -47,8 +47,8 @@ variable "bootstrap_vnet_cidr" {
 }
 
 variable "bootstrap_pe_subnet_name" {
-  type        = string
-  default     = "snet-bootstrap-pe"
+  type    = string
+  default = "snet-bootstrap-pe"
 }
 
 variable "bootstrap_pe_subnet_cidr" {
@@ -83,9 +83,9 @@ variable "tags" {
   type        = map(string)
   description = "Organization-approved nonsecret tags."
   default = {
-    workload     = "azure-private-ai-assurance"
-    environment  = "bootstrap"
-    managed_by   = "terraform"
-    sensitivity  = "restricted"
+    workload    = "azure-private-ai-assurance"
+    environment = "bootstrap"
+    managed_by  = "terraform"
+    sensitivity = "restricted"
   }
 }

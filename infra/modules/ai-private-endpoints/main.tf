@@ -18,7 +18,7 @@ resource "azurerm_private_endpoint" "openai" {
   }
   lifecycle {
     precondition {
-      condition = var.private_endpoints_approved && endswith(lower(var.openai_zone_id), "/privatelink.openai.azure.com")
+      condition     = var.private_endpoints_approved && endswith(lower(var.openai_zone_id), "/privatelink.openai.azure.com")
       error_message = "A05: approved OpenAI PE and exact private DNS zone are required."
     }
   }
@@ -42,7 +42,7 @@ resource "azurerm_private_endpoint" "search" {
   }
   lifecycle {
     precondition {
-      condition = var.private_endpoints_approved && endswith(lower(var.search_zone_id), "/privatelink.search.windows.net")
+      condition     = var.private_endpoints_approved && endswith(lower(var.search_zone_id), "/privatelink.search.windows.net")
       error_message = "A05: approved Search PE and exact private DNS zone are required."
     }
   }
@@ -66,7 +66,7 @@ resource "azurerm_private_endpoint" "cosmos" {
   }
   lifecycle {
     precondition {
-      condition = var.private_endpoints_approved && endswith(lower(var.cosmos_zone_id), "/privatelink.documents.azure.com")
+      condition     = var.private_endpoints_approved && endswith(lower(var.cosmos_zone_id), "/privatelink.documents.azure.com")
       error_message = "A05: approved NoSQL PE and exact private DNS zone are required."
     }
   }

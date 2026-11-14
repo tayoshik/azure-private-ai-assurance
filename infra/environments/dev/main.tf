@@ -15,24 +15,24 @@ module "foundation" {
 }
 
 module "network" {
-  source              = "../../modules/network"
-  name                = var.vnet_name
-  resource_group_name = module.foundation.name
-  location            = module.foundation.location
-  vnet_cidr           = var.vnet_cidr
-  subnet_cidrs        = var.subnet_cidrs
-  approved_client_cidrs = var.approved_client_cidrs
-  approved_test_runner_cidrs = var.approved_test_runner_cidrs
-  approved_dns_resolver_ips = var.approved_dns_resolver_ips
-  gateway_extra_egress_rules = var.gateway_extra_egress_rules
-  app_extra_egress_rules = var.app_extra_egress_rules
-  network_policy_approved = var.network_policy_approved
+  source                             = "../../modules/network"
+  name                               = var.vnet_name
+  resource_group_name                = module.foundation.name
+  location                           = module.foundation.location
+  vnet_cidr                          = var.vnet_cidr
+  subnet_cidrs                       = var.subnet_cidrs
+  approved_client_cidrs              = var.approved_client_cidrs
+  approved_test_runner_cidrs         = var.approved_test_runner_cidrs
+  approved_dns_resolver_ips          = var.approved_dns_resolver_ips
+  gateway_extra_egress_rules         = var.gateway_extra_egress_rules
+  app_extra_egress_rules             = var.app_extra_egress_rules
+  network_policy_approved            = var.network_policy_approved
   gateway_network_isolation_approved = var.gateway_network_isolation_approved
-  gateway_egress_profile_approved = var.gateway_egress_profile_approved
-  app_egress_profile_approved = var.app_egress_profile_approved
-  enable_app_forced_tunnel = var.enable_app_forced_tunnel
-  approved_firewall_next_hop_ip = var.approved_firewall_next_hop_ip
-  tags                = local.tags
+  gateway_egress_profile_approved    = var.gateway_egress_profile_approved
+  app_egress_profile_approved        = var.app_egress_profile_approved
+  enable_app_forced_tunnel           = var.enable_app_forced_tunnel
+  approved_firewall_next_hop_ip      = var.approved_firewall_next_hop_ip
+  tags                               = local.tags
 }
 
 module "private_dns" {
@@ -171,90 +171,90 @@ module "ai_data_rbac" {
 
 # W01-W03/W05: single App Service module with managed identity, no keys.
 module "app_service" {
-  source                        = "../../modules/app-service"
-  location                      = module.foundation.location
-  resource_group_name           = module.foundation.name
-  tags                          = local.tags
-  service_plan_name             = var.app_service_plan_name
-  service_plan_sku              = var.app_service_plan_sku
-  web_app_name                  = var.app_web_name
-  python_version                = var.app_python_version
-  health_check_path             = var.app_health_check_path
-  app_identity_id               = module.identity.app_identity_id
-  app_identity_client_id        = module.identity.app_client_id
-  app_outbound_subnet_id        = module.network.app_outbound_subnet_id
-  web_inbound_pe_subnet_id      = module.network.web_private_endpoint_subnet_id
-  openai_endpoint               = module.azure_openai.endpoint
-  openai_deployment_name        = module.azure_openai.deployment_name
-  search_hostname               = module.ai_search.hostname
-  cosmos_endpoint               = module.cosmos_db.account_endpoint
-  cosmos_database_name          = module.cosmos_db.database_name
-  cosmos_container_name         = module.cosmos_db.container_name
-  app_service_plan_approved     = var.app_service_plan_approved
-  region_and_capacity_approved  = var.app_region_capacity_approved
+  source                         = "../../modules/app-service"
+  location                       = module.foundation.location
+  resource_group_name            = module.foundation.name
+  tags                           = local.tags
+  service_plan_name              = var.app_service_plan_name
+  service_plan_sku               = var.app_service_plan_sku
+  web_app_name                   = var.app_web_name
+  python_version                 = var.app_python_version
+  health_check_path              = var.app_health_check_path
+  app_identity_id                = module.identity.app_identity_id
+  app_identity_client_id         = module.identity.app_client_id
+  app_outbound_subnet_id         = module.network.app_outbound_subnet_id
+  web_inbound_pe_subnet_id       = module.network.web_private_endpoint_subnet_id
+  openai_endpoint                = module.azure_openai.endpoint
+  openai_deployment_name         = module.azure_openai.deployment_name
+  search_hostname                = module.ai_search.hostname
+  cosmos_endpoint                = module.cosmos_db.account_endpoint
+  cosmos_database_name           = module.cosmos_db.database_name
+  cosmos_container_name          = module.cosmos_db.container_name
+  app_service_plan_approved      = var.app_service_plan_approved
+  region_and_capacity_approved   = var.app_region_capacity_approved
   web_app_configuration_approved = var.web_app_configuration_approved
-  outbound_integration_approved = var.app_outbound_integration_approved
-  application_contract_approved = var.application_contract_approved
-  depends_on = [module.network, module.ai_data_rbac]
+  outbound_integration_approved  = var.app_outbound_integration_approved
+  application_contract_approved  = var.application_contract_approved
+  depends_on                     = [module.network, module.ai_data_rbac]
 }
 
 # W04: inbound Web App PE on a different subnet; same private DNS authority.
 module "webapp_private_endpoint" {
-  source                       = "../../modules/webapp-private-endpoint"
-  private_endpoint_name        = var.app_web_private_endpoint_name
-  location                     = module.foundation.location
-  resource_group_name          = module.foundation.name
-  web_inbound_pe_subnet_id     = module.network.web_private_endpoint_subnet_id
-  app_outbound_subnet_id       = module.network.app_outbound_subnet_id
-  web_app_id                   = module.app_service.web_app_id
-  webapp_private_dns_zone_id   = module.private_dns.zone_ids["privatelink.azurewebsites.net"]
+  source                        = "../../modules/webapp-private-endpoint"
+  private_endpoint_name         = var.app_web_private_endpoint_name
+  location                      = module.foundation.location
+  resource_group_name           = module.foundation.name
+  web_inbound_pe_subnet_id      = module.network.web_private_endpoint_subnet_id
+  app_outbound_subnet_id        = module.network.app_outbound_subnet_id
+  web_app_id                    = module.app_service.web_app_id
+  webapp_private_dns_zone_id    = module.private_dns.zone_ids["privatelink.azurewebsites.net"]
   web_private_endpoint_approved = var.web_private_endpoint_approved
-  private_dns_and_scm_approved = var.web_private_dns_scm_approved
-  tags                         = local.tags
-  depends_on                   = [module.network]
+  private_dns_and_scm_approved  = var.web_private_dns_scm_approved
+  tags                          = local.tags
+  depends_on                    = [module.network]
 }
 
 
 # O01: Workload audit workspace; private ingestion prerequisite O02 is
 # explicitly out of scope until AMPLS/DNS is approved and implemented.
 module "monitoring" {
-  source = "../../modules/monitoring"
-  name = var.monitor_workspace_name
-  location = module.foundation.location
-  resource_group_name = module.foundation.name
-  retention_in_days = var.monitor_retention_days
+  source                                    = "../../modules/monitoring"
+  name                                      = var.monitor_workspace_name
+  location                                  = module.foundation.location
+  resource_group_name                       = module.foundation.name
+  retention_in_days                         = var.monitor_retention_days
   monitoring_and_private_ingestion_approved = var.monitoring_private_ingestion_approved
-  tags = local.tags
+  tags                                      = local.tags
 }
 
 # GW01–GW05: private-only WAF_v2, UAI/KV TLS, backend health and diagnostics.
 # The app's default hostname is used for backend TLS Host/SNI; the private
 # business FQDN is used ONLY for the gateway listener and on-prem DNS.
 module "application_gateway" {
-  source = "../../modules/application-gateway"
-  name = var.application_gateway_name
-  location = module.foundation.location
-  resource_group_name = module.foundation.name
-  tags = local.tags
-  gateway_subnet_id = module.network.app_gateway_subnet_id
-  gateway_subnet_cidr = var.subnet_cidrs.app_gateway
-  private_frontend_ip = var.gateway_private_frontend_ip
-  gateway_identity_id = module.identity.gateway_identity_id
+  source                                      = "../../modules/application-gateway"
+  name                                        = var.application_gateway_name
+  location                                    = module.foundation.location
+  resource_group_name                         = module.foundation.name
+  tags                                        = local.tags
+  gateway_subnet_id                           = module.network.app_gateway_subnet_id
+  gateway_subnet_cidr                         = var.subnet_cidrs.app_gateway
+  private_frontend_ip                         = var.gateway_private_frontend_ip
+  gateway_identity_id                         = module.identity.gateway_identity_id
   key_vault_certificate_secret_versionless_id = var.gateway_certificate_secret_versionless_id
-  business_fqdn = var.gateway_business_fqdn
-  backend_app_fqdn = module.app_service.default_hostname
-  health_check_path = var.app_health_check_path
-  gateway_capacity = var.application_gateway_capacity
-  waf_mode = var.application_gateway_waf_mode
-  waf_drs_version = var.application_gateway_waf_drs_version
-  log_analytics_workspace_id = module.monitoring.workspace_id
-  private_gateway_feature_approved = var.private_gateway_feature_approved
-  gateway_ipam_and_routes_approved = var.gateway_ipam_and_routes_approved
-  backend_dns_tls_approved = var.gateway_backend_dns_tls_approved
-  certificate_import_and_rbac_approved = var.gateway_certificate_import_rbac_approved
-  waf_policy_approved = var.gateway_waf_policy_approved
-  waf_prevention_approved = var.gateway_waf_prevention_approved
-  logging_route_approved = var.gateway_logging_route_approved
+  business_fqdn                               = var.gateway_business_fqdn
+  backend_app_fqdn                            = module.app_service.default_hostname
+  health_check_path                           = var.app_health_check_path
+  gateway_capacity                            = var.application_gateway_capacity
+  waf_mode                                    = var.application_gateway_waf_mode
+  waf_drs_version                             = var.application_gateway_waf_drs_version
+  log_analytics_workspace_id                  = module.monitoring.workspace_id
+  private_gateway_feature_approved            = var.private_gateway_feature_approved
+  gateway_ipam_and_routes_approved            = var.gateway_ipam_and_routes_approved
+  backend_dns_tls_approved                    = var.gateway_backend_dns_tls_approved
+  certificate_import_and_rbac_approved        = var.gateway_certificate_import_rbac_approved
+  waf_policy_approved                         = var.gateway_waf_policy_approved
+  waf_prevention_approved                     = var.gateway_waf_prevention_approved
+  logging_route_approved                      = var.gateway_logging_route_approved
   depends_on = [module.network, module.webapp_private_endpoint,
-                module.key_vault_private_endpoint, module.key_vault, module.monitoring]
+  module.key_vault_private_endpoint, module.key_vault, module.monitoring]
 }

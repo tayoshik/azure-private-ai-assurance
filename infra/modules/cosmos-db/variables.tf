@@ -8,14 +8,14 @@ variable "partition_key_paths" { type = list(string) }
 variable "consistency_level" {
   type = string
   validation {
-    condition = contains(["Session", "Strong", "Eventual", "ConsistentPrefix"], var.consistency_level)
+    condition     = contains(["Session", "Strong", "Eventual", "ConsistentPrefix"], var.consistency_level)
     error_message = "Approved Cosmos consistency must be explicit."
   }
 }
 variable "backup_tier" {
   type = string
   validation {
-    condition = contains(["Continuous7Days", "Continuous30Days"], var.backup_tier)
+    condition     = contains(["Continuous7Days", "Continuous30Days"], var.backup_tier)
     error_message = "Choose an explicitly approved continuous backup tier."
   }
 }

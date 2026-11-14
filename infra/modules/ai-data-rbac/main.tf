@@ -5,7 +5,7 @@ resource "azurerm_role_assignment" "openai_user" {
   principal_id         = var.app_principal_id
   lifecycle {
     precondition {
-      condition = var.rbac_approved
+      condition     = var.rbac_approved
       error_message = "A06/G07: approved OpenAI app identity and least-privilege scope required."
     }
   }
@@ -17,7 +17,7 @@ resource "azurerm_role_assignment" "search_reader" {
   principal_id         = var.app_principal_id
   lifecycle {
     precondition {
-      condition = var.rbac_approved
+      condition     = var.rbac_approved
       error_message = "A06/G07: approved Search index reader RBAC required."
     }
   }
@@ -36,11 +36,11 @@ resource "azurerm_cosmosdb_sql_role_assignment" "app" {
   scope               = "${var.cosmos_account_id}/dbs/${var.cosmos_database_name}/colls/${var.cosmos_container_name}"
   lifecycle {
     precondition {
-      condition = var.rbac_approved
+      condition     = var.rbac_approved
       error_message = "A06/G07: approved Cosmos SQL role and exact data scope required."
     }
     precondition {
-      condition = !var.cosmos_write_approved || var.cosmos_write_justification_approved
+      condition     = !var.cosmos_write_approved || var.cosmos_write_justification_approved
       error_message = "A06: Cosmos data writer requires separate approved justification."
     }
   }

@@ -13,7 +13,7 @@ resource "azurerm_log_analytics_workspace" "audit" {
   lifecycle {
     prevent_destroy = true
     precondition {
-      condition = var.monitoring_and_private_ingestion_approved
+      condition     = var.monitoring_and_private_ingestion_approved
       error_message = "O01/O02: Monitoring access, AMPLS/private ingestion/query path, retention and budget must be approved."
     }
   }

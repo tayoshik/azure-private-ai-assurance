@@ -84,3 +84,15 @@ A missing lockfile is an explicit blocker for final G03 approval even if ephemer
 ## 6. Completion gates
 
 **G03/Q01 provider validation can be recorded as passed only when:** both root `fmt` checks pass; both provider installs are authenticated and logged; both `validate` runs exit 0; lockfiles match exact pins, are reviewed and committed; SHA-256/commit/CI run IDs are recorded. This still does **not** authorize Q03 (`plan`). For Q03 additionally require G07 (subscription, region, CIDRs, identity, certificate, quota, approved runner), B05 (private backend reachable), independent scope approvals and evidence storage. **Current stage remains NO-GO**.
+
+## 7. First real CI result and corrective change record (2026-11-14)
+
+- Baseline commit `651791fc5946303cd02e8d744a493458ec86c961` → [CI run 43598887055](https://github.com/tayoshik/azure-private-ai-assurance/actions/runs/43598887055).
+- `source-preflight`: PASS; 145/145 tests at first publish.
+- `format-check`: FAIL; actual Terraform CLI found formatting changes in 19 HCL files. The provider-schema job uploaded a **39,039-byte official `terraform fmt` diff**; do not ignore this formatting failure.
+- `provider-schema`: actual Terraform CLI `1.9.8` and HashiCorp-signed AzureRM `4.66.0` were installed successfully. `infra/bootstrap` init + validate **PASS**. `infra/environments/dev` init **PASS**, validate **FAIL** on `azurerm_cosmosdb_account.no_sql.local_authentication_enabled` (unsupported argument in 4.66.0).
+- **Fix:** Replace Cosmos account `local_authentication_enabled = false` with `local_authentication_disabled = true`, update the A01-A06 source-contract checker and Q02 Plan guard to assert the opposite boolean polarity, and add two synthetic negative cases. **The Search Service attribute is different and must remain `local_authentication_enabled = false`.**
+- Applied the actual CI `terraform fmt` patch to 19 files; manually reconciled three hunks with prior source comments/modified Cosmos setting. Refactored the mutation test helper to tolerate HCL spacing so formatting does not create false failures. On the corrected candidate **147/147** local Python tests PASS; local CLI is absent, so only a new GitHub Actions run can confirm real `fmt` and `validate`.
+- Both roots generated **matching provisional lockfile candidates** from the provider registry in CI, SHA-256 `4c4d4bd4ac67e53c049edb3daeadf355847221daa1fdecea59522068dcf6cfc1`. Do not merge them as final approved locks until signed package, platform coverage, provider version and two independent reviews are complete.
+
+**Close gate only after checking the corrected follow-up CI run.** No prior static PASS is evidence of a real Azure deployment. Azure Plan/Apply and 1,716 live tests remain NOT_READY; formal decision remains NO-GO.

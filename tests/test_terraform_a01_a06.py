@@ -7,6 +7,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'scripts'))
 from check_terraform_a01_a06 import check
+from terraform_test_helpers import replace_mutation
 
 class TestAIData(unittest.TestCase):
     def test_baseline(self):
@@ -18,8 +19,7 @@ class TestAIData(unittest.TestCase):
             shutil.copytree(ROOT/'infra',target/'infra')
             p=target/path
             source=p.read_text()
-            self.assertIn(old,source,old)
-            p.write_text(source.replace(old,new,1))
+            p.write_text(replace_mutation(source,old,new))
             report=check(target)
             self.assertNotEqual(report['errors'],[],(path,old))
             self.assertEqual(report['azure_live_passes'],0)
@@ -32,7 +32,8 @@ class TestAIData(unittest.TestCase):
     def test_search_key_auth(self):self.mutate('infra/modules/ai-search/main.tf','local_authentication_enabled  = false','local_authentication_enabled  = true')
     def test_search_bypass(self):self.mutate('infra/modules/ai-search/main.tf','network_rule_bypass_option    = "None"','network_rule_bypass_option    = "AzureServices"')
     def test_cosmos_public(self):self.mutate('infra/modules/cosmos-db/main.tf','public_network_access_enabled = false','public_network_access_enabled = true')
-    def test_cosmos_key_auth(self):self.mutate('infra/modules/cosmos-db/main.tf','local_authentication_enabled  = false','local_authentication_enabled  = true')
+    def test_cosmos_key_auth(self):self.mutate('infra/modules/cosmos-db/main.tf','local_authentication_disabled = true','local_authentication_disabled = false')
+    def test_cosmos_wrong_provider_attribute(self):self.mutate('infra/modules/cosmos-db/main.tf','local_authentication_disabled = true','local_authentication_enabled = false')
     def test_cosmos_backup(self):self.mutate('infra/modules/cosmos-db/main.tf','type = "Continuous"','type = "Periodic"')
     def test_openai_pe_subresource(self):self.mutate('infra/modules/ai-private-endpoints/main.tf','subresource_names              = ["account"]','subresource_names              = ["sites"]')
     def test_search_pe_subresource(self):self.mutate('infra/modules/ai-private-endpoints/main.tf','subresource_names              = ["searchService"]','subresource_names              = ["wrong"]')

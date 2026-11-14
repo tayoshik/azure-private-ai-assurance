@@ -13,11 +13,11 @@ resource "azurerm_search_service" "search" {
 
   lifecycle {
     precondition {
-      condition = var.search_approved && var.region_and_sku_approved
+      condition     = var.search_approved && var.region_and_sku_approved
       error_message = "A03/G03/G07: approved Search SKU, region, PE capability and budget are required."
     }
     precondition {
-      condition = var.sku != "free" && var.replica_count >= 1 && var.partition_count >= 1
+      condition     = var.sku != "free" && var.replica_count >= 1 && var.partition_count >= 1
       error_message = "A03: private-capable SKU and positive capacity required."
     }
   }

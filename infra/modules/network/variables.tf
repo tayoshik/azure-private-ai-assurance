@@ -16,9 +16,9 @@ variable "vnet_cidr" {
 }
 variable "subnet_cidrs" {
   type = object({
-    app_gateway          = string
-    app_outbound         = string
-    web_private_endpoint = string
+    app_gateway           = string
+    app_outbound          = string
+    web_private_endpoint  = string
     data_private_endpoint = string
   })
   # All subnet ranges must be approved and confirmed non-overlapping by IPAM.
@@ -67,7 +67,7 @@ variable "gateway_extra_egress_rules" {
   default     = {}
   description = "Reviewed gateway egress exceptions; use IP destinations only, NOT FQDN. Include Key Vault/CRL or route via approved firewall where required."
   validation {
-    condition = alltrue([for k,v in var.gateway_extra_egress_rules :
+    condition = alltrue([for k, v in var.gateway_extra_egress_rules :
       can(regex("^[A-Za-z0-9]{1,45}$", k)) && can(cidrhost(v.destination_cidr, 0)) && v.destination_cidr != "0.0.0.0/0" && v.destination_port >= 1 && v.destination_port <= 65535 && v.priority >= 300 && v.priority <= 999
     ]) && length(distinct([for v in values(var.gateway_extra_egress_rules) : v.priority])) == length(var.gateway_extra_egress_rules)
     error_message = "Gateway exceptions require distinct priorities 300-999, scoped CIDRs, ports and valid names."
@@ -83,7 +83,7 @@ variable "app_extra_egress_rules" {
   default     = {}
   description = "Approved App Service egress; identity, CRL, artifact supply, monitoring and runtime dependencies MUST be covered."
   validation {
-    condition = alltrue([for k,v in var.app_extra_egress_rules :
+    condition = alltrue([for k, v in var.app_extra_egress_rules :
       can(regex("^[A-Za-z0-9]{1,45}$", k)) && can(cidrhost(v.destination_cidr, 0)) && v.destination_cidr != "0.0.0.0/0" && v.destination_port >= 1 && v.destination_port <= 65535 && v.priority >= 300 && v.priority <= 999
     ]) && length(distinct([for v in values(var.app_extra_egress_rules) : v.priority])) == length(var.app_extra_egress_rules)
     error_message = "App exceptions require distinct priorities 300-999, scoped CIDRs, ports and valid names."

@@ -10,7 +10,7 @@ variable "model_sku" { type = string }
 variable "model_capacity" {
   type = number
   validation {
-    condition = var.model_capacity > 0
+    condition     = var.model_capacity > 0
     error_message = "Model capacity must be positive and quota-approved."
   }
 }

@@ -82,8 +82,12 @@ class Q02Tests(unittest.TestCase):
         self.assertEqual(self.status(), 'FAIL_POLICY')
 
     def test_reject_cosmos_local_auth(self):
-        self.rec('azurerm_cosmosdb_account')['values']['local_authentication_enabled']=True
+        self.rec('azurerm_cosmosdb_account')['values']['local_authentication_disabled']=False
         self.assertEqual(self.status(), 'FAIL_POLICY')
+
+    def test_cosmos_auth_missing_not_ready(self):
+        del self.rec('azurerm_cosmosdb_account')['values']['local_authentication_disabled']
+        self.assertEqual(self.status(), 'NOT_READY')
 
     def test_reject_vault_public(self):
         self.rec('azurerm_key_vault')['values']['public_network_access_enabled']=True

@@ -29,7 +29,7 @@ RESOURCE_GATES = [
     ('cosmos-db/main.tf', 'azurerm_cosmosdb_account', 'no_sql', [
         r'kind\s*=\s*"GlobalDocumentDB"',
         r'public_network_access_enabled\s*=\s*false',
-        r'local_authentication_enabled\s*=\s*false',
+        r'local_authentication_disabled\s*=\s*true',
         r'network_acl_bypass_for_azure_services\s*=\s*false',
         r'type\s*=\s*"Continuous"',
         r'condition\s*=\s*var\.cosmos_account_approved\s*&&\s*var\.backup_and_budget_approved']),

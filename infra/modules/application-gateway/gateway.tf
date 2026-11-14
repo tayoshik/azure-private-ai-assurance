@@ -92,19 +92,19 @@ resource "azurerm_application_gateway" "private_web" {
   lifecycle {
     prevent_destroy = true
     precondition {
-      condition = var.private_gateway_feature_approved && var.gateway_ipam_and_routes_approved
+      condition     = var.private_gateway_feature_approved && var.gateway_ipam_and_routes_approved
       error_message = "GW03/G07: Private Gateway feature, delegated subnet, IPAM and approved egress/NSG must be verified."
     }
     precondition {
-      condition = var.backend_dns_tls_approved && var.certificate_import_and_rbac_approved
+      condition     = var.backend_dns_tls_approved && var.certificate_import_and_rbac_approved
       error_message = "GW02/GW04: Key Vault certificate, TLS host/probe/DNS and identity access require prior independent review."
     }
     precondition {
-      condition = trimspace(var.business_fqdn) != "" && var.business_fqdn != var.backend_app_fqdn
+      condition     = trimspace(var.business_fqdn) != "" && var.business_fqdn != var.backend_app_fqdn
       error_message = "Private business listener FQDN and App Service backend FQDN must be independently configured."
     }
     precondition {
-      condition = can(cidrhost("${var.private_frontend_ip}/32", 0))
+      condition     = can(cidrhost("${var.private_frontend_ip}/32", 0))
       error_message = "Private frontend address must be valid IPv4 and match signed IPAM."
     }
   }
