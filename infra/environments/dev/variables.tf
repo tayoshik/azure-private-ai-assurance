@@ -196,7 +196,8 @@ variable "cosmos_write_justification_approved" {
   default = false
 }
 
-# W01-W05: all approvals default false.
+
+# W01-W05: approval defaults deliberately deny planning.
 variable "app_service_plan_name" { type = string }
 variable "app_service_plan_sku" { type = string }
 variable "app_web_name" { type = string }
@@ -229,5 +230,61 @@ variable "web_private_endpoint_approved" {
 }
 variable "web_private_dns_scm_approved" {
   type    = bool
+  default = false
+}
+
+
+# GW01-GW05 / O01: all deployment approvals start FALSE.
+variable "application_gateway_name" { type = string }
+variable "gateway_private_frontend_ip" { type = string }
+variable "gateway_certificate_secret_versionless_id" { type = string }
+variable "gateway_business_fqdn" { type = string }
+variable "application_gateway_capacity" {
+  type = number
+  default = 2
+}
+variable "application_gateway_waf_mode" {
+  type = string
+  default = "Detection"
+}
+variable "application_gateway_waf_drs_version" {
+  type = string
+  default = "2.2"
+}
+variable "monitor_workspace_name" { type = string }
+variable "monitor_retention_days" {
+  type = number
+  default = 30
+}
+variable "monitoring_private_ingestion_approved" {
+  type = bool
+  default = false
+}
+variable "private_gateway_feature_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_ipam_and_routes_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_backend_dns_tls_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_certificate_import_rbac_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_waf_policy_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_waf_prevention_approved" {
+  type = bool
+  default = false
+}
+variable "gateway_logging_route_approved" {
+  type = bool
   default = false
 }

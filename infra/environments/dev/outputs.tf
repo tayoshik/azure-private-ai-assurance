@@ -58,8 +58,16 @@ output "data_role_assignment_ids" {
   }
 }
 
+
 output "app_service_plan_id" { value = module.app_service.service_plan_id }
 output "app_web_app_id" { value = module.app_service.web_app_id }
 output "app_web_default_hostname" { value = module.app_service.default_hostname }
 output "app_web_private_endpoint_id" { value = module.webapp_private_endpoint.private_endpoint_id }
 output "app_web_private_endpoint_ip" { value = module.webapp_private_endpoint.private_ip }
+
+
+output "application_gateway_id" { value = module.application_gateway.id }
+output "application_gateway_private_frontend_ip" { value = module.application_gateway.private_frontend_ip }
+output "application_gateway_waf_policy_id" { value = module.application_gateway.waf_policy_id }
+output "application_gateway_diagnostic_setting_id" { value = module.application_gateway.diagnostic_setting_id }
+output "log_analytics_workspace_id" { value = module.monitoring.workspace_id }

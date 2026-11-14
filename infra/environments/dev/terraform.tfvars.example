@@ -78,17 +78,40 @@ ai_data_rbac_approved              = false
 cosmos_data_write_approved         = false
 cosmos_write_justification_approved = false
 
-# W01-W05: examples only; do not use without approved app source and G07.
-app_service_plan_name            = "plan-REPLACE-dev"
-app_service_plan_sku             = "P1v3"
-app_web_name                     = "web-REPLACE-dev"
-app_python_version               = "3.11"
-app_health_check_path            = "/healthz"
-app_web_private_endpoint_name    = "pe-web-REPLACE-dev"
-app_service_plan_approved        = false
-app_region_capacity_approved     = false
-web_app_configuration_approved   = false
+
+# W01-W05: DOCUMENTATION EXAMPLES ONLY; do not treat as approved values.
+app_service_plan_name       = "plan-REPLACE-dev"
+app_service_plan_sku        = "P1v3"   # Confirm region/HA/capacity before use.
+app_web_name                = "web-REPLACE-dev"
+app_python_version          = "3.11"   # Actual application runtime NOT yet supplied.
+app_health_check_path       = "/healthz"
+app_web_private_endpoint_name = "pe-web-REPLACE-dev"
+# Every gate below remains false until G03/G07 and app contract are signed.
+app_service_plan_approved       = false
+app_region_capacity_approved    = false
+web_app_configuration_approved  = false
 app_outbound_integration_approved = false
-application_contract_approved    = false
-web_private_endpoint_approved    = false
-web_private_dns_scm_approved     = false
+application_contract_approved   = false
+web_private_endpoint_approved   = false
+web_private_dns_scm_approved    = false
+
+
+# GW01-GW05 / O01. EXAMPLES ONLY, not approved IPs or active certificate.
+application_gateway_name = "appgw-REPLACE-dev"
+gateway_private_frontend_ip = "10.240.0.10" # Must match approved IPAM in gateway subnet.
+gateway_certificate_secret_versionless_id = "https://kv-REPLACE-dev.vault.azure.net/secrets/cert-REPLACE"
+gateway_business_fqdn = "ai.internal.example.invalid" # Configure approved corporate DNS.
+application_gateway_capacity = 2
+application_gateway_waf_mode = "Detection"
+application_gateway_waf_drs_version = "2.2"
+monitor_workspace_name = "log-REPLACE-dev"
+monitor_retention_days = 30
+# Do not approve monitoring without AMPLS/private ingestion/query path.
+monitoring_private_ingestion_approved = false
+private_gateway_feature_approved = false
+gateway_ipam_and_routes_approved = false
+gateway_backend_dns_tls_approved = false
+gateway_certificate_import_rbac_approved = false
+gateway_waf_policy_approved = false
+gateway_waf_prevention_approved = false
+gateway_logging_route_approved = false

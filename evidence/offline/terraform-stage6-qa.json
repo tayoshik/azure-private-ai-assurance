@@ -1,0 +1,15 @@
+{
+  "stage": "GW01-GW05",
+  "date": "2026-11-14",
+  "HCL_module_files_added": 9,
+  "terraform_cli_present": false,
+  "terraform_fmt_run": false,
+  "terraform_validate_run": false,
+  "terraform_plan_run": false,
+  "terraform_apply_run": false,
+  "offline_unittest_pass": 110,
+  "offline_unittest_fail": 0,
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "key_gap": "O02 AMPLS private ingestion path not yet implemented or verified"
+}

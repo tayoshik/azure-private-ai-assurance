@@ -1,0 +1,24 @@
+name: Terraform Stage 6 Gateway static review
+on:
+  push:
+    paths:
+      - 'infra/modules/application-gateway/**'
+      - 'infra/modules/monitoring/**'
+      - 'infra/environments/dev/**'
+      - 'scripts/check_terraform_gw01_gw05.py'
+      - 'tests/test_terraform_gw01_gw05.py'
+      - '.github/workflows/terraform-stage6-gateway-static.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stage 6 offline configuration contracts
+        run: python3 scripts/check_terraform_gw01_gw05.py
+      - name: Terraform regression and mutation tests
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+# Does not run terraform init/validate/plan/apply nor contact Azure.
