@@ -43,7 +43,7 @@ class TestW01W05(unittest.TestCase):
    # from false to true, regardless of whitespace around the equals sign.
    if path.endswith("terraform.tfvars.example") and "application_contract_approved" in old:
     import re
-    mutated, count = re.subn(r"(?m)^(\\s*application_contract_approved\\s*=\\s*)false(?=\\s*(?:#.*)?$)", r"\\g<1>true", contents, count=1)
+    mutated, count = re.subn(r"(?m)^(\s*application_contract_approved\s*=\s*)false(?=\s*(?:#.*)?$)", r"\g<1>true", contents, count=1)
     self.assertEqual(count, 1, (path, old))
    else:
     self.assertIn(old,contents,(path,old))
