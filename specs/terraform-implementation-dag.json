@@ -1,0 +1,760 @@
+{
+  "schema": "azure-private-ai-assurance/terraform-implementation-dag/v1",
+  "date": "2026-11-14",
+  "state": "PLANNED",
+  "source_78_steps": 78,
+  "source_test_cases": 1716,
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "node_count": 55,
+  "edge_count": 147,
+  "topological_rounds": 24,
+  "nodes": [
+    {
+      "id": "G01",
+      "title": "Deployment inputs and IPAM template",
+      "depends_on": [],
+      "deliverable": "docs/terraform-inputs-template.md",
+      "kind": "INPUT",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G02",
+      "title": "Trust boundaries and ADR",
+      "depends_on": [
+        "G01"
+      ],
+      "deliverable": "docs/terraform-architecture-decisions.md",
+      "kind": "DESIGN",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G03",
+      "title": "Pin provider schemas and check Gateway/region support",
+      "depends_on": [
+        "G01"
+      ],
+      "deliverable": "docs/provider-compatibility-matrix.md",
+      "kind": "DESIGN",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G04",
+      "title": "Real Terraform and application source inventory",
+      "depends_on": [
+        "G01"
+      ],
+      "deliverable": "docs/source-ownership-inventory.md",
+      "kind": "INPUT",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G05",
+      "title": "Repository layout and secret detection",
+      "depends_on": [
+        "G04"
+      ],
+      "deliverable": "infra/README.md",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G06",
+      "title": "Module interface contracts",
+      "depends_on": [
+        "G02",
+        "G03",
+        "G05"
+      ],
+      "deliverable": "infra/modules/README.md",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "G07",
+      "title": "Approve actual nonproduction environment",
+      "depends_on": [
+        "G01",
+        "G02",
+        "G03"
+      ],
+      "deliverable": "evidence/restricted/approved-environment-scope.json",
+      "kind": "APPROVAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "B01",
+      "title": "Separate bootstrap state stack",
+      "depends_on": [
+        "G06"
+      ],
+      "deliverable": "infra/bootstrap/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "B02",
+      "title": "Secure Blob state storage",
+      "depends_on": [
+        "B01"
+      ],
+      "deliverable": "infra/bootstrap/storage_security.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "B03",
+      "title": "CI runner and OIDC identity",
+      "depends_on": [
+        "G02",
+        "B01"
+      ],
+      "deliverable": "infra/ci/identity-and-runner.md",
+      "kind": "DESIGN",
+      "status": "PLANNED"
+    },
+    {
+      "id": "B04",
+      "title": "Private Blob endpoint and backend DNS",
+      "depends_on": [
+        "B02",
+        "B03"
+      ],
+      "deliverable": "infra/bootstrap/private_state.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "B05",
+      "title": "Verified private state connectivity",
+      "depends_on": [
+        "B04"
+      ],
+      "deliverable": "evidence/restricted/backend-readiness.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N01",
+      "title": "Resource groups and tags",
+      "depends_on": [
+        "G06"
+      ],
+      "deliverable": "infra/modules/foundation/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N02",
+      "title": "VNet and IPAM",
+      "depends_on": [
+        "G01",
+        "N01"
+      ],
+      "deliverable": "infra/modules/network/vnet.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N03",
+      "title": "Dedicated delegated subnets",
+      "depends_on": [
+        "N02",
+        "G03"
+      ],
+      "deliverable": "infra/modules/network/subnets.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N04",
+      "title": "NSG route and egress policy",
+      "depends_on": [
+        "N03",
+        "G02"
+      ],
+      "deliverable": "infra/modules/network/policy.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N05",
+      "title": "Private DNS zones and VNet links",
+      "depends_on": [
+        "N02",
+        "N03"
+      ],
+      "deliverable": "infra/modules/private-dns/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "N06",
+      "title": "Optional DNS Resolver",
+      "depends_on": [
+        "N05",
+        "G01"
+      ],
+      "deliverable": "infra/modules/dns-resolver/main.tf",
+      "kind": "OPTIONAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "O01",
+      "title": "Log Analytics diagnostics baseline",
+      "depends_on": [
+        "N01"
+      ],
+      "deliverable": "infra/modules/monitoring/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "O02",
+      "title": "Optional AMPLS and VNet flow logs",
+      "depends_on": [
+        "O01",
+        "N03",
+        "N05"
+      ],
+      "deliverable": "infra/modules/monitoring/private-observability.tf",
+      "kind": "OPTIONAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "I01",
+      "title": "Managed identity",
+      "depends_on": [
+        "N01"
+      ],
+      "deliverable": "infra/modules/identity/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "I02",
+      "title": "Key Vault security and RBAC",
+      "depends_on": [
+        "N01",
+        "I01"
+      ],
+      "deliverable": "infra/modules/key-vault/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "I03",
+      "title": "Key Vault private endpoint",
+      "depends_on": [
+        "I02",
+        "N03",
+        "N05"
+      ],
+      "deliverable": "infra/modules/private-endpoints/key-vault.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A01",
+      "title": "Azure OpenAI account",
+      "depends_on": [
+        "N01",
+        "G03"
+      ],
+      "deliverable": "infra/modules/azure-openai/account.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A02",
+      "title": "Approved model deployment",
+      "depends_on": [
+        "A01",
+        "G03"
+      ],
+      "deliverable": "infra/modules/azure-openai/deployment.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A03",
+      "title": "Azure AI Search service",
+      "depends_on": [
+        "N01",
+        "G03"
+      ],
+      "deliverable": "infra/modules/ai-search/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A04",
+      "title": "Cosmos DB NoSQL",
+      "depends_on": [
+        "N01",
+        "G03"
+      ],
+      "deliverable": "infra/modules/cosmos-db/main.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A05",
+      "title": "PaaS private endpoints and DNS",
+      "depends_on": [
+        "A01",
+        "A03",
+        "A04",
+        "N03",
+        "N05"
+      ],
+      "deliverable": "infra/modules/private-endpoints/ai-data.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A06",
+      "title": "OpenAI Search Cosmos data-plane roles",
+      "depends_on": [
+        "I01",
+        "A01",
+        "A03",
+        "A04"
+      ],
+      "deliverable": "infra/modules/identity/data-roles.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "A07",
+      "title": "Optional Search shared private link",
+      "depends_on": [
+        "A03",
+        "A05"
+      ],
+      "deliverable": "infra/modules/ai-search/shared-private-link.tf",
+      "kind": "OPTIONAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W01",
+      "title": "Linux App Service plan",
+      "depends_on": [
+        "N01",
+        "G03"
+      ],
+      "deliverable": "infra/modules/app-service/plan.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W02",
+      "title": "Hardened Linux Web App",
+      "depends_on": [
+        "W01",
+        "I01"
+      ],
+      "deliverable": "infra/modules/app-service/webapp.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W03",
+      "title": "Outbound VNet integration",
+      "depends_on": [
+        "W02",
+        "N03",
+        "N04"
+      ],
+      "deliverable": "infra/modules/app-service/outbound-vnet.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W04",
+      "title": "Inbound Web App private endpoint",
+      "depends_on": [
+        "W02",
+        "N03",
+        "N05"
+      ],
+      "deliverable": "infra/modules/private-endpoints/webapp.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W05",
+      "title": "App settings and private AI dependencies",
+      "depends_on": [
+        "W02",
+        "W03",
+        "W04",
+        "A05",
+        "A06",
+        "I03"
+      ],
+      "deliverable": "infra/modules/app-service/app-settings.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "W06",
+      "title": "Optional private ACR",
+      "depends_on": [
+        "W02",
+        "I01",
+        "N03",
+        "N05",
+        "B03"
+      ],
+      "deliverable": "infra/modules/container-registry/main.tf",
+      "kind": "OPTIONAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "GW01",
+      "title": "WAF policy",
+      "depends_on": [
+        "N01",
+        "O01"
+      ],
+      "deliverable": "infra/modules/application-gateway/waf-policy.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "GW02",
+      "title": "TLS certificate via Key Vault",
+      "depends_on": [
+        "I01",
+        "I02",
+        "I03"
+      ],
+      "deliverable": "infra/modules/application-gateway/tls-cert.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "GW03",
+      "title": "Private-only Application Gateway",
+      "depends_on": [
+        "GW01",
+        "GW02",
+        "N03",
+        "N04",
+        "W04",
+        "G03"
+      ],
+      "deliverable": "infra/modules/application-gateway/gateway.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "GW04",
+      "title": "TLS listener backend and health probes",
+      "depends_on": [
+        "GW03",
+        "W02",
+        "W04"
+      ],
+      "deliverable": "infra/modules/application-gateway/routing.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "GW05",
+      "title": "WAF diagnostic settings and alerts",
+      "depends_on": [
+        "GW04",
+        "O01"
+      ],
+      "deliverable": "infra/modules/application-gateway/diagnostics.tf",
+      "kind": "CODE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "Q01",
+      "title": "Offline Terraform syntax and static QA",
+      "depends_on": [
+        "G05",
+        "G06",
+        "B01",
+        "B02",
+        "B04",
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "O01",
+        "I01",
+        "I02",
+        "I03",
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "W01",
+        "W02",
+        "W03",
+        "W04",
+        "W05",
+        "GW01",
+        "GW02",
+        "GW03",
+        "GW04",
+        "GW05"
+      ],
+      "deliverable": "evidence/offline/terraform-static.json",
+      "kind": "OFFLINE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "Q02",
+      "title": "Fail-closed Terraform policy fixtures",
+      "depends_on": [
+        "Q01"
+      ],
+      "deliverable": "policy/terraform-plan/",
+      "kind": "OFFLINE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "Q03",
+      "title": "Authorized nonprod saved plan",
+      "depends_on": [
+        "Q02",
+        "B05",
+        "G07"
+      ],
+      "deliverable": "evidence/restricted/nonprod-plan-manifest.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "Q04",
+      "title": "Two independent plan approvals",
+      "depends_on": [
+        "Q03"
+      ],
+      "deliverable": "evidence/restricted/two-reviewer-approval.json",
+      "kind": "APPROVAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "Q05",
+      "title": "Separate authorized nonprod apply",
+      "depends_on": [
+        "Q04"
+      ],
+      "deliverable": "evidence/restricted/nonprod-apply-manifest.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V01",
+      "title": "Live resource inventory",
+      "depends_on": [
+        "Q05"
+      ],
+      "deliverable": "evidence/restricted/deployed-inventory.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V02",
+      "title": "Private DNS TLS and backend health",
+      "depends_on": [
+        "V01",
+        "GW04"
+      ],
+      "deliverable": "evidence/restricted/private-connectivity.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V03",
+      "title": "Managed identity and AI smoke test",
+      "depends_on": [
+        "V01",
+        "W05"
+      ],
+      "deliverable": "evidence/restricted/ai-smoke.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V04",
+      "title": "Real Playwright E2E tests",
+      "depends_on": [
+        "V02",
+        "V03"
+      ],
+      "deliverable": "evidence/restricted/playwright-junit.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V05",
+      "title": "Authorized WAF and external exposure tests",
+      "depends_on": [
+        "V02",
+        "GW05"
+      ],
+      "deliverable": "evidence/restricted/waf-and-exposure.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V06",
+      "title": "Log State Drift and DR evidence",
+      "depends_on": [
+        "V01",
+        "O01",
+        "B05"
+      ],
+      "deliverable": "evidence/restricted/operability.json",
+      "kind": "LIVE_GATE",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V07",
+      "title": "Independent evidence mapping for 1716 IDs",
+      "depends_on": [
+        "V04",
+        "V05",
+        "V06"
+      ],
+      "deliverable": "evidence/restricted/1716-acceptance-overlay.json",
+      "kind": "REVIEW",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V08",
+      "title": "Independent security and operations acceptance",
+      "depends_on": [
+        "V07"
+      ],
+      "deliverable": "docs/independent-acceptance-record.md",
+      "kind": "APPROVAL",
+      "status": "PLANNED"
+    },
+    {
+      "id": "V09",
+      "title": "Formal Go or No Go decision",
+      "depends_on": [
+        "V08"
+      ],
+      "deliverable": "docs/go-no-go-decision.md",
+      "kind": "APPROVAL",
+      "status": "PLANNED"
+    }
+  ],
+  "ready_layers": [
+    [
+      "G01"
+    ],
+    [
+      "G02",
+      "G03",
+      "G04"
+    ],
+    [
+      "G05",
+      "G07"
+    ],
+    [
+      "G06"
+    ],
+    [
+      "B01",
+      "N01"
+    ],
+    [
+      "B02",
+      "B03",
+      "N02",
+      "O01",
+      "I01",
+      "A01",
+      "A03",
+      "A04",
+      "W01"
+    ],
+    [
+      "B04",
+      "N03",
+      "I02",
+      "A02",
+      "A06",
+      "W02",
+      "GW01"
+    ],
+    [
+      "B05",
+      "N04",
+      "N05"
+    ],
+    [
+      "N06",
+      "O02",
+      "I03",
+      "A05",
+      "W03",
+      "W04",
+      "W06"
+    ],
+    [
+      "A07",
+      "W05",
+      "GW02"
+    ],
+    [
+      "GW03"
+    ],
+    [
+      "GW04"
+    ],
+    [
+      "GW05"
+    ],
+    [
+      "Q01"
+    ],
+    [
+      "Q02"
+    ],
+    [
+      "Q03"
+    ],
+    [
+      "Q04"
+    ],
+    [
+      "Q05"
+    ],
+    [
+      "V01"
+    ],
+    [
+      "V02",
+      "V03",
+      "V06"
+    ],
+    [
+      "V04",
+      "V05"
+    ],
+    [
+      "V07"
+    ],
+    [
+      "V08"
+    ],
+    [
+      "V09"
+    ]
+  ]
+}
