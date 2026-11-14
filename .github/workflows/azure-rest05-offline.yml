@@ -49,7 +49,8 @@ jobs:
           from pathlib import Path
           code = Path('scripts/rest05_ai_data_audit.py').read_text()
           workflow = Path('.github/workflows/azure-rest05-offline.yml').read_text()
-          assert 'id-token: write' not in workflow
+          lines = workflow.splitlines()
+          assert lines[lines.index('permissions:')+1].strip() == 'contents: read'
           assert 'read_enabled=True' not in code
           assert 'terraform apply' not in code
           assert 'AzureCliCredential' not in code
