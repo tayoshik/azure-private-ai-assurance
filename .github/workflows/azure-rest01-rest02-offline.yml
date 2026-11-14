@@ -1,0 +1,42 @@
+name: Azure REST01-REST02 offline assurance
+on:
+  push:
+    paths:
+      - 'scripts/rest01_catalogue.py'
+      - 'scripts/azure_rest_reader.py'
+      - 'tests/test_rest01_catalogue.py'
+      - 'tests/test_azure_rest_reader.py'
+      - 'specs/english_tests_001_440.json'
+      - 'specs/phase3_264_en.json'
+      - 'specs/phase4_286_en.json'
+      - 'specs/phase5_286_en.json'
+      - 'specs/phase6_220_en.json'
+      - 'specs/phase7_220_en.json'
+      - '.github/workflows/azure-rest01-rest02-offline.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-rest01-rest02:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 1716-case execution routing (no live Azure calls)
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/rest01_catalogue.py --summary > /tmp/rest-routing-summary.json
+          python3 - <<'PY'
+          import json
+          result=json.load(open('/tmp/rest-routing-summary.json'))
+          assert result['case_count']==1716
+          assert result['azure_live_passes']==0
+          assert result['status']=='ROUTING_CANDIDATES_ONLY'
+          print('PASS_OFFLINE_ROUTING_ONLY', result['route_counts'])
+          PY
+      - name: Read-only REST client and routing regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*rest*.py' -v
+      - name: Confirm Terraform regressions are unchanged
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+# NEVER add Azure credentials to this offline job. No live acceptance occurs.
