@@ -5,8 +5,8 @@ on:
       - 'infra/modules/application-gateway/**'
       - 'infra/modules/monitoring/**'
       - 'infra/environments/dev/**'
-      - 'scripts/check_terraform_gw01_gw05.py'
-      - 'tests/test_terraform_gw01_gw05.py'
+      - 'scripts/check_terraform*.py'
+      - 'tests/test_terraform*.py'
       - '.github/workflows/terraform-stage6-gateway-static.yml'
   pull_request:
   workflow_dispatch:
