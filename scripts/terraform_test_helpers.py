@@ -10,7 +10,7 @@ def replace_mutation(source: str, before: str, after: str) -> str:
     tokens = before.split()
     if not tokens:
         raise AssertionError("Empty mutation selector")
-    pattern = re.compile(r"\s+".join(map(re.escape, tokens)), re.MULTILINE)
+    pattern = re.compile(r"(?<![A-Za-z0-9_])" + r"\s+".join(map(re.escape, tokens)) + r"(?![A-Za-z0-9_])", re.MULTILINE)
     matches = list(pattern.finditer(source))
     if len(matches) != 1:
         raise AssertionError(f"Mutation selector expected once, found {len(matches)}: {before!r}")

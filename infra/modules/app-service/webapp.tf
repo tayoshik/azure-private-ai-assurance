@@ -20,15 +20,15 @@ resource "azurerm_linux_web_app" "app" {
   }
 
   site_config {
-    always_on                           = true
-    http2_enabled                       = true
-    ftps_state                          = "Disabled"
-    minimum_tls_version                 = "1.2"
-    scm_minimum_tls_version             = "1.2"
-    vnet_route_all_enabled              = true
-    health_check_path                   = var.health_check_path
-    ip_restriction_default_action       = "Deny"
-    scm_ip_restriction_default_action   = "Deny"
+    always_on                         = true
+    http2_enabled                     = true
+    ftps_state                        = "Disabled"
+    minimum_tls_version               = "1.2"
+    scm_minimum_tls_version           = "1.2"
+    vnet_route_all_enabled            = true
+    health_check_path                 = var.health_check_path
+    ip_restriction_default_action     = "Deny"
+    scm_ip_restriction_default_action = "Deny"
 
     application_stack {
       python_version = var.python_version
