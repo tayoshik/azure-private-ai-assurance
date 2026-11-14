@@ -77,3 +77,18 @@ ai_private_endpoints_approved      = false
 ai_data_rbac_approved              = false
 cosmos_data_write_approved         = false
 cosmos_write_justification_approved = false
+
+# W01-W05: examples only; do not use without approved app source and G07.
+app_service_plan_name            = "plan-REPLACE-dev"
+app_service_plan_sku             = "P1v3"
+app_web_name                     = "web-REPLACE-dev"
+app_python_version               = "3.11"
+app_health_check_path            = "/healthz"
+app_web_private_endpoint_name    = "pe-web-REPLACE-dev"
+app_service_plan_approved        = false
+app_region_capacity_approved     = false
+web_app_configuration_approved   = false
+app_outbound_integration_approved = false
+application_contract_approved    = false
+web_private_endpoint_approved    = false
+web_private_dns_scm_approved     = false

@@ -1,0 +1,15 @@
+{
+  "stage": "W01-W05",
+  "date": "2026-11-14",
+  "source_total_hcl_files": 52,
+  "previous_hcl_files": 43,
+  "new_hcl_files": 9,
+  "local_offline_tests_passed": 91,
+  "new_mutation_tests": 22,
+  "terraform_cli_validate_executed": false,
+  "provider_schema_validation": false,
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "evidence_kind": "LOCAL_SOURCE_TEXT_CHECKS_ONLY",
+  "github_actions_status": "NOT_YET_VERIFIED"
+}

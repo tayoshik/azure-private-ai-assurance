@@ -167,3 +167,48 @@ module "ai_data_rbac" {
   cosmos_write_approved               = var.cosmos_data_write_approved
   cosmos_write_justification_approved = var.cosmos_write_justification_approved
 }
+
+# W01-W03/W05: single App Service module with managed identity, no keys.
+module "app_service" {
+  source                         = "../../modules/app-service"
+  location                       = module.foundation.location
+  resource_group_name            = module.foundation.name
+  tags                           = local.tags
+  service_plan_name              = var.app_service_plan_name
+  service_plan_sku               = var.app_service_plan_sku
+  web_app_name                   = var.app_web_name
+  python_version                 = var.app_python_version
+  health_check_path              = var.app_health_check_path
+  app_identity_id                = module.identity.app_identity_id
+  app_identity_client_id         = module.identity.app_client_id
+  app_outbound_subnet_id         = module.network.app_outbound_subnet_id
+  web_inbound_pe_subnet_id       = module.network.web_private_endpoint_subnet_id
+  openai_endpoint                = module.azure_openai.endpoint
+  openai_deployment_name         = module.azure_openai.deployment_name
+  search_hostname                = module.ai_search.hostname
+  cosmos_endpoint                = module.cosmos_db.account_endpoint
+  cosmos_database_name           = module.cosmos_db.database_name
+  cosmos_container_name          = module.cosmos_db.container_name
+  app_service_plan_approved      = var.app_service_plan_approved
+  region_and_capacity_approved   = var.app_region_capacity_approved
+  web_app_configuration_approved = var.web_app_configuration_approved
+  outbound_integration_approved  = var.app_outbound_integration_approved
+  application_contract_approved  = var.application_contract_approved
+  depends_on                     = [module.network, module.ai_data_rbac]
+}
+
+# W04: separate inbound private endpoint and DNS.
+module "webapp_private_endpoint" {
+  source                        = "../../modules/webapp-private-endpoint"
+  private_endpoint_name         = var.app_web_private_endpoint_name
+  location                      = module.foundation.location
+  resource_group_name           = module.foundation.name
+  web_inbound_pe_subnet_id      = module.network.web_private_endpoint_subnet_id
+  app_outbound_subnet_id        = module.network.app_outbound_subnet_id
+  web_app_id                    = module.app_service.web_app_id
+  webapp_private_dns_zone_id    = module.private_dns.zone_ids["privatelink.azurewebsites.net"]
+  web_private_endpoint_approved = var.web_private_endpoint_approved
+  private_dns_and_scm_approved  = var.web_private_dns_scm_approved
+  tags                          = local.tags
+  depends_on                    = [module.network]
+}

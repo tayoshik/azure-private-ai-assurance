@@ -151,14 +151,83 @@ variable "cosmos_backup_tier" { type = string }
 variable "openai_private_endpoint_name" { type = string }
 variable "search_private_endpoint_name" { type = string }
 variable "cosmos_private_endpoint_name" { type = string }
-variable "openai_account_approved" { type = bool, default = false }
-variable "openai_region_quota_approved" { type = bool, default = false }
-variable "openai_model_deployment_approved" { type = bool, default = false }
-variable "search_service_approved" { type = bool, default = false }
-variable "search_region_sku_approved" { type = bool, default = false }
-variable "cosmos_account_approved" { type = bool, default = false }
-variable "cosmos_backup_budget_approved" { type = bool, default = false }
-variable "ai_private_endpoints_approved" { type = bool, default = false }
-variable "ai_data_rbac_approved" { type = bool, default = false }
-variable "cosmos_data_write_approved" { type = bool, default = false }
-variable "cosmos_write_justification_approved" { type = bool, default = false }
+variable "openai_account_approved" {
+  type    = bool
+  default = false
+}
+variable "openai_region_quota_approved" {
+  type    = bool
+  default = false
+}
+variable "openai_model_deployment_approved" {
+  type    = bool
+  default = false
+}
+variable "search_service_approved" {
+  type    = bool
+  default = false
+}
+variable "search_region_sku_approved" {
+  type    = bool
+  default = false
+}
+variable "cosmos_account_approved" {
+  type    = bool
+  default = false
+}
+variable "cosmos_backup_budget_approved" {
+  type    = bool
+  default = false
+}
+variable "ai_private_endpoints_approved" {
+  type    = bool
+  default = false
+}
+variable "ai_data_rbac_approved" {
+  type    = bool
+  default = false
+}
+variable "cosmos_data_write_approved" {
+  type    = bool
+  default = false
+}
+variable "cosmos_write_justification_approved" {
+  type    = bool
+  default = false
+}
+
+# W01-W05: all approvals default false.
+variable "app_service_plan_name" { type = string }
+variable "app_service_plan_sku" { type = string }
+variable "app_web_name" { type = string }
+variable "app_python_version" { type = string }
+variable "app_health_check_path" { type = string }
+variable "app_web_private_endpoint_name" { type = string }
+variable "app_service_plan_approved" {
+  type    = bool
+  default = false
+}
+variable "app_region_capacity_approved" {
+  type    = bool
+  default = false
+}
+variable "web_app_configuration_approved" {
+  type    = bool
+  default = false
+}
+variable "app_outbound_integration_approved" {
+  type    = bool
+  default = false
+}
+variable "application_contract_approved" {
+  type    = bool
+  default = false
+}
+variable "web_private_endpoint_approved" {
+  type    = bool
+  default = false
+}
+variable "web_private_dns_scm_approved" {
+  type    = bool
+  default = false
+}

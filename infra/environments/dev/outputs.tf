@@ -57,3 +57,9 @@ output "data_role_assignment_ids" {
     cosmos = module.ai_data_rbac.cosmos_sql_assignment_id
   }
 }
+
+output "app_service_plan_id" { value = module.app_service.service_plan_id }
+output "app_web_app_id" { value = module.app_service.web_app_id }
+output "app_web_default_hostname" { value = module.app_service.default_hostname }
+output "app_web_private_endpoint_id" { value = module.webapp_private_endpoint.private_endpoint_id }
+output "app_web_private_endpoint_ip" { value = module.webapp_private_endpoint.private_ip }
