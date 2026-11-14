@@ -73,3 +73,13 @@ Follow the [10-turn roadmap](docs/ten-turn-roadmap.md). Translation of the 1,716
 Repository visibility: **public**, as explicitly selected by the owner on 2026-11-14. Publication requires a confirmed GitHub destination, write permission and review of the data classification. **No license is granted by default:** a license and its scope must be selected by the rights holder before open-source redistribution.
 
 For permitted vulnerability disclosures, see [SECURITY.md](SECURITY.md). For publication instructions, see [GitHub publishing](docs/github-publishing.md).
+## English detailed test procedures
+
+- [78-step construction runbook](docs/78-step-construction-runbook.md)
+- [Detailed security architecture](docs/architecture-detailed.md)
+- [Threat model](docs/threat-model.md)
+- [Reviewed command recipes](docs/command-recipes.md)
+- [Phase 1: Steps 01–10, 220 tests](docs/phase1-220-english-tests.md)
+- [Phase 2: Steps 11–20, 220 tests](docs/phase2-220-english-tests.md)
+
+The 440 cases are documentation and synthetic-check specifications, not evidence that 440 live Azure tests passed. The project remains **NO-GO** for production release.
