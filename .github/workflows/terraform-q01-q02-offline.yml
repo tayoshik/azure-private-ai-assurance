@@ -1,0 +1,29 @@
+name: Terraform Q01 Q02 offline assurance
+on:
+  push:
+    paths:
+      - 'infra/**'
+      - 'scripts/check_terraform*.py'
+      - 'scripts/terraform_q01_integrated.py'
+      - 'scripts/terraform_q02_plan_guard.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-q01-q02-offline.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Existing Stage 1-6 and integrated Q01 contracts
+        run: python3 scripts/terraform_q01_integrated.py
+      - name: Q02 synthetic good bad missing detector
+        run: |
+          python3 scripts/terraform_q02_plan_guard.py --selftest --scope dev
+          python3 scripts/terraform_q02_plan_guard.py --selftest --scope bootstrap
+      - name: Terraform offline regression tests
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+# No Azure credentials, no Terraform CLI/provider download, no plan, no apply.

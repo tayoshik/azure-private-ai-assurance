@@ -1,0 +1,16 @@
+{
+  "source": "Stage 6 approved archive snapshot (not live Azure)",
+  "q01": "PASS_OFFLINE_CONTRACT_ONLY",
+  "q02": "PASS_OFFLINE_FIXTURES_ONLY",
+  "offline_regression_tests": 137,
+  "offline_regression_passes": 137,
+  "terraform_cli": "NOT_EXECUTED",
+  "terraform_validate": "NOT_EXECUTED",
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "known_missing": [
+    "approved .terraform.lock.hcl",
+    "real Terraform CLI/provider validation",
+    "signed nonprod G07 and B05 evidence"
+  ]
+}
