@@ -15,12 +15,12 @@ The original case IDs, the corrected Phase 1 predicates, and Phase 2 source comm
 ## Offline verification commands
 
 ```bash
-python3 scripts/phase1_policy_check.py --rules specs/phase1_policies_110.json --selftest --all
-python3 scripts/phase2_policy_check.py --selftest ALL --spec specs/phase2_220.json
 python3 scripts/verify_english_tests.py
+# The source-specific Phase 1/2 detector scripts are retained in the
+# downloadable Turn 03 validation bundle pending separate source review.
 ```
 
-**Important:** These three commands check *local synthetic data and catalogue consistency*. They cannot establish Azure resource configuration, security enforcement or approval.
+**Important:** This command checks *local catalogue consistency*. They cannot establish Azure resource configuration, security enforcement or approval.
 
 ## Step 01: Private boundary definition
 
