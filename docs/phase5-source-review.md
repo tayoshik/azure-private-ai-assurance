@@ -1,0 +1,130 @@
+# Phase 5 — Source Review and Corrections
+
+**Original Phase 5 specification SHA-256:** `e1a24b145ec7bdd66f3cbe123644e9f060354c7d1aa8d93c193214122d346de3`.
+
+## Interpretation and safety changes
+
+- 286 test IDs were retained exactly; 143 are actual configuration/evidence reviews, 143 are synthetic anomaly-detection unit tests.
+- Synthetic `Fail` on deliberately bad fixtures is a detector success, not a real network-denial success.
+- Source HCL/approved deployment and current Azure inventory were not provided. Live acceptance remains `NOT_READY` for every case.
+- Commands that only test evidence file existence / checksum are insufficient for a security PASS; require independent content review and attestation.
+- Quoting of embedded `jq` strings was fixed where mechanically safe; no Azure command was executed.
+- Terraform read-only plan may still obtain a state lock and initiate cloud refresh, so only approved CI may run it.
+- Conditional ACR cases (Step 50) require explicit approved `not applicable` decision rather than a synthetic pass.
+- WAF harmless SQLi/XSS simulation and certificate rotation/drift checks require approved nonproduction test scope.
+- The older offline detector uses simple typed rules that may be weaker than the full business criterion. The two are intentionally NOT equated.
+
+## Command review actions
+
+110 records of shell-quote corrections or insufficient-evidence warnings:
+
+- `AZ-T46-11` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T46-11` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T46-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T46-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T46-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T46-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T46-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T46-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T48-11` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-13` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-15` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T48-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T48-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T48-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T48-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T49-09` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T49-09` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T49-15` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T49-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T49-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T49-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T49-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T50-01` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-11` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-13` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-13` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T50-15` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T50-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T50-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T50-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T50-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-07` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T51-07` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-13` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T51-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T51-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T51-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T52-09` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T52-09` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-01` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-01` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-09` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-09` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-13` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-13` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T53-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T53-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T54-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T54-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T54-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T54-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T55-11` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T55-11` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T55-15` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T55-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T55-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T55-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-01` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-01` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-03` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-03` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-05` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-05` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-07` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-07` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-09` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-09` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T56-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T56-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T57-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T57-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T57-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T57-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T57-21` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T57-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-01` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-01` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-03` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-03` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-05` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-07` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-07` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-09` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-09` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-11` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-11` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-13` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-13` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-15` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-15` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-17` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-17` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-19` | shell-quote-fix | jq double-quote shell escaping fixed
+- `AZ-T58-19` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.
+- `AZ-T58-21` | evidence-strength | File existence or a valid hash alone does not prove the control; inspect exact properties and signed acceptance criteria.

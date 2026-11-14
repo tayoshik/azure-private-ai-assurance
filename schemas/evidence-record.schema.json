@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/azure-private-ai-assurance/evidence-record-v1",
+  "title": "Azure Private AI Assurance evidence record (signed JSON bytes)",
+  "description": "An evidence envelope is not a live PASS or a release approval. Separate Ed25519 signature and organization-pinned public key are required.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "test_id", "subscription_id", "resource_id", "runner_id", "collector_id", "authorization_ticket", "run_id", "collected_at", "observation_sha256", "baseline_sha256", "synthetic", "source_environment", "verification_level"],
+  "properties": {
+    "schema_version": {"const": "evidence-record-v1"},
+    "test_id": {"type": "string", "pattern": "^AZ-T[0-7][0-9]-[0-2][0-9]$"},
+    "subscription_id": {"type": "string", "minLength": 1},
+    "resource_id": {"type": "string", "minLength": 1},
+    "runner_id": {"type": "string", "minLength": 1},
+    "collector_id": {"type": "string", "minLength": 1},
+    "authorization_ticket": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "collected_at": {"type": "string", "format": "date-time"},
+    "observation_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "baseline_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "synthetic": {"const": false},
+    "source_environment": {"const": "APPROVED_NONPROD_CI"},
+    "verification_level": {"const": "OBSERVATION_ONLY"}
+  }
+}
