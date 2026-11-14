@@ -25,7 +25,7 @@
     },
     {
       "path": ".github/workflows/azure-rest05-offline.yml",
-      "sha256": "39ce0c5bbba92c66ef7f0b9f74b0b3096d42bec3f5a7a875eb061e299b561396"
+      "sha256": "34d776469a5e5db59a0c62043bb18aacac8df041e2f23eee56148b557f6ffde3"
     },
     {
       "path": "evidence/offline/rest05-summary.json",
