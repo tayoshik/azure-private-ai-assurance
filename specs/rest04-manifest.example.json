@@ -1,0 +1,21 @@
+{
+  "schema": "azure-private-ai-assurance/rest04-manifest/v1",
+  "targets": [
+    {
+      "private_endpoint_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web",
+      "nic_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/networkInterfaces/pe-web-nic",
+      "zone_group_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web/privateDnsZoneGroups/default",
+      "dns_zone_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net",
+      "a_record_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/A/web-synthetic",
+      "vnet_link_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/virtualNetworkLinks/test-link",
+      "service_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Web/sites/web-synthetic",
+      "subnet_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/snet-pe",
+      "vnet_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test",
+      "group_id": "sites",
+      "expected_private_ips": [
+        "10.32.5.9"
+      ],
+      "expected_record_fqdn": "web-synthetic.privatelink.azurewebsites.net"
+    }
+  ]
+}

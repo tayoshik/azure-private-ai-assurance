@@ -1,0 +1,32 @@
+name: Azure REST04 Private Endpoint and DNS offline
+on:
+  push:
+    paths:
+      - 'scripts/azure_rest_reader.py'
+      - 'scripts/rest03_resource_audit.py'
+      - 'scripts/rest04_private_dns_audit.py'
+      - 'tests/test_*rest*.py'
+      - 'specs/rest04-*.json'
+      - '.github/workflows/azure-rest04-offline.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rest04-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: REST04 synthetic fixture and manifest gate (NO AZURE)
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/rest04_private_dns_audit.py --selftest
+          python3 scripts/rest04_private_dns_audit.py --fixture specs/rest04-synthetic-fixture.json
+      - name: REST01-04 offline regressions
+        run: python3 -m unittest discover -s tests -p 'test_*rest*.py' -v
+      - name: Retain existing Terraform test regressions
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+      - name: Verify published test catalogue without Azure access
+        run: python3 scripts/verify_publication.py
+# Explicitly no id-token permission, Azure secrets, plan, apply, or real DNS probes.

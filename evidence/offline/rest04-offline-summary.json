@@ -1,0 +1,31 @@
+{
+  "as_of": "2026-11-14",
+  "status": "PASS_OFFLINE_SYNTHETIC_ONLY",
+  "rest_regression_total": 110,
+  "rest04_new_tests": 45,
+  "azure_live_passes": 0,
+  "azure_live_acceptance": "NOT_READY",
+  "private_ci_runner_available": false,
+  "release_decision": "NO_GO",
+  "source_sha256": {
+    ".github/workflows/azure-rest04-offline.yml": "cac4886975b46dd56cb6d3cef40fceecd0c3fecd65099662dffeb9c512ecb1d3",
+    "README.md": "e0bfd9f390ffb55d97ad296a1a30b22d3e7537f5e6ca5a91f06672b1162abe1d",
+    "docs/rest04-private-dns-operator.md": "dc9f902f02cfe8bb76121fcda1870e0ed7f9b359e7e7dbe5543a3e9f42737154",
+    "scripts/azure_rest_reader.py": "a12b7995fba2261f85aff8e855abe9447e06f07dab7cf3095c863cb06d92a49e",
+    "scripts/rest01_catalogue.py": "567768589124d6e61dec75cc6264dcb1263d3742473347b146e829164f91ca7e",
+    "scripts/rest03_resource_audit.py": "170f36acb1278035e23703761ed89a01fee7d8ed8395ae56479b728335629c62",
+    "scripts/rest04_private_dns_audit.py": "4b0dc5b1140e1e3f98edbbb05dbfce6357b1d9fa81fe5be5308dd6b04d76083f",
+    "specs/english_tests_001_440.json": "19130e3a87f04f50167983ffc301fb08e5ecd4ff5bc0f8c34adc359222290789",
+    "specs/phase3_264_en.json": "742d5272700101b3e0b3b8c8eaaefc09bd19465e82c94720204191ec9cdc3b65",
+    "specs/phase4_286_en.json": "4f387dfe8ff9d8bd715fd9949dd116468758d87e67997f5b847cf074dc633e9b",
+    "specs/phase5_286_en.json": "0181f3dccac1977b1effe82550c1873b32cd5d73eba2fcae1a15e4726824d115",
+    "specs/phase6_220_en.json": "ca8a07ec2a38e9606be18068acefb1cd6b457fcb61eacbc2270ba0417dad6d79",
+    "specs/phase7_220_en.json": "30402bfb0e2f5303296b8eded43bb029240ef3830c4f8e1a1194569d33cc74c8",
+    "specs/rest04-manifest.example.json": "ba6be5dbd598bc93ca49c51ae731377f2b1603bd0d2bb99e1a68fd62a6826239",
+    "specs/rest04-synthetic-fixture.json": "98a6c2b25e331413819bfba179b395580232117c4827168a074975f518aa810b",
+    "tests/test_azure_rest_reader.py": "e33d8eb479d928cf646d5e84f3a164a6a32364e501ced0f9ae7d23f0c117e035",
+    "tests/test_rest01_catalogue.py": "c79df68d932542f40328ef175c882588b555e14acfdc45142c507eec94244d12",
+    "tests/test_rest03_resource_audit.py": "ebbb26587d12b259cf8cdb10e5dc15397a9242bed92e323694c758566e0cec7f",
+    "tests/test_rest04_private_dns_audit.py": "83bbabfefeafd0c3ee2894adbcddfce9e6aff02a44bbd852b696128b11b3ccc4"
+  }
+}

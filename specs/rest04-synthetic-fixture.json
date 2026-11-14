@@ -1,0 +1,148 @@
+{
+  "schema": "azure-private-ai-assurance/rest04-manifest/v1",
+  "targets": [
+    {
+      "private_endpoint_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web",
+      "nic_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/networkInterfaces/pe-web-nic",
+      "zone_group_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web/privateDnsZoneGroups/default",
+      "dns_zone_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net",
+      "a_record_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/A/web-synthetic",
+      "vnet_link_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/virtualNetworkLinks/test-link",
+      "service_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Web/sites/web-synthetic",
+      "subnet_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/snet-pe",
+      "vnet_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test",
+      "group_id": "sites",
+      "expected_private_ips": [
+        "10.32.5.9"
+      ],
+      "expected_record_fqdn": "web-synthetic.privatelink.azurewebsites.net"
+    }
+  ],
+  "observations": [
+    {
+      "pe": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web",
+          "type": "Microsoft.Network/privateEndpoints",
+          "properties": {
+            "subnet": {
+              "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/snet-pe"
+            },
+            "networkInterfaces": [
+              {
+                "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/networkInterfaces/pe-web-nic"
+              }
+            ],
+            "provisioningState": "Succeeded",
+            "privateLinkServiceConnections": [
+              {
+                "properties": {
+                  "privateLinkServiceId": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Web/sites/web-synthetic",
+                  "groupIds": [
+                    "sites"
+                  ],
+                  "privateLinkServiceConnectionState": {
+                    "status": "Approved"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "evidence_sha256": "210c761efa3009c478587893b17010cfb26fdbfd788551b6bbe0e22404f0c35c"
+      },
+      "nic": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/networkInterfaces/pe-web-nic",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/networkInterfaces/pe-web-nic",
+          "type": "Microsoft.Network/networkInterfaces",
+          "properties": {
+            "privateEndpoint": {
+              "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web"
+            },
+            "ipConfigurations": [
+              {
+                "properties": {
+                  "privateIPAddress": "10.32.5.9",
+                  "subnet": {
+                    "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test/subnets/snet-pe"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "evidence_sha256": "a0eb971cf72f1189900f584576c155d06b11d29bd07ffe910e8585fa513e7a17"
+      },
+      "zone_group": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web/privateDnsZoneGroups/default",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateEndpoints/pe-web/privateDnsZoneGroups/default",
+          "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+          "properties": {
+            "provisioningState": "Succeeded",
+            "privateDnsZoneConfigs": [
+              {
+                "properties": {
+                  "privateDnsZoneId": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net"
+                }
+              }
+            ]
+          }
+        },
+        "evidence_sha256": "861de7b70a066b31243eeaf9e87bbdf8d24a10c4e62e7a490377b9175ca3e829"
+      },
+      "dns_zone": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net",
+          "type": "Microsoft.Network/privateDnsZones",
+          "properties": {
+            "numberOfRecordSets": 1
+          }
+        },
+        "evidence_sha256": "4e8111adfbfbc697ff81a35a22151aba30c07f4b47d133d6efa89a298ae7d20f"
+      },
+      "a_record": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/A/web-synthetic",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/A/web-synthetic",
+          "type": "Microsoft.Network/privateDnsZones/A",
+          "properties": {
+            "aRecords": [
+              {
+                "ipv4Address": "10.32.5.9"
+              }
+            ],
+            "ttl": 3600
+          }
+        },
+        "evidence_sha256": "9ad6028d020f37a4efe06d87a2db116d9438876fa3d59774159254f15373323d"
+      },
+      "vnet_link": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/virtualNetworkLinks/test-link",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/privateDnsZones/privatelink.azurewebsites.net/virtualNetworkLinks/test-link",
+          "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+          "properties": {
+            "virtualNetwork": {
+              "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Network/virtualNetworks/vnet-test"
+            },
+            "registrationEnabled": false,
+            "provisioningState": "Succeeded",
+            "virtualNetworkLinkState": "Completed"
+          }
+        },
+        "evidence_sha256": "3efedf37be63041568d6eef394fe91757814964422c1d3c905a5bd6d49e42c3e"
+      }
+    }
+  ],
+  "synthetic": true
+}
