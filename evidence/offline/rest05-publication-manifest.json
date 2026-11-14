@@ -1,0 +1,39 @@
+{
+  "schema": "azure-private-ai-assurance/rest05-publication/v1",
+  "date": "2026-11-15",
+  "source": "offline constructed sources (no Azure access)",
+  "files": [
+    {
+      "path": "scripts/rest05_ai_data_audit.py",
+      "sha256": "ef1697fef3c69b4757a4b7ffcfda0b4e4f9aac5057d4057d003494011ceb2406"
+    },
+    {
+      "path": "tests/test_rest05_ai_data_audit.py",
+      "sha256": "282b1031241268128fc3c1bc79ae06166bfb0ea97819635c81bd4be34e860f60"
+    },
+    {
+      "path": "specs/rest05-manifest.example.json",
+      "sha256": "4b950e2364e47e505e792424be87e6564610d3c6033446c4107d87b0e9a23f75"
+    },
+    {
+      "path": "specs/rest05-synthetic-fixture.json",
+      "sha256": "0231a13df75cb43bf7de81bad58c418896cd4b5d18a0bb314e27983d2dfa526f"
+    },
+    {
+      "path": "docs/rest05-ai-data-operator.md",
+      "sha256": "5c601f2743a648ef43f2c3615783a8faf0bc30b642f098c7cc92e48ae5facde4"
+    },
+    {
+      "path": ".github/workflows/azure-rest05-offline.yml",
+      "sha256": "39ce0c5bbba92c66ef7f0b9f74b0b3096d42bec3f5a7a875eb061e299b561396"
+    },
+    {
+      "path": "evidence/offline/rest05-summary.json",
+      "sha256": "33164e9db5fe136dca54846d3f24eea6a905ca83a3aec8ce9cc74aed18809a4b"
+    }
+  ],
+  "rest_tests_passed": 170,
+  "terraform_regressions_passed": 145,
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO"
+}

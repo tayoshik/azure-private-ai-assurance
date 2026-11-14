@@ -1,0 +1,59 @@
+name: Azure REST05 AI data offline assurance
+on:
+  push:
+    paths:
+      - 'scripts/rest05_ai_data_audit.py'
+      - 'scripts/azure_rest_reader.py'
+      - 'scripts/rest03_resource_audit.py'
+      - 'tests/test_rest05_ai_data_audit.py'
+      - 'tests/test_azure_rest_reader.py'
+      - 'specs/rest05-*.json'
+      - 'docs/rest05-ai-data-operator.md'
+      - '.github/workflows/azure-rest05-offline.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  synthetic-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: REST05 synthetic policy fixtures
+        run: |
+          set -Eeuo pipefail
+          mkdir -p /tmp/rest05
+          python3 scripts/rest05_ai_data_audit.py --selftest > /tmp/rest05/selftest.json
+          python3 scripts/rest05_ai_data_audit.py --fixture specs/rest05-synthetic-fixture.json > /tmp/rest05/fixture.json
+          python3 - <<'PY'
+          import json
+          for name in ('selftest','fixture'):
+              with open(f'/tmp/rest05/{name}.json') as f: r=json.load(f)
+              assert r['status'].startswith('PASS_OFFLINE_'),r
+              assert r['azure_live_passes']==0,r
+              assert r['release_decision']=='NO_GO',r
+          print('REST05 fixtures: PASS_OFFLINE_ONLY')
+          PY
+      - name: REST01-REST05 full offline regression tests
+        run: python3 -m unittest discover -s tests -p 'test_*rest*.py' -v
+      - name: Existing Terraform regression tests
+        run: python3 -m unittest discover -s tests -p 'test_terraform*.py' -v
+      - name: Guard against live credentials or writes
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          code = Path('scripts/rest05_ai_data_audit.py').read_text()
+          workflow = Path('.github/workflows/azure-rest05-offline.yml').read_text()
+          assert 'id-token: write' not in workflow
+          assert 'read_enabled=True' not in code
+          assert 'terraform apply' not in code
+          assert 'AzureCliCredential' not in code
+          print('PASS: REST05 offline action has no live credentials or writes')
+          PY
+          python3 -m py_compile scripts/rest05_ai_data_audit.py
+# Runs on GitHub-hosted runner, no OIDC token, no Azure REST request, no data plane.

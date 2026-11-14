@@ -1,0 +1,15 @@
+{
+  "schema": "azure-private-ai-assurance/rest05-offline-qa/v1",
+  "scope": "SYNTHETIC_ONLY",
+  "profiles": 3,
+  "new_rest05_test_count": 60,
+  "existing_rest01_rest04_test_count": 110,
+  "rest_total_passed": 170,
+  "azure_live_passes": 0,
+  "live_acceptance_not_ready": 1716,
+  "private_runner_exists": false,
+  "release_decision": "NO_GO",
+  "terraform_fmt": "NOT_EXECUTED",
+  "azure_rest_calls": "NOT_EXECUTED",
+  "authenticated_data_plane": "NOT_EXECUTED"
+}

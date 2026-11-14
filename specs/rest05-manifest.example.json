@@ -1,0 +1,47 @@
+{
+  "schema": "azure-private-ai-assurance/rest05-manifest/v1",
+  "targets": [
+    {
+      "profile": "azure_openai",
+      "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic",
+      "api_version": "2024-10-01",
+      "expected": {
+        "location": "japaneast",
+        "custom_subdomain": "openai-synthetic",
+        "deployment_name": "test-deploy",
+        "model_format": "OpenAI",
+        "model_name": "synthetic-model",
+        "model_version": "test-v1",
+        "sku_name": "Standard",
+        "sku_capacity": 1
+      }
+    },
+    {
+      "profile": "ai_search",
+      "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Search/searchServices/search-synthetic",
+      "api_version": "2025-05-01",
+      "expected": {
+        "location": "japaneast",
+        "sku_name": "standard",
+        "replica_count": 1,
+        "partition_count": 1
+      }
+    },
+    {
+      "profile": "cosmos_nosql",
+      "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic",
+      "api_version": "2025-10-15",
+      "expected": {
+        "location": "japaneast",
+        "database_name": "synthetic-db",
+        "container_name": "synthetic-records",
+        "partition_key_paths": [
+          "/tenantId"
+        ],
+        "backup_type": "Continuous",
+        "backup_tier": "Continuous7Days",
+        "consistency_level": "Session"
+      }
+    }
+  ]
+}

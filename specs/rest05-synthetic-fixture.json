@@ -1,0 +1,175 @@
+{
+  "manifest": {
+    "schema": "azure-private-ai-assurance/rest05-manifest/v1",
+    "targets": [
+      {
+        "profile": "azure_openai",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic",
+        "api_version": "2024-10-01",
+        "expected": {
+          "location": "japaneast",
+          "custom_subdomain": "openai-synthetic",
+          "deployment_name": "test-deploy",
+          "model_format": "OpenAI",
+          "model_name": "synthetic-model",
+          "model_version": "test-v1",
+          "sku_name": "Standard",
+          "sku_capacity": 1
+        }
+      },
+      {
+        "profile": "ai_search",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Search/searchServices/search-synthetic",
+        "api_version": "2025-05-01",
+        "expected": {
+          "location": "japaneast",
+          "sku_name": "standard",
+          "replica_count": 1,
+          "partition_count": 1
+        }
+      },
+      {
+        "profile": "cosmos_nosql",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic",
+        "api_version": "2025-10-15",
+        "expected": {
+          "location": "japaneast",
+          "database_name": "synthetic-db",
+          "container_name": "synthetic-records",
+          "partition_key_paths": [
+            "/tenantId"
+          ],
+          "backup_type": "Continuous",
+          "backup_tier": "Continuous7Days",
+          "consistency_level": "Session"
+        }
+      }
+    ]
+  },
+  "evidence": {
+    "azure_openai": {
+      "account": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic",
+          "type": "microsoft.cognitiveservices/accounts",
+          "location": "japaneast",
+          "properties": {
+            "publicNetworkAccess": "Disabled",
+            "disableLocalAuth": true,
+            "customSubDomainName": "openai-synthetic"
+          },
+          "kind": "OpenAI"
+        },
+        "evidence_sha256": "e571b1120c51d74c4056e23bedc8ddfcc8a1a7eb26b5286ff4655c333a38294e"
+      },
+      "deployment": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic/deployments/test-deploy",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.CognitiveServices/accounts/openai-synthetic/deployments/test-deploy",
+          "type": "Microsoft.CognitiveServices/accounts/deployments",
+          "sku": {
+            "name": "Standard",
+            "capacity": 1
+          },
+          "properties": {
+            "model": {
+              "format": "OpenAI",
+              "name": "synthetic-model",
+              "version": "test-v1"
+            },
+            "versionUpgradeOption": "NoAutoUpgrade"
+          }
+        },
+        "evidence_sha256": "faebdbe71fc02e757f39a6fa7b397377a7a11f8f7c31d7253e1a2bf29b4e0e78"
+      }
+    },
+    "ai_search": {
+      "service": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Search/searchServices/search-synthetic",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.Search/searchServices/search-synthetic",
+          "type": "microsoft.search/searchservices",
+          "location": "japaneast",
+          "properties": {
+            "publicNetworkAccess": "Disabled",
+            "disableLocalAuth": true,
+            "networkRuleSet": {
+              "bypass": "None"
+            },
+            "replicaCount": 1,
+            "partitionCount": 1
+          },
+          "sku": {
+            "name": "standard"
+          }
+        },
+        "evidence_sha256": "f40892d11ae794327accfc4871df2a2313f49e0f94149380dfa2b065cd7e7098"
+      }
+    },
+    "cosmos_nosql": {
+      "account": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic",
+          "type": "microsoft.documentdb/databaseaccounts",
+          "location": "japaneast",
+          "properties": {
+            "publicNetworkAccess": "Disabled",
+            "disableLocalAuth": true,
+            "networkAclBypass": "None",
+            "backupPolicy": {
+              "type": "Continuous",
+              "continuousModeProperties": {
+                "tier": "Continuous7Days"
+              }
+            },
+            "consistencyPolicy": {
+              "defaultConsistencyLevel": "Session"
+            }
+          },
+          "kind": "GlobalDocumentDB"
+        },
+        "evidence_sha256": "24168a2b6d2b07fed5f556c4955127ab3059efa2f4b0a0404fc2fbc172dcbe4d"
+      },
+      "database": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic/sqlDatabases/synthetic-db",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic/sqlDatabases/synthetic-db",
+          "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
+          "properties": {
+            "resource": {
+              "id": "synthetic-db"
+            }
+          }
+        },
+        "evidence_sha256": "ad934419c7a44d210cbce918c22ebc064bc680b89ecd7dabac6d6a39fd55ca6e"
+      },
+      "container": {
+        "state": "OBSERVED_NOT_ACCEPTED",
+        "resource_id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic/sqlDatabases/synthetic-db/containers/synthetic-records",
+        "observation": {
+          "id": "/subscriptions/01234567-89ab-4def-8123-0123456789ab/resourceGroups/rg-synthetic/providers/Microsoft.DocumentDB/databaseAccounts/cosmos-synthetic/sqlDatabases/synthetic-db/containers/synthetic-records",
+          "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
+          "properties": {
+            "resource": {
+              "id": "synthetic-records",
+              "partitionKey": {
+                "paths": [
+                  "/tenantId"
+                ]
+              }
+            }
+          }
+        },
+        "evidence_sha256": "8fd162a3108ce9126f78a29edb0e2cf563fc14bc1014bbee0b2025cc9ad71335"
+      }
+    }
+  },
+  "synthetic": true
+}
