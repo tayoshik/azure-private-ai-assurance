@@ -66,11 +66,14 @@ def private_ip(s):
 
 def validate_target(target):
     """Validate manifest scope without guessing asset IDs, IPs or FQDNs."""
-    if not isinstance(target, dict) or set(target) != {
-        *PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id", "group_id",
-        "expected_private_ips", "expected_record_fqdn"}:
+    required = {*PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id", "group_id",
+                "expected_private_ips", "expected_record_fqdn"}
+    if (not isinstance(target, dict) or not required <= set(target)
+            or set(target) - required - {"expected_link_vnet_id"}):
         raise ValueError("REST04 manifest requires exactly the documented fields")
     ids = [*PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id"]
+    if "expected_link_vnet_id" in target:
+        ids.append("expected_link_vnet_id")
     for key in ids:
         value = target.get(key)
         if not isinstance(value, str) or not RESOURCE.fullmatch(value) or not SUBSCRIPTION.match(value):
@@ -78,6 +81,10 @@ def validate_target(target):
     subs = {SUBSCRIPTION.match(target[k]).group(1).casefold() for k in ids}
     if len(subs) != 1:
         raise ValueError("REST04 v1 requires single approved subscription scope")
+    if "expected_link_vnet_id" in target and not re.fullmatch(
+            r"/subscriptions/[0-9a-f-]+/resourceGroups/[^/?#]+/providers/Microsoft[.]Network/virtualNetworks/[A-Za-z0-9_.-]+",
+            target["expected_link_vnet_id"], re.I):
+        raise ValueError("expected linked VNet must be an exact VNet resource ID")
     pe = target["private_endpoint_id"].casefold()
     zone = target["dns_zone_id"].casefold()
     expected_types = {"private_endpoint_id": "/microsoft.network/privateendpoints/",
@@ -257,7 +264,7 @@ def assess_target(target, observations, *, synthetic=False):
                             problems.append("zoneGroup.recordSets IP mismatch")
     # Zone object identity/type already checked by REST02 observation wrapper.
     lp = get_path(link,"properties") or {}
-    must_equal(get_path(lp,"virtualNetwork","id"),target["vnet_id"],"vnetLink.vnet")
+    must_equal(get_path(lp,"virtualNetwork","id"),target.get("expected_link_vnet_id", target["vnet_id"]),"vnetLink.vnet")
     if lp.get("registrationEnabled") is not False:
         if lp.get("registrationEnabled") is None:
             missing.append("vnetLink.registrationEnabled")

@@ -1,4 +1,4 @@
-"""Recompute the literal catalogue references and the implemented Step 31 overlay."""
+"""Recompute the literal catalogue references and the implemented Step 30 and Step 31 overlays."""
 import argparse
 from collections import Counter
 import json
@@ -18,6 +18,8 @@ BASELINE = {"missing_script_reference": 999, "no_direct_script_reference": 717}
 def ledger():
     rows = {}
     counts = Counter()
+    missing_replacements = 0
+    no_direct_mapped = 0
     for name in CATALOGUES:
         source = f"specs/{name}.json"
         content = json.loads((ROOT / source).read_text(encoding="utf-8"))
@@ -36,8 +38,24 @@ def ledger():
                                   "RUNTIME_OBSERVER" if number in RUNTIME else
                                   "OPTIONAL_ARM_CONFIGURATION_ONLY" if number in OPTIONAL_CONFIG else
                                   "MANUAL_REVIEW_REQUIRED")
+            overlay = {}
+            if case["step"] == 30:
+                number = int(case_id.rsplit("-", 1)[1])
+                if number == 17:
+                    implementation = "MANUAL_REVIEW_REQUIRED"
+                    command = "--review-ownership"
+                elif number % 2 == 0:
+                    implementation = "OFFLINE_CHECK"
+                    command = "--selftest"
+                    missing_replacements += bool(missing)
+                else:
+                    implementation = "AZURE_ARM_CONFIGURATION" if number <= 13 else "PRIVATE_RUNNER_DNS"
+                    command = "--live"
+                    no_direct_mapped += status == "no_direct_script_reference"
+                overlay = {"entry_point": "scripts/azure_private_dns_step30.py " + command,
+                           "mapping": "docs/azure-private-dns-step30.md"}
             rows[case_id] = {"catalogue": source, "action_reference": status, "missing": missing,
-                             "implementation": implementation, "azure_acceptance": "NOT_READY"}
+                             "implementation": implementation, "azure_acceptance": "NOT_READY", **overlay}
     expected = {f"AZ-T{step:02}-{number:02}" for step in range(1, 79) for number in range(1, 23)}
     if set(rows) != expected:
         raise ValueError("Catalogue ID coverage differs from the approved range")
@@ -46,6 +64,12 @@ def ledger():
         "baseline_literal_references": BASELINE,
         "current_literal_references": {key: counts[key] for key in (*BASELINE, "tracked_script_reference")},
         "implementation_counts": dict(sorted(Counter(r["implementation"] for r in rows.values()).items())),
+        "step30_resolution": {
+            "missing_literal_references_with_step30_offline_replacement": missing_replacements,
+            "missing_literal_references_without_step30_replacement": counts["missing_script_reference"] - missing_replacements,
+            "no_direct_reference_with_step30_live_mapping": no_direct_mapped,
+            "no_direct_reference_without_step30_live_mapping": counts["no_direct_script_reference"] - no_direct_mapped,
+        },
         "azure_accepted": 0,
         "release_decision": "NO_GO",
     }

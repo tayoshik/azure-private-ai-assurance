@@ -1,0 +1,129 @@
+{
+  "schema": "azure-private-dns/az-t30/v1",
+  "topology": null,
+  "approval_ref": null,
+  "approved_private_runner": false,
+  "resolver_ips": [],
+  "targets": {
+    "web": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    },
+    "scm": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    },
+    "openai": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    },
+    "search": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    },
+    "cosmos": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    },
+    "vault": {
+      "ordinary_name": null,
+      "private_name": null,
+      "cname_chain": [],
+      "expected_cidrs": [],
+      "arm": {
+        "private_endpoint_id": null,
+        "nic_id": null,
+        "zone_group_id": null,
+        "dns_zone_id": null,
+        "a_record_id": null,
+        "vnet_link_id": null,
+        "service_id": null,
+        "subnet_id": null,
+        "vnet_id": null,
+        "group_id": null,
+        "expected_record_fqdn": null,
+        "expected_private_ips": []
+      }
+    }
+  }
+}

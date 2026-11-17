@@ -6,10 +6,14 @@ on:
       - 'infra/**'
       - 'scripts/azure_monitor_private_audit.py'
       - 'scripts/azure_rest_reader.py'
+      - 'scripts/azure_private_dns_step30.py'
+      - 'scripts/rest04_private_dns_audit.py'
       - 'scripts/validate_package.py'
       - 'scripts/build_test_automation_ledger.py'
       - 'specs/**'
       - 'tests/test_azure_monitor_private_audit.py'
+      - 'tests/test_azure_private_dns_step30.py'
+      - 'tests/test_rest04_private_dns_audit.py'
       - 'tests/test_terraform_*.py'
   workflow_dispatch:
 permissions:
@@ -19,10 +23,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1 (Node 24)
         with:
           persist-credentials: false
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1 (Node 24)
         with:
           terraform_version: 1.9.8
           terraform_wrapper: false
@@ -33,6 +37,11 @@ jobs:
           python3 -B -m unittest discover -s tests -p 'test_azure_monitor_private_audit.py' -v
           python3 -B -m unittest discover -s tests -p 'test_terraform_gw01_gw05.py' -v
           python3 -B -m unittest discover -s tests -p 'test_terraform_provider_preflight.py' -v
+      - name: Check AZ-T30 without Azure or DNS
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_private_dns_step30.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_rest04_private_dns_audit.py' -v
+          python3 -B scripts/azure_private_dns_step30.py --selftest --out "$RUNNER_TEMP/az-t30-synthetic"
       - name: Format and validate provider contracts
         run: |
           terraform fmt -check infra/environments/dev/main.tf infra/environments/dev/monitoring-private-link*.tf
