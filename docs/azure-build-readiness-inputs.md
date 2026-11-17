@@ -14,3 +14,10 @@ The code fixes the resource roles, scopes and test shape. Inputs below require t
 | Deployed app, private URL, actual login/identity flow, one real main screen/action and expected result | Configurable Gateway and App Service health paths. Stage 5 identifies app and auth prerequisites; no executable app UI contract was found | Playwright config/spec and authenticated end-to-end journey |
 
 Collect operational inputs in restricted storage. Local input checks are available in [Step 26](azure-private-endpoint-step26.md), [Step 28](azure-gateway-step28.md), [Step 30](azure-private-dns-step30.md) and [Step 31](azure-monitor-private-link-operator.md). They check declared scope and consistency before any actual operation.
+
+## Priority order for owner decisions
+
+1. **P0 — Nonproduction scope and private execution**. Approve subscription/tenant/region, scoped Runner placement, source and DNS/route, backend state access, GitHub OIDC subject and separate roles for read/plan/apply. This unlocks the private bootstrap/backend gate and the first authorized construction pipeline.
+2. **P0 — Topology and dependencies**. Select Hub/dev and DNS/PE approval owners, approve CIDRs, actor-specific Entra/Monitor/certificate destinations, Firewall/Proxy and default routing. Code fixes the Azure Public authority/profile and the test input shape. Actual FIC, IPs, route, ID and bypass review remain owner inputs. This blocks real AZ-T26/28/29/30/31.
+3. **P1 — Real app and test account contract**. Provide deployed artifact/commit, actual private URL and health path, Entra registration/redirect and audience, approved test account or identity flow, one real screen route/selector, action and expected result. Current Terraform only wires infrastructure, UAI and configurable health paths; Stage 5 records the app, EasyAuth and deployment dependencies as outstanding. Thus there is no verified UI to turn into a Playwright spec.
+4. **P1 — Evidence access and supply**. Assign owners of required flow/alert telemetry, independent reviews and REST23 dependency supply. This blocks acceptance and integrated tests.
