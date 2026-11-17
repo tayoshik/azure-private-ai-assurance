@@ -30,7 +30,13 @@ class ProviderPreflightTests(unittest.TestCase):
         self.assertEqual(result['release_decision'], 'NO_GO')
         self.assertEqual(result['validate'], 'NOT_EXECUTED')
 
+    def test_source_contains_both_reviewed_candidate_locks(self):
+        result = MODULE.audit(self.root)
+        self.assertEqual(set(result['lockfiles'].values()), {'PRESENT_UNVERIFIED'})
+        self.assertEqual(result['release_decision'], 'NO_GO')
+
     def test_strict_is_not_ready(self):
+        (self.root/'infra/bootstrap/.terraform.lock.hcl').unlink(missing_ok=True)
         self.assertEqual(MODULE.audit(self.root, require_lock=True)['status'], 'NOT_READY_PROVIDER_GATES')
 
     def test_changed_provider_pin_is_rejected(self):
@@ -60,6 +66,8 @@ class ProviderPreflightTests(unittest.TestCase):
         self.assertTrue(MODULE.audit(self.root)['errors'])
 
     def test_missing_lock_keeps_no_go(self):
+        for root in MODULE.ROOTS:
+            (self.root/root/'.terraform.lock.hcl').unlink(missing_ok=True)
         obj = MODULE.audit(self.root)
         self.assertEqual(obj['lockfiles']['infra/bootstrap'], 'MISSING')
         self.assertEqual(obj['lockfiles']['infra/environments/dev'], 'MISSING')

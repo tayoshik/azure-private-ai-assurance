@@ -215,8 +215,7 @@ module "webapp_private_endpoint" {
 }
 
 
-# O01: Workload audit workspace; private ingestion prerequisite O02 is
-# explicitly out of scope until AMPLS/DNS is approved and implemented.
+# O01/O02: Workload audit workspace and opt-in Monitor Private Link.
 module "monitoring" {
   source                                    = "../../modules/monitoring"
   name                                      = var.monitor_workspace_name
@@ -224,6 +223,9 @@ module "monitoring" {
   resource_group_name                       = module.foundation.name
   retention_in_days                         = var.monitor_retention_days
   monitoring_and_private_ingestion_approved = var.monitoring_private_ingestion_approved
+  private_link                              = var.monitoring_private_link
+  workload_vnet_id                          = module.network.vnet_id
+  subscription_id                           = var.subscription_id
   tags                                      = local.tags
 }
 
