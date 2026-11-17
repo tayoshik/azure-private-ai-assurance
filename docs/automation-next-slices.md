@@ -1,0 +1,17 @@
+# Automation backlog after the Monitor Private Link review
+
+Current scope is build and executable tests. Azure acceptance remains **0/1,716**, independent signatures **0**, release **NO_GO**.
+
+- **Build**
+  - Monitor Terraform supports shared Hub and new dev ownership. Choose and approve a concrete topology, DNS owner, addresses, PE approval and access per the [input matrix](azure-monitor-private-link-operator.md#required-input-and-validation).
+  - Prepare an approved nonproduction subscription, Private Runner and OIDC, then validate backend connectivity, real plan, apply and workload inventory in their authorized stages.
+  - Complete Application Insights, monitoring coverage and operational alerts according to the chosen design. A monitored Gateway transaction and an alert firing are separate observations.
+- **Test automation**
+  - First implement **AZ-T30** Private DNS controls. The monitor path already introduced an explicit approved configuration, private resolution and TLS primitives. REST04 already audits zones, links and expected records, and the Terraform App Service PE and its DNS zone are declared. Reuse those read-only functions behind an explicit target-bound Runner CLI. Done means all 22 IDs have reviewed execution or review paths, synthetic tests cover wrong zone/record/link/IP and missing authentication, and an authorized Runner can collect normal and SCM hostname results into sanitized per-ID evidence. Real results remain gated on deployment and Runner connectivity.
+  - Implement authenticated browser coverage once actual screens are confirmed. The fixed app module deploys infrastructure and takes a health path; Stage 5 explicitly leaves the deployed app and authentication contract outstanding. No app source, verified route beyond the configurable health probe, identity/login contract or user journey was confirmed in this repository. The health probe belongs to HTTP/TLS integration. Playwright configuration and specs remain pending input from the application owner, including deployed artifact, private base URL, approved user identity flow and one real business journey with expected selectors/results.
+  - Review the other 1,694 IDs incrementally. The [automation ledger](../specs/test-automation-ledger.json) keeps historical and current literal counts separate. Recalculation finds 999 missing direct references and 717 with no direct reference, unchanged because this change maps Step 31 in an overlay and does not rewrite historical commands. The 717 include inline CLI and evidence/manual work; they are not an implementation count.
+- **CI and integrated execution**
+  - The Monitor offline workflow uses the signed/checksummed AzureRM lock with Terraform 1.9.8 and has no Azure login, live test, real plan or apply step. The previous 350 local successes are reference evidence; unaffected suites were not rerun for this change.
+  - REST23 ZIP supply is NOT_READY, REST11 858 is NOT_RUN, validate_catalogue.py remains missing. The private deployment/test workflow and test data management remain outstanding.
+
+The review added destruction safeguards for the owned Monitor resources and workspace association. Three optional ARM reads verify App Insights binding, one direct role assignment and absence alert wiring. Effective inherited permissions and actual alert delivery need further evidence. See the [22-case execution and evidence table](azure-monitor-step31-mapping.md).

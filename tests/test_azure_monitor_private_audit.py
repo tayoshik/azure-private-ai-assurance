@@ -1,9 +1,11 @@
 """Synthetic tests for the Azure Monitor Private Link observer."""
 import contextlib
 import io
+from hashlib import sha256
 import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
@@ -197,3 +199,48 @@ class MonitorAuditTests(unittest.TestCase):
     def test_missing_supporting_observations_remain_not_ready(self):
         report = audit.review_supporting_controls({"as_of": "2026-11-17", "workspace_id": WORKSPACE})
         self.assertEqual(set(report.values()), {"NOT_READY"})
+
+    def test_check_config_uses_no_azure_for_dev_and_hub(self):
+        with tempfile.TemporaryDirectory() as directory:
+            manifest = Path(directory) / "input.json"
+            for mode in ("dev", "hub"):
+                cfg = configuration()
+                cfg["mode"] = mode
+                manifest.write_text(json.dumps(cfg))
+                out = io.StringIO()
+                with patch.object(audit, "run_live") as live, contextlib.redirect_stdout(out):
+                    self.assertEqual(audit.main(["--check-config", "--config", str(manifest)]), 0)
+                live.assert_not_called()
+                self.assertEqual(json.loads(out.getvalue())["status"], "CONFIG_SHAPE_VALID_NO_AZURE")
+
+    def test_optional_checks_observe_only_target_configuration(self):
+        cfg = configuration()
+        component = BASE + "/Microsoft.Insights/components/app"
+        rule = BASE + "/Microsoft.Insights/scheduledQueryRules/absence"
+        group = BASE + "/Microsoft.Insights/actionGroups/owner"
+        criteria = {"allOf": [{"query": "approved synthetic criterion"}]}
+        cfg["optional_observations"] = {
+            "app_insights_id": component,
+            "query_role": {"assignment_guid": GUID, "principal_id": GUID, "definition_guid": GUID},
+            "absence_alert": {"rule_id": rule, "action_group_id": group,
+                              "criteria_sha256": sha256(json.dumps(criteria, sort_keys=True, separators=(",", ":")).encode()).hexdigest()},
+        }
+        cfg = audit.read_config(cfg)
+        assignment = cfg["optional_observations"]["query_role"]["assignment_id"]
+        self.arm_data.update({
+            component: {"WorkspaceResourceId": WORKSPACE},
+            assignment: {"scope": WORKSPACE, "principalId": GUID,
+                         "roleDefinitionId": f"{BASE}/Microsoft.Authorization/roleDefinitions/{GUID}"},
+            rule: {"enabled": True, "criteria": criteria, "scopes": [WORKSPACE],
+                   "actions": {"actionGroups": [group]}},
+            group: {"enabled": True},
+        })
+        self.assertEqual(audit.optional_arm_checks(self.arm, cfg, self.outcome), {})
+        self.assertEqual(self.outcome, {f"AZ-T31-{i:02}": "CONFIG_OBSERVED_NOT_ACCEPTED" for i in (7, 17, 21)})
+        self.arm_data[component]["WorkspaceResourceId"] = WORKSPACE + "-other"
+        self.arm_data[assignment]["condition"] = "unexpected"
+        self.arm_data[group]["enabled"] = False
+        self.outcome.clear()
+        self.assertEqual(set(audit.optional_arm_checks(self.arm, cfg, self.outcome)),
+                         {"AZ-T31-07", "AZ-T31-17", "AZ-T31-21"})
+        self.assertEqual(self.outcome, {})

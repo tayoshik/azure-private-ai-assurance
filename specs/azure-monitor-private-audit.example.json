@@ -24,5 +24,6 @@
     "privatelink.blob.core.windows.net": null
   },
   "endpoint_ips": [],
-  "lookback_hours": 1
+  "lookback_hours": 1,
+  "optional_observations": {}
 }

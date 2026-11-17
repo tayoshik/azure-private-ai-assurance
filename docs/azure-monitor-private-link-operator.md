@@ -63,7 +63,7 @@ done
 terraform -chdir=infra/environments/dev test -filter=tests/monitoring_private_link.tftest.hcl
 ```
 
-These Terraform tests use only the mocked provider with `command = plan` and do not run an Azure plan. The workflow candidate lives under `ci/` and requires a reviewed installation. Use [the Step 31 assignment table](azure-monitor-step31-mapping.md) and [the sanitized implementation report](azure-monitor-implementation-report.md) for the evidence boundary.
+These Terraform tests use only the mocked provider with `command = plan` and do not run an Azure plan. The read-only [offline workflow](../.github/workflows/azure-monitor-private-link-offline.yml) runs on relevant pushes and manual dispatch. Use [the Step 31 assignment table](azure-monitor-step31-mapping.md) and [the sanitized implementation report](azure-monitor-implementation-report.md) for the evidence boundary.
 
 ## Private Runner live run
 
@@ -71,6 +71,26 @@ These Terraform tests use only the mocked provider with `command = plan` and do 
 2. Copy `specs/azure-monitor-private-audit.example.json` to restricted storage. Populate the topology, allowed subscriptions, approved tenant and application client ID, approved Run/Query/log-source references, exact AMPLS, Workspace, association, PE, DNS zone-group and Gateway ARM IDs. Supply the exact five approved zone IDs and endpoint RFC1918 IPv4 addresses from the approved PE. Use canonical ARM paths starting with lowercase `/subscriptions/`. The Workspace GUID is the Workspace's customer ID. The transaction GUID is the approved Gateway transaction identifier. Use a recent transaction from an approved test flow; the audit never generates a transaction or sends a log.
 3. Run `python3 -B scripts/azure_monitor_private_audit.py --live --config "$APPROVED_MONITOR_CONFIG"`. Execution without explicit arguments exits 2. The runner checks control-plane configuration, then resolves the canonical Logs API and workspace OMS/ODS names to approved IPs, verifies TCP/TLS with hostname validation, and issues a bounded read-only Logs query over that same pinned private path. It correlates the Gateway ARM ID and transaction GUID in `AGWAccessLogs`. The output includes control IDs and status only. Keep raw credentials, Azure IDs, raw service responses and diagnostic logs out of the repository.
 4. `OBSERVED_NOT_ACCEPTED` means the listed runtime observations completed. Missing auth, targets, approvals, approved DNS, connectivity or the expected record produce exit 2 with a reason. Independent review is still required to award acceptance. No cases earn Azure PASS through this script. Use Playwright for the separately approved authenticated application flows.
+
+### Required input and validation
+
+| Input | Hub shared | Dev new | How to check before requesting execution |
+|---|---|---|---|
+| Tenant/subscription | Workspace and Hub scope in provider subscription; list any other approved read subscriptions. | Approved nonproduction provider subscription. | Check Azure resource IDs and OIDC tenant; use C below. |
+| AMPLS and Workspace | Owner supplies existing scope, monitored Workspace and scoped association. | Terraform creates scope and association. | Review scope mode, enrollment permissions and access overrides. |
+| DNS owner and 5 zone IDs | Hub manages zones, PE zone group, VNet links and forwarding. | Workload DNS owner confirms isolation, including bootstrap Blob DNS, before links are created. | Compare exact zone IDs and check canonical resolution from actual Runner. |
+| VNet/subnet and clients | Hub controls existing PE subnet; confirm peering and routes. | Dedicated /27-or-larger IPv4 subnet in workload VNet, scoped HTTPS CIDRs. | Review IPAM and overlap against VNet and bootstrap; Terraform mock checks input contract only. |
+| Runner route and IPs | Reach the existing PE and route to approved ARM/Entra endpoints. | Reach provisioned PE from approved client CIDRs. | In restricted config, supply exact PE IPs. Live probe checks DNS, TLS and connection. |
+| OIDC / log queries | Approved tenant, client identity, protected token file, ARM/Law reader and marker. | Same. | Check federation subject and effective scopes; verify no CI secret enters source. |
+| PE approval | Hub owner supplies existing approved connection. | Default is manual approval by the scope/network owner. | Live ARM must observe Approved for the exact PE/AMPLS subresource. DNS or an existing PE alone does not establish approval. |
+
+Before live execution, use `python3 -B scripts/azure_monitor_private_audit.py --check-config --config "$APPROVED_MONITOR_CONFIG"`. The checked-in example is intentionally incomplete. This validates typed topology, exact resource IDs and subscription allowlists without accessing Azure. The `hub` and `dev` Terraform sketches above plus their mocked tests validate separate creation contracts.
+
+Optional read-only observations take `optional_observations.app_insights_id`, `query_role` (assignment_guid, principal_id, definition_guid), and `absence_alert` (rule_id, action_group_id, criteria_sha256). Hash the reviewed ARM criteria object using UTF-8 JSON with sorted keys and compact separators. Use protected inputs. App Insights binding, exact direct assignment, and enabled alert wiring are configuration observations. Review role inheritance and actual alert delivery independently.
+
+### Deletion and changes in ownership
+
+Hub mode changes the workspace association in the shared scope. It does not manage Hub zones, links, scope settings or endpoint. Linking or unlinking the Workspace changes which assets and DNS records the Hub publishes; coordinate such changes with its owner. Dev manages the isolated DNS records, links, subnet/NSG and PE, so removal can interrupt monitoring queries. The workspace, association and managed scope/PE/DNS resources use prevent_destroy with their declarations in place; decommissioning or crossing topologies requires a reviewed migration. Remove the scope association before attempting Workspace deletion. Review destroys across state operations, because removing the resource declaration also removes its lifecycle guard. Pending manual PE approval and logged diagnostics never imply working private queries.
 
 ### Troubleshooting
 

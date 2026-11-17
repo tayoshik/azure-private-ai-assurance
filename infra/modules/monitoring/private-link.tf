@@ -24,6 +24,10 @@ resource "azurerm_monitor_private_link_scope" "monitor" {
   ingestion_access_mode = "PrivateOnly"
   query_access_mode     = "PrivateOnly"
   tags                  = var.tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_monitor_private_link_scoped_service" "workspace" {
@@ -34,6 +38,8 @@ resource "azurerm_monitor_private_link_scoped_service" "workspace" {
   linked_resource_id  = azurerm_log_analytics_workspace.audit.id
 
   lifecycle {
+    prevent_destroy = true
+
     precondition {
       condition     = !local.share_ampls || try(lower(split("/", local.private_link.hub_scope_id)[2]) == lower(var.subscription_id), false)
       error_message = "The hub scope must be in the provider subscription; cross-subscription associations must be owned by a separate stack."
@@ -46,6 +52,10 @@ resource "azurerm_private_dns_zone" "monitor" {
   name                = each.key
   resource_group_name = var.resource_group_name
   tags                = var.tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "monitor" {
@@ -56,6 +66,10 @@ resource "azurerm_private_dns_zone_virtual_network_link" "monitor" {
   virtual_network_id    = var.workload_vnet_id
   registration_enabled  = false
   tags                  = var.tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_subnet" "monitor" {
@@ -121,6 +135,10 @@ resource "azurerm_private_endpoint" "monitor" {
   }
 
   depends_on = [azurerm_subnet_network_security_group_association.monitor]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 
   private_dns_zone_group {
     name                 = "azure-monitor"

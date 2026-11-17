@@ -2,6 +2,7 @@
 """Observe the approved Azure Monitor Private Link path. Never changes Azure."""
 import argparse
 from datetime import date
+from hashlib import sha256
 import http.client
 import ipaddress
 import json
@@ -90,6 +91,23 @@ def read_config(config):
     hours = config.get("lookback_hours", 1)
     require(type(hours) is int and 1 <= hours <= 24, "lookback_hours must be 1..24")
     config["lookback_hours"] = hours
+    optional = config.get("optional_observations") or {}
+    require(isinstance(optional, dict) and set(optional) <= {"app_insights_id", "query_role", "absence_alert"},
+            "unknown optional observations")
+    if "app_insights_id" in optional:
+        resource_id(optional["app_insights_id"], "Microsoft.Insights/components", subscriptions)
+    if "query_role" in optional:
+        role = optional["query_role"]
+        role["assignment_id"] = (config["workspace_id"] + "/providers/Microsoft.Authorization/roleAssignments/"
+                                 + str(UUID(role["assignment_guid"])))
+        role["principal_id"] = str(UUID(role["principal_id"]))
+        role["definition_guid"] = str(UUID(role["definition_guid"]))
+    if "absence_alert" in optional:
+        alert = optional["absence_alert"]
+        resource_id(alert["rule_id"], "Microsoft.Insights/scheduledQueryRules", subscriptions)
+        resource_id(alert["action_group_id"], "Microsoft.Insights/actionGroups", subscriptions)
+        require(re.fullmatch(r"[a-f0-9]{64}", alert["criteria_sha256"]), "approved alert criteria hash required")
+    config["optional_observations"] = optional
     return config
 
 
@@ -209,6 +227,56 @@ def credential_for(cfg):
     return WorkloadIdentityCredential()
 
 
+def optional_arm_checks(client, cfg, observed):
+    optional = cfg["optional_observations"]
+    workspace = cfg["workspace_id"].lower()
+    failures = {}
+
+    def app_insights(value):
+        app = properties(client, value, "2020-02-02")
+        require(str(app.get("WorkspaceResourceId", app.get("workspaceResourceId", ""))).lower() == workspace,
+                "App Insights points to a different Workspace")
+
+    def query_role(value):
+        role = properties(client, value["assignment_id"], "2022-04-01")
+        definition = str(role.get("roleDefinitionId", "")).lower()
+        require(str(role.get("scope", "")).lower() == workspace
+                and str(role.get("principalId", "")).lower() == value["principal_id"]
+                and definition.endswith("/providers/microsoft.authorization/roledefinitions/" + value["definition_guid"])
+                and not role.get("condition"),
+                "direct role assignment differs from the approved scope, identity or role")
+
+    def absence_alert(value):
+        rule = properties(client, value["rule_id"], "2021-08-01")
+        group = properties(client, value["action_group_id"], "2023-01-01")
+        criteria = rule.get("criteria")
+        digest = sha256(json.dumps(criteria, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        require(rule.get("enabled") is True and group.get("enabled") is True
+                and [item.lower() for item in rule.get("scopes", [])] == [workspace]
+                and [item.lower() for item in rule.get("actions", {}).get("actionGroups", [])]
+                == [value["action_group_id"].lower()]
+                and isinstance(criteria, dict) and bool(criteria.get("allOf"))
+                and digest == value["criteria_sha256"],
+                "absence alert wiring or approved criteria differ")
+
+    for identifier, field, observe in (
+        ("AZ-T31-07", "app_insights_id", app_insights),
+        ("AZ-T31-17", "query_role", query_role),
+        ("AZ-T31-21", "absence_alert", absence_alert),
+    ):
+        if field not in optional:
+            continue
+        try:
+            observe(optional[field])
+        except NotReadyError as exc:
+            failures[identifier] = str(exc)
+        except (RestFailure, ValueError, TypeError, AttributeError, OSError):
+            failures[identifier] = "optional ARM response unavailable or invalid"
+        else:
+            observed[identifier] = "CONFIG_OBSERVED_NOT_ACCEPTED"
+    return failures
+
+
 def run_live(cfg, observed):
     credential = credential_for(cfg)
     arm = AzureReadOnlyClient(cfg["subscriptions"], lambda: credential.get_token(ARM_SCOPE).token, read_enabled=True)
@@ -223,6 +291,7 @@ def run_live(cfg, observed):
         raise NotReadyError("Log Analytics OIDC token unavailable") from exc
     await_log(cfg, addresses[QUERY_HOST][0], token)
     observed.update({f"AZ-T31-{i:02}": "OBSERVED_NOT_ACCEPTED" for i in (5, 13, 15)})
+    return optional_arm_checks(arm, cfg, observed)
 
 
 def review_supporting_controls(document):
@@ -258,6 +327,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     modes = parser.add_mutually_exclusive_group()
     modes.add_argument("--live", action="store_true")
+    modes.add_argument("--check-config", action="store_true", help="validate the approved input shape without Azure")
     modes.add_argument("--review-file", type=Path, help="compare supporting control evidence offline")
     parser.add_argument("--config", type=Path)
     args = parser.parse_args(argv)
@@ -275,13 +345,21 @@ def main(argv=None):
             else:
                 report.update(reason="supporting evidence is missing or differs from its baseline")
         else:
-            require(args.live and args.config is not None, "explicit --live and approved --config required")
+            require((args.live or args.check_config) and args.config is not None,
+                    "explicit --live or --check-config and approved --config required")
             with args.config.open("rb") as stream:
                 raw = stream.read(65_537)
             require(len(raw) <= 65_536, "approved config exceeds size limit")
-            run_live(read_config(json.loads(raw)), checks)
-            report.update(status="OBSERVED_NOT_ACCEPTED",
-                          remaining="Decision review, App Insights, effective RBAC, exceptions and alert delivery require separate evidence.")
+            config = read_config(json.loads(raw))
+            if args.check_config:
+                report.update(status="CONFIG_SHAPE_VALID_NO_AZURE")
+            else:
+                failures = run_live(config, checks)
+                report.update(
+                    status="NOT_READY" if failures else "OBSERVED_NOT_ACCEPTED",
+                    optional_failures=failures,
+                    remaining="Topology approval, exception completeness, effective RBAC and alert firing/delivery need separate evidence.",
+                )
     except NotReadyError as exc:
         report["reason"] = str(exc)
     except (OSError, RestFailure, http.client.HTTPException):
@@ -289,7 +367,7 @@ def main(argv=None):
     except (ValueError, KeyError, TypeError, AttributeError, IndexError):
         report["reason"] = "approved config or Azure response is incomplete or invalid"
     print(json.dumps(report, sort_keys=True))
-    return 0 if report["status"] in ("OBSERVED_NOT_ACCEPTED", "MATCHED_OFFLINE") else 2
+    return 0 if report["status"] in ("OBSERVED_NOT_ACCEPTED", "MATCHED_OFFLINE", "CONFIG_SHAPE_VALID_NO_AZURE") else 2
 
 
 if __name__ == "__main__":
