@@ -1,0 +1,33 @@
+{
+  "topology": null,
+  "approval_ref": null,
+  "network_isolation_review_ref": null,
+  "egress_review_ref": null,
+  "gateway_id": null,
+  "vnet_id": null,
+  "subnet_id": null,
+  "nsg_id": null,
+  "route_table_id": null,
+  "frontend_ip": null,
+  "schema": "azure-private-gateway/az-t28/v1",
+  "environment": "nonproduction",
+  "approved_private_runner": false,
+  "profile": "private_waf_v2_network_isolation",
+  "subscriptions": [],
+  "expected_routes": [],
+  "cidrs": [],
+  "client_cidrs": [],
+  "deny_test_cidrs": [],
+  "approved_priorities": {
+    "Inbound": [],
+    "Outbound": []
+  },
+  "egress": [
+    {
+      "purpose": null,
+      "protocol": null,
+      "port": null,
+      "destinations": []
+    }
+  ]
+}
