@@ -163,17 +163,10 @@ def _verified_observations(target, observations):
     return raw
 
 
-def assess_target(target, observations, *, synthetic=False):
-    """Verify ARM control-plane consistency; a good observation is NOT a DNS probe."""
-    target = validate_target(target)
-    result = {"target_sha256": digest(target), "status": "NOT_READY", "azure_live_acceptance": "NOT_READY",
-              "private_dns_runtime_proven": False, "azure_live_passes": 0}
-    data = _verified_observations(target, observations)
-    if data is None:
-        return {**result, "missing": ["complete, scoped, digest-verified REST02 observations"]}
-    problems, missing = [], []
-    pe, nic, grp, zone, arec, link = (data[k] for k in ROLES)
+def assess_endpoint(target, pe, nic):
+    """Check PE/NIC inventory without inferring effective connectivity."""
     pep = get_path(pe, "properties") or {}
+    problems, missing = [], []
     def must_equal(actual, expected, check):
         if actual is None:
             missing.append(check)
@@ -240,6 +233,29 @@ def assess_target(target, observations, *, synthetic=False):
                 problems.append("nic.publicIPAddress configured")
     if ips and set(ips) != set(target["expected_private_ips"]):
         problems.append("nic.privateIPAddress != approved IP set")
+    return problems, missing
+
+
+def assess_target(target, observations, *, synthetic=False):
+    """Verify ARM control-plane consistency; a good observation is NOT a DNS probe."""
+    target = validate_target(target)
+    result = {"target_sha256": digest(target), "status": "NOT_READY", "azure_live_acceptance": "NOT_READY",
+              "private_dns_runtime_proven": False, "azure_live_passes": 0}
+    data = _verified_observations(target, observations)
+    if data is None:
+        return {**result, "missing": ["complete, scoped, digest-verified REST02 observations"]}
+    pe, nic, grp, zone, arec, link = (data[k] for k in ROLES)
+    problems, missing = assess_endpoint(target, pe, nic)
+    def must_equal(actual, expected, check):
+        if actual is None:
+            missing.append(check)
+        elif not same_id(actual, expected):
+            problems.append(check)
+    def status_ok(actual, expected, check):
+        if not isinstance(actual, str):
+            missing.append(check)
+        elif actual.casefold() != expected.casefold():
+            problems.append(check)
     gp = get_path(grp,"properties") or {}
     status_ok(gp.get("provisioningState"),"Succeeded","zoneGroup.provisioningState")
     configs = gp.get("privateDnsZoneConfigs")

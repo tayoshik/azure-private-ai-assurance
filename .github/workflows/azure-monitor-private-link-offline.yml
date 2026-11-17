@@ -7,12 +7,14 @@ on:
       - 'scripts/azure_monitor_private_audit.py'
       - 'scripts/azure_rest_reader.py'
       - 'scripts/azure_private_dns_step30.py'
+      - 'scripts/azure_private_endpoint_step26.py'
       - 'scripts/rest04_private_dns_audit.py'
       - 'scripts/validate_package.py'
       - 'scripts/build_test_automation_ledger.py'
       - 'specs/**'
       - 'tests/test_azure_monitor_private_audit.py'
       - 'tests/test_azure_private_dns_step30.py'
+      - 'tests/test_azure_private_endpoint_step26.py'
       - 'tests/test_rest04_private_dns_audit.py'
       - 'tests/test_terraform_*.py'
   workflow_dispatch:
@@ -42,6 +44,10 @@ jobs:
           python3 -B -m unittest discover -s tests -p 'test_azure_private_dns_step30.py' -v
           python3 -B -m unittest discover -s tests -p 'test_rest04_private_dns_audit.py' -v
           python3 -B scripts/azure_private_dns_step30.py --selftest --out "$RUNNER_TEMP/az-t30-synthetic"
+      - name: Verify AZ-T26 configuration and synthetic evidence without Azure
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_private_endpoint_step26.py' -v
+          python3 -B tests/test_azure_private_endpoint_step26.py --evidence "$RUNNER_TEMP/az-t26-synthetic"
       - name: Format and validate provider contracts
         run: |
           terraform fmt -check infra/environments/dev/main.tf infra/environments/dev/monitoring-private-link*.tf

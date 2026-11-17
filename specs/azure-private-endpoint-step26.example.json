@@ -1,0 +1,34 @@
+{
+  "schema": "azure-private-endpoint/az-t26/v1",
+  "topology": null,
+  "environment": "nonproduction",
+  "approval_ref": null,
+  "approved_private_runner": false,
+  "subscriptions": [],
+  "subnets": [
+    {
+      "vnet_id": null,
+      "subnet_id": null,
+      "purpose": null,
+      "mode": null,
+      "nsg_id": null,
+      "route_table_id": null,
+      "cidrs": [],
+      "required_enforcement": [],
+      "expected_routes": [],
+      "source_cidrs": [],
+      "source_asg_ids": [],
+      "endpoints": [
+        {
+          "private_endpoint_id": null,
+          "nic_id": null,
+          "service_id": null,
+          "group_id": null,
+          "purpose": null,
+          "expected_private_ips": [],
+          "asg_ids": []
+        }
+      ]
+    }
+  ]
+}

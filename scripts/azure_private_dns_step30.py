@@ -305,12 +305,12 @@ def synthetic_checks():
     }
 
 
-def reports(result, mode, output):
-    rows = [{"test_id": f"AZ-T30-{i:02}", "kind": KINDS.get(i, "synthetic_detector"),
+def reports(result, mode, output, *, step=30, kinds=KINDS):
+    rows = [{"test_id": f"AZ-T{step:02}-{i:02}", "kind": kinds.get(i, "synthetic_detector"),
              "result": state, "reason": reason, "azure_acceptance": "NOT_READY"}
             for i, (state, reason) in sorted(result.items())]
     report = {"mode": mode, "azure_accepted": 0, "release_decision": "NO_GO", "results": rows}
-    suite = ET.Element("testsuite", name=f"AZ-T30-{mode}", tests=str(len(rows)),
+    suite = ET.Element("testsuite", name=f"AZ-T{step:02}-{mode}", tests=str(len(rows)),
                        failures=str(sum(x["result"] == "FAIL" for x in rows)),
                        skipped=str(sum(x["result"] == "NOT_READY" for x in rows)))
     for row in rows:
