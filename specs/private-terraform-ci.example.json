@@ -1,0 +1,83 @@
+{
+  "schema": "private-terraform-ci/v1",
+  "environment": "nonprod",
+  "cloud": "AzurePublic",
+  "repository": "tayoshik/azure-private-ai-assurance",
+  "region": null,
+  "subscription_id": null,
+  "tenant_id": null,
+  "target_resource_group_id": null,
+  "scope_approval_ref": null,
+  "administrator_ref": null,
+  "private_runner_approval_ref": null,
+  "reviewer_policy_ref": null,
+  "runner": {
+    "placement": "independent_management",
+    "group": "azure-private-nonprod",
+    "ephemeral": false,
+    "owner": null,
+    "cidr": null
+  },
+  "network": {
+    "topology": null,
+    "dns_owner": null,
+    "pe_approver": null,
+    "hub_blob_dns_zone_id": null,
+    "hub_dns_subscription_id": null,
+    "isolated_blob_dns": false,
+    "bootstrap_vnet_cidr": null,
+    "bootstrap_pe_cidr": null,
+    "workload_vnet_cidr": null,
+    "workload_subnets": {
+      "gateway": null,
+      "web_pe": null,
+      "data_pe": null,
+      "app_outbound": null
+    }
+  },
+  "backend": {
+    "ownership": null,
+    "owner": null,
+    "account": null,
+    "container": null,
+    "key": null,
+    "private_ips": [],
+    "public_access": false,
+    "shared_key": false,
+    "sas": false,
+    "auth": "oidc_entra",
+    "allow_initial_missing_state": false
+  },
+  "identity": {
+    "read": {
+      "environment": "nonprod-read",
+      "subject": "repo:tayoshik/azure-private-ai-assurance:environment:nonprod-read",
+      "issuer": "https://token.actions.githubusercontent.com",
+      "exchange_audience": "api://AzureADTokenExchange",
+      "client_id": null,
+      "principal_id": null,
+      "backend_role": "Storage Blob Data Reader",
+      "target_role_ref": null
+    },
+    "plan": {
+      "environment": "nonprod-plan",
+      "subject": "repo:tayoshik/azure-private-ai-assurance:environment:nonprod-plan",
+      "issuer": "https://token.actions.githubusercontent.com",
+      "exchange_audience": "api://AzureADTokenExchange",
+      "client_id": null,
+      "principal_id": null,
+      "backend_role": "Storage Blob Data Contributor",
+      "target_role_ref": null
+    },
+    "apply": {
+      "environment": "nonprod-apply",
+      "subject": "repo:tayoshik/azure-private-ai-assurance:environment:nonprod-apply",
+      "issuer": "https://token.actions.githubusercontent.com",
+      "exchange_audience": "api://AzureADTokenExchange",
+      "client_id": null,
+      "principal_id": null,
+      "backend_role": "Storage Blob Data Contributor",
+      "target_role_ref": null
+    }
+  }
+}

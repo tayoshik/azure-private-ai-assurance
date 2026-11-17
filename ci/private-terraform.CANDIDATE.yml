@@ -1,0 +1,103 @@
+# Inactive. Install under .github/workflows only after the activation checklist is signed.
+name: Private Terraform nonproduction
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        type: choice
+        options: [read, plan, apply]
+        required: true
+      commit:
+        description: Exact approved main commit SHA
+        required: true
+        type: string
+      plan_run_id:
+        description: Restricted saved plan run ID for apply
+        required: false
+        type: string
+permissions: {}
+concurrency:
+  group: private-terraform-nonprod
+  cancel-in-progress: false
+jobs:
+  read:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'tayoshik/azure-private-ai-assurance' &&
+      github.ref == 'refs/heads/main' && github.ref_protected &&
+      inputs.phase == 'read' && inputs.commit == github.sha
+    environment: nonprod-read
+    permissions:
+      contents: read
+      id-token: write
+    runs-on:
+      group: azure-private-nonprod
+      labels: linux-x64-ephemeral
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Execute protected read phase
+        env:
+          APPROVED_JOB_ENVIRONMENT: nonprod-read
+          APPROVED_COMMIT: ${{ inputs.commit }}
+          TF_PRIVATE_CONTRACT: ${{ secrets.TF_PRIVATE_CONTRACT }}
+        run: python3 -B scripts/private_terraform_ci.py --live-role read --commit "$APPROVED_COMMIT"
+  plan:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'tayoshik/azure-private-ai-assurance' &&
+      github.ref == 'refs/heads/main' && github.ref_protected &&
+      inputs.phase == 'plan' && inputs.commit == github.sha
+    environment: nonprod-plan
+    permissions:
+      contents: read
+      id-token: write
+    runs-on:
+      group: azure-private-nonprod
+      labels: linux-x64-ephemeral
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Execute protected plan phase
+        env:
+          APPROVED_JOB_ENVIRONMENT: nonprod-plan
+          APPROVED_COMMIT: ${{ inputs.commit }}
+          TF_PRIVATE_CONTRACT: ${{ secrets.TF_PRIVATE_CONTRACT }}
+          APPROVED_PLAN_VOLUME: ${{ vars.APPROVED_PLAN_VOLUME }}
+          TF_PRIVATE_TFVARS: ${{ secrets.TF_PRIVATE_TFVARS }}
+        run: python3 -B scripts/private_terraform_ci.py --live-role plan --commit "$APPROVED_COMMIT"
+  apply:
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.repository == 'tayoshik/azure-private-ai-assurance' &&
+      github.ref == 'refs/heads/main' && github.ref_protected &&
+      inputs.phase == 'apply' && inputs.commit == github.sha
+    environment: nonprod-apply
+    permissions:
+      contents: read
+      id-token: write
+    runs-on:
+      group: azure-private-nonprod
+      labels: linux-x64-ephemeral
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Execute protected apply phase
+        env:
+          APPROVED_JOB_ENVIRONMENT: nonprod-apply
+          APPROVED_COMMIT: ${{ inputs.commit }}
+          TF_PRIVATE_CONTRACT: ${{ secrets.TF_PRIVATE_CONTRACT }}
+          APPROVED_PLAN_VOLUME: ${{ vars.APPROVED_PLAN_VOLUME }}
+          TF_PRIVATE_TFVARS: ${{ secrets.TF_PRIVATE_TFVARS }}
+          APPROVED_PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+          TF_PRIVATE_PLAN_APPROVAL: ${{ secrets.TF_PRIVATE_PLAN_APPROVAL }}
+        run: python3 -B scripts/private_terraform_ci.py --live-role apply --commit "$APPROVED_COMMIT" --plan-run-id "$APPROVED_PLAN_RUN_ID"

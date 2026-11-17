@@ -10,6 +10,8 @@ on:
       - 'scripts/azure_private_endpoint_step26.py'
       - 'scripts/azure_gateway_step28.py'
       - 'scripts/azure_entra_step29.py'
+      - 'scripts/private_terraform_ci.py'
+      - 'ci/private-terraform.CANDIDATE.yml'
       - 'scripts/rest04_private_dns_audit.py'
       - 'scripts/validate_package.py'
       - 'scripts/build_test_automation_ledger.py'
@@ -19,6 +21,7 @@ on:
       - 'tests/test_azure_private_endpoint_step26.py'
       - 'tests/test_azure_gateway_step28.py'
       - 'tests/test_azure_entra_step29.py'
+      - 'tests/test_private_terraform_ci.py'
       - 'tests/test_rest04_private_dns_audit.py'
       - 'tests/test_terraform_*.py'
   workflow_dispatch:
@@ -60,8 +63,13 @@ jobs:
         run: |
           python3 -B -m unittest discover -s tests -p 'test_azure_entra_step29.py' -v
           python3 -B tests/test_azure_entra_step29.py --evidence "$RUNNER_TEMP/az-t29-synthetic"
+      - name: Verify private Terraform input and workflow contracts without Azure
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_private_terraform_ci.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_terraform_stage1.py' -v
       - name: Format and validate provider contracts
         run: |
+          terraform fmt -check -recursive infra/bootstrap
           terraform fmt -check infra/environments/dev/main.tf infra/environments/dev/monitoring-private-link*.tf
           terraform fmt -check -recursive infra/modules/monitoring
           terraform fmt -check -recursive infra/environments/dev/tests
@@ -69,4 +77,5 @@ jobs:
             terraform -chdir="$root" init -backend=false -input=false -lockfile=readonly
             terraform -chdir="$root" validate
           done
+          terraform -chdir=infra/bootstrap test -filter=tests/private_ci.tftest.hcl
           terraform -chdir=infra/environments/dev test -filter=tests/monitoring_private_link.tftest.hcl

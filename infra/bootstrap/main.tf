@@ -52,7 +52,13 @@ resource "azurerm_storage_container" "state" {
   }
 }
 
+moved {
+  from = azurerm_role_assignment.ci_state_data
+  to   = azurerm_role_assignment.ci_state_data[0]
+}
+
 resource "azurerm_role_assignment" "ci_state_data" {
+  count                = var.ci_principal_object_id == null ? 0 : 1
   scope                = azurerm_storage_container.state.resource_manager_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = var.ci_principal_object_id

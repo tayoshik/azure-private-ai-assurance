@@ -21,3 +21,15 @@ Collect operational inputs in restricted storage. Local input checks are availab
 2. **P0 — Topology and dependencies**. Select Hub/dev and DNS/PE approval owners, approve CIDRs, actor-specific Entra/Monitor/certificate destinations, Firewall/Proxy and default routing. Code fixes the Azure Public authority/profile and the test input shape. Actual FIC, IPs, route, ID and bypass review remain owner inputs. This blocks real AZ-T26/28/29/30/31.
 3. **P1 — Real app and test account contract**. Provide deployed artifact/commit, actual private URL and health path, Entra registration/redirect and audience, approved test account or identity flow, one real screen route/selector, action and expected result. Current Terraform only wires infrastructure, UAI and configurable health paths; Stage 5 records the app, EasyAuth and deployment dependencies as outstanding. Thus there is no verified UI to turn into a Playwright spec.
 4. **P1 — Evidence access and supply**. Assign owners of required flow/alert telemetry, independent reviews and REST23 dependency supply. This blocks acceptance and integrated tests.
+
+## Minimal execution-platform decisions
+
+| Owner | Required response | Blocked gate |
+|---|---|---|
+| Azure administrator | Tenant/subscription/region, exact workload RG, bootstrap operator, preregistered providers and target role scopes | G07, bootstrap, workload plan |
+| Network and DNS | Hub or dev, zone/forwarding ownership, separate management/state/workload CIDRs, exact Blob PE IPs and approver | B04/B05, private network tests |
+| Runner platform | Independent ephemeral Linux x64 Runner, selected-workflow group restriction and protected encrypted plan mount | Live dispatch, plan custody |
+| Identity and release | Exact nonprod environments and three identities, container roles, protected reviewer policy and independent approval record | OIDC, data plane, plan/apply |
+| State custody | Existing/new backend, account/container/key, initial-state or migration decision, verified recovery location | State initialization and recovery |
+
+Use the [bootstrap and recovery procedure](private-terraform-execution.md) and validate the restricted copy of specs/private-terraform-ci.example.json offline.
