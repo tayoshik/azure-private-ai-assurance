@@ -24,7 +24,7 @@ All 13 remaining missing script references are the known Playwright references: 
 
 ## Extra per-ID flags generated for review
 
-The audit also reports overlapping, non-exclusive review flags:
+The audit also reports overlapping, non-exclusive review flags. **The initial GitHub Actions report identified 160 odd-case artifact-presence commands** requiring explicit comparison with approved expected content and control baselines; this is a review queue, not 160 proven failures:
 
 - `REAL_APP_AUTH_AND_RUNNER_REQUIRED` for all 13 browser-related cases.
 - `ODD_ID_RUNS_SELFTEST_NOT_RUNTIME_EVIDENCE` for AZ-T74-13.
