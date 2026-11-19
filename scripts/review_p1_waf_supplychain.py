@@ -175,7 +175,7 @@ def compare(case_id, o, approved):
                   "SBOM_HAS_NO_COMPONENTS")
         boolean(o, "sbom_artifact_digest_matches", True)
         required_string(o.get("immutable_sbom_reference"), "SBOM_REFERENCE")
-        safe_json_sbom(o.get("sbom_path"), a["sbom_sha256"], o["sbom_format"],
+        safe_json_sbom(o.get("sbom_path"), approved["sbom_sha256"], o["sbom_format"],
                        o["image_digest"], o["component_count"])
     elif case_id == "AZ-T50-21":
         same(o, approved, "policy_resource_id", "unapproved_image_ref",
