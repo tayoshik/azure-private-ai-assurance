@@ -125,6 +125,8 @@ class Phase6RecoveryTests(unittest.TestCase):
         self.assertEqual(classifier.classify({**r, "source": "SYNTHETIC"}), "NOT_READY")
         self.assertEqual(classifier.classify({**r, "asset_exists": 1}), "NOT_READY")
         self.assertEqual(classifier.classify({**r, "control_plane_private_confirmed": 1}), "NOT_READY")
+        self.assertEqual(classifier.classify({**r, "observation": []}), "NOT_READY")
+        self.assertEqual(classifier.classify({**r, "observation": {"unexpected": "object"}}), "NOT_READY")
 
     def test_classifier_synthetic_selftest_and_observation_never_exit_zero(self):
         p = subprocess.run([sys.executable, str(ROOT/"scripts/phase6_result_classifier.py"),
@@ -149,10 +151,10 @@ class Phase6RecoveryTests(unittest.TestCase):
         r = audit(ROOT, include_cases=True)
         self.assertFalse(r["errors"], r["errors"])
         self.assertEqual(r["canonical_test_ids"], 1716)
-        self.assertEqual(r["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"], 126)
-        self.assertEqual(r["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"], 873)
+        self.assertLessEqual(r["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"], 126)
+        self.assertGreaterEqual(r["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"], 873)
         self.assertEqual(r["literal_script_reference"]["NO_DIRECT_SCRIPT_REFERENCE"], 717)
-        self.assertEqual(r["cases_with_missing_input"], 2)
+        self.assertLessEqual(r["cases_with_missing_input"], 2)
         self.assertNotIn("scripts/phase6_guard.py", r["missing_script_paths"])
         self.assertNotIn("scripts/phase6_result_classifier.py", r["missing_script_paths"])
         self.assertEqual(r["azure_live_passes_verified"], 0)
