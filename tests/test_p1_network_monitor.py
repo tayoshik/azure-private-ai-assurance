@@ -235,8 +235,9 @@ class NextTenNetworkMonitorTests(unittest.TestCase):
         o["observation"]["p95_minutes"]=0.0
         self.assertEqual(p.assess(cid,o,a)["result"],"DIFFERENCE_REVIEW_REQUIRED")
         o,a=fixture(cid)
-        o["observation"]["ingestion_samples"][0]["ingested_utc"]=iso(
-            datetime.now(timezone.utc)+timedelta(hours=6))
+        for row in o["observation"]["ingestion_samples"][:2]:
+            row["ingested_utc"]=iso(datetime.now(timezone.utc)+timedelta(hours=6))
+        # With 20 samples, at least two late samples must influence nearest-rank p95.
         self.assertNotEqual(p.assess(cid,o,a)["result"],"REVIEW_REQUIRED")
         o,a=fixture(cid)
         a["expected"]["approved_p95_minutes"]=1.0
