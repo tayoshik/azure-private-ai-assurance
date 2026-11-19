@@ -1,0 +1,102 @@
+name: P1 WAF, SBOM, TLS and route control review (offline only)
+on:
+  push:
+    paths:
+      - 'scripts/review_p1_waf_supplychain.py'
+      - 'tests/test_p1_waf_supplychain.py'
+      - 'docs/p1-waf-supplychain-ten.md'
+      - '.github/workflows/p1-waf-supplychain.yml'
+  pull_request:
+    paths:
+      - 'scripts/review_p1_waf_supplychain.py'
+      - 'tests/test_p1_waf_supplychain.py'
+      - 'docs/p1-waf-supplychain-ten.md'
+      - '.github/workflows/p1-waf-supplychain.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-grounded-ten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Ten new source cases, JUnit XML/SBOM bytes and negative controls
+        run: python3 -m unittest discover -s tests -p 'test_p1_waf_supplychain.py' -v
+      - name: Preserve the previous 30 P1 comparator and priority regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_p1_source_evidence.py' -v
+          python3 -m unittest discover -s tests -p 'test_p1_network_monitor.py' -v
+          python3 -m unittest discover -s tests -p 'test_p1_evidence_correlation.py' -v
+          python3 -m unittest discover -s tests -p 'test_static_criteria_review.py' -v
+      - name: Assert 40 distinct P1 cases without independent security review
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.triage_static_criteria import triage
+          from scripts.review_p1_evidence_correlation import CASE_CRITERIA as c1
+          from scripts.review_p1_network_monitor import CASES as c2
+          from scripts.review_p1_source_evidence import CASES as c3
+          from scripts.review_p1_waf_supplychain import CASES as c4
+          ranks=triage()
+          assert not ranks['errors']
+          assert ranks['static_review_candidates']==160
+          assert ranks['priority_counts']=={'P0':5,'P1':127,'P2':28}
+          p1={x['id'] for x in ranks['cases'] if x['priority']=='P1'}
+          ids=set(c1)|set(c2)|set(c3)|set(c4)
+          assert all(len(c)==10 for c in (c1,c2,c3,c4))
+          assert len(ids)==40 and ids<=p1 and len(p1-ids)==87
+          record={'schema':'azure-p1-comparator-coverage/v4',
+                  'original_p1_cases':127,
+                  'new_case_ids':sorted(c4),
+                  'local_comparator_coverage':40,
+                  'not_covered_by_these_comparators':87,
+                  'independently_reviewed_cases':0,
+                  'azure_live_passes':0,
+                  'release_decision':'NO_GO'}
+          Path('artifacts/p1-40-coverage.json').write_text(
+              json.dumps(record,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+      - name: Canonical source dependencies and release gate stay NO_GO
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > artifacts/dependency.json
+          python3 - <<'PY'
+          import json
+          j=json.load(open('artifacts/dependency.json',encoding='utf-8'))
+          assert j['canonical_test_ids']==1716 and j['errors']==[]
+          assert j['literal_script_reference']=={
+            'TRACKED_SCRIPT_REFERENCE':986,
+            'MISSING_SCRIPT_REFERENCE':13,
+            'NO_DIRECT_SCRIPT_REFERENCE':717}
+          assert j['cases_with_missing_input']==0
+          assert j['azure_live_passes_verified']==0
+          assert j['release_decision']=='NO_GO'
+          PY
+          code=0
+          python3 scripts/audit_semantic_readiness.py --strict > /dev/null || code=$?
+          test "$code" -eq 2
+          code=0
+          python3 scripts/release_gate.py > artifacts/release.json || code=$?
+          test "$code" -eq 2
+          python3 - <<'PY'
+          import json
+          j=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert j['decision']=='NO_GO' and j['verified_live_azure_passes']==0
+          PY
+      - name: Upload offline review metadata only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-waf-sbom-tls-review-only
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
