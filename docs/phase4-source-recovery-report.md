@@ -1,4 +1,4 @@
-# Phase 4 guard restoration, original rule data pending (2026-11-19)
+# Phase 4 guard and original rule data restored (2026-11-19)
 
 ## Scope and provenance
 
@@ -15,7 +15,7 @@ Frozen original:
 
 The replacement scripts/phase4_guard.py uses typed predicates, strict 286 ID / 143 control assertions, rejection of malformed/synthetic provenance, and makes every observation-mode result exit 2 with REVIEW_REQUIRED, DIFFERENCE_REVIEW_REQUIRED, or NOT_READY. Only successful synthetic fixture selftests may return exit 0. Never promote them to Azure acceptance.
 
-**The 600,202-byte original JSON has NOT been committed yet.** It is provided separately as a SHA-256-checked source file in the companion conversation artifact. The English publication specs/phase4_286_en.json is already tracked but lacks the 143 original fixture predicates and cannot replace the frozen original. Do not fabricate or generate placeholder JSON. The default Phase 4 guard therefore correctly returns NOT_READY.
+**The exact 600,202-byte original JSON is now committed** at `specs/phase4_286.json`; its Git blob SHA-1 is `27f497770afac4bf34076b3c7df23d8508fff542`, verified against the original frozen source. The source SHA-256 is pinned in the workflow. The publication file `specs/phase4_286_en.json` retains source-era metadata and 37 documented command edits; it is not a substitute for the original predicates. `python3 scripts/phase4_guard.py --selftest ALL` now runs all 286 frozen synthetic checks on GitHub. Synthetic success still cannot provide real Azure PASS.
 
 ## Actual current dependency status
 
@@ -24,11 +24,11 @@ The replacement scripts/phase4_guard.py uses typed predicates, strict 286 ID / 1
 | Cases referencing a missing code path | 536 | **389** |
 | Cases referencing a tracked code path | 463 | **610** |
 | Cases with no direct script path | 717 | 717 |
-| Cases referencing missing literal input file | 145 | 145 |
+| Cases referencing missing literal input file | 145 | **2** |
 | Azure live accepted passes | 0 | 0 |
 | Release | NO_GO | NO_GO |
 
-**This restores the 143 Phase 4 Guard script references plus four Step 45 plan-policy script references, not the 143 source-rule inputs or any Azure execution.** The program is not ready for 286 original-case selftests on GitHub until the exact source is checked in.
+**The source-rule input has also been restored.** Phase 4 now runs 143 frozen control rules and all 286 associated synthetic labels. The two remaining missing literal files are `fixtures/plan_app_pna_true.json` and `fixtures/plan_nsg_any.json` (separate plan-policy regressions). No Azure execution or independent live acceptance has occurred.
 
 ## Stage 45 plan guard provenance and release behavior
 
@@ -51,11 +51,10 @@ python3 scripts/audit_catalogue_dependencies.py
 python3 scripts/release_gate.py
 ~~~
 
-The ledger and CI need regenerating once the genuine source JSON is present, and the source-pending CI's expected refusal assertion must be replaced by an original-source 286-case selftest assertion (not by ignoring missing data).
+The ledger is unchanged by adding the input JSON because it classifies executable script references; the independent dependency audit now reports two missing plan input references. The source-pending CI was replaced by a SHA-pinned original-source 286-case assertion; missing data is never ignored.
 
 ## Next actions
 
-1. Move the exact source bytes into the repository via an approved GitHub binary/file-transfer path; do not transcribe or re-create the original.
-2. Add source hash validation in CI and run all original 286 synthetic tests. Compare all 286 original command strings with the 286 English publications; review documented jq quote edits.
-3. Review the existing Stage 45 plan-policy original guard separately. Its review-required CLI returns 0 and therefore needs a fail-closed exit convention before restoration; avoid treating mere plan-file existence as compliance.
-4. Restore independent baseline and review evidence for real Azure tests only through approved CI/runner; this repository cannot issue GO.
+1. Review source-preserving original JSON blob and the 37 documented command edits. Synthetic pass is not deployed-resource evidence.
+2. Recover the two missing plan fixture files from their frozen original sources, with negative-path tests.
+3. Continue Phase 5 guard recovery and source identity for steps 46–58, preserving NO_GO until independent live acceptance.
