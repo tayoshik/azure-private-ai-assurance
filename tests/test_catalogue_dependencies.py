@@ -37,8 +37,10 @@ class DependencyAuditTests(unittest.TestCase):
     def test_current_missing_references_are_reported(self):
         self.assertGreater(self.report["cases_with_unresolved_literal_dependencies"], 0)
         self.assertNotIn("scripts/phase4_guard.py", self.report["missing_script_paths"])
-        self.assertIn("specs/phase4_286.json", self.report["missing_input_paths"])
-        self.assertIn("AZ-T33-02", self.report["unresolved_ids"])
+        self.assertNotIn("specs/phase4_286.json", self.report["missing_input_paths"])
+        self.assertIn("fixtures/plan_app_pna_true.json", self.report["missing_input_paths"])
+        self.assertIn("fixtures/plan_nsg_any.json", self.report["missing_input_paths"])
+        self.assertNotIn("AZ-T33-02", self.report["unresolved_ids"])
 
     def test_literal_parser_does_not_misclassify_azure_cli(self):
         command = 'az network vnet show -g "$RG" -n "$NAME" --query id'
