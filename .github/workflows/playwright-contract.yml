@@ -5,12 +5,14 @@ on:
       - 'scripts/validate_playwright_contract.py'
       - 'tests/test_playwright_contract.py'
       - 'docs/playwright-contract-schema.md'
+      - 'docs/playwright-contract.template.json'
       - '.github/workflows/playwright-contract.yml'
   pull_request:
     paths:
       - 'scripts/validate_playwright_contract.py'
       - 'tests/test_playwright_contract.py'
       - 'docs/playwright-contract-schema.md'
+      - 'docs/playwright-contract.template.json'
       - '.github/workflows/playwright-contract.yml'
   workflow_dispatch:
 permissions:
@@ -25,6 +27,19 @@ jobs:
           persist-credentials: false
       - name: Refuse secrets, missing source, insecure TLS and generic browser assertions
         run: python3 -m unittest discover -s tests -p 'test_playwright_contract.py' -v
+      - name: Owner template is deliberately NOT_READY, exit code 2
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/validate_playwright_contract.py --contract docs/playwright-contract.template.json > /tmp/contract-status.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/contract-status.json',encoding='utf-8'))
+          assert d['result']=='NOT_READY'
+          assert d['azure_live_passes']==0 and d['release_decision']=='NO_GO'
+          PY
       - name: Keep the 13 original unresolved references and 0 Azure passes
         shell: bash
         run: |
