@@ -138,7 +138,7 @@ def compare_control(case_id, obs, approved):
         base.need(type(records) is list and type(targets) is list and len(records) >= 2
                   and base.strings(targets) and len(records) == len(targets),
                   "MISSING_PUBLIC_EGRESS_TEST_SET")
-        got = []
+        got, flow_ids = [], []
         for item in records:
             base.need(type(item) is dict, "BAD_PUBLIC_EGRESS_RECORD")
             dest = base.address(item.get("destination_ip"))
@@ -147,6 +147,9 @@ def compare_control(case_id, obs, approved):
             base.need(base.text(item.get("outcome")), "MISSING_EGRESS_OUTCOME")
             base.agree(item["outcome"] == "Denied", "UNAPPROVED_PUBLIC_EGRESS_SUCCEEDED")
             base.need(base.text(item.get("flow_log_id")), "MISSING_EGRESS_FLOW_LOG")
+            flow_ids.append(item["flow_log_id"])
+        base.agree(len(set(flow_ids)) == len(flow_ids),
+                   "DUPLICATE_EGRESS_FLOW_CORRELATION")
         base.agree(set(got) == set(targets) and len(set(got)) == len(got),
                    "PUBLIC_EGRESS_TARGET_SET_MISMATCH")
         src = base.address(obs.get("source_ip"))
