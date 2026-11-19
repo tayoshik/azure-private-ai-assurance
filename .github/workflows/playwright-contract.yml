@@ -1,0 +1,62 @@
+name: Playwright implementation contract (offline, fail closed)
+on:
+  push:
+    paths:
+      - 'scripts/validate_playwright_contract.py'
+      - 'tests/test_playwright_contract.py'
+      - 'docs/playwright-contract-schema.md'
+      - '.github/workflows/playwright-contract.yml'
+  pull_request:
+    paths:
+      - 'scripts/validate_playwright_contract.py'
+      - 'tests/test_playwright_contract.py'
+      - 'docs/playwright-contract-schema.md'
+      - '.github/workflows/playwright-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-untrusted-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Refuse secrets, missing source, insecure TLS and generic browser assertions
+        run: python3 -m unittest discover -s tests -p 'test_playwright_contract.py' -v
+      - name: Keep the 13 original unresolved references and 0 Azure passes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > /tmp/full-catalogue.json
+          python3 scripts/audit_playwright_readiness.py > /tmp/playwright-status.json
+          python3 - <<'PY'
+          import json
+          a=json.load(open('/tmp/full-catalogue.json',encoding='utf-8'))
+          p=json.load(open('/tmp/playwright-status.json',encoding='utf-8'))
+          assert a['canonical_test_ids'] == 1716 and not a['errors']
+          assert a['literal_script_reference']['MISSING_SCRIPT_REFERENCE'] == 13
+          assert a['cases_with_missing_input'] == 0
+          assert p['case_references_reviewed'] == 13 and p['case_path_missing'] == 13
+          assert p['approved_live_azure_passes'] == 0
+          assert p['readiness'] == 'BLOCKED_UNVERIFIED_APP_AND_RUNNERS'
+          assert a['release_decision'] == 'NO_GO'
+          print('Owner contract unverified; Playwright missing 13; NO_GO.')
+          PY
+      - name: Strict readiness and release must refuse
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_playwright_readiness.py --strict > /dev/null || rc=$?
+          test "$rc" -eq 2
+          rc=0
+          python3 scripts/release_gate.py > /tmp/release-no-go.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          r=json.load(open('/tmp/release-no-go.json',encoding='utf-8'))
+          assert r['decision'] == 'NO_GO' and r['verified_live_azure_passes'] == 0
+          PY
