@@ -1,0 +1,104 @@
+name: P1 additional source-evidence ten checks (offline only)
+on:
+  push:
+    paths:
+      - 'scripts/review_p1_source_evidence.py'
+      - 'tests/test_p1_source_evidence.py'
+      - 'docs/p1-source-evidence-ten.md'
+      - '.github/workflows/p1-source-evidence.yml'
+  pull_request:
+    paths:
+      - 'scripts/review_p1_source_evidence.py'
+      - 'tests/test_p1_source_evidence.py'
+      - 'docs/p1-source-evidence-ten.md'
+      - '.github/workflows/p1-source-evidence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-evidence-ten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Source-linked new ten cases and fail-closed regression
+        run: python3 -m unittest discover -s tests -p 'test_p1_source_evidence.py' -v
+      - name: Preserve previous twenty P1 case regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_p1_network_monitor.py' -v
+          python3 -m unittest discover -s tests -p 'test_p1_evidence_correlation.py' -v
+          python3 -m unittest discover -s tests -p 'test_static_criteria_review.py' -v
+      - name: Enforce exactly thirty source-linked P1 cases, no independent approvals
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 - <<'PY'
+          from scripts.triage_static_criteria import triage
+          from scripts.review_p1_source_evidence import CASES as new
+          from scripts.review_p1_network_monitor import CASES as previous
+          from scripts.review_p1_evidence_correlation import CASE_CRITERIA as first
+          import json
+          from pathlib import Path
+          rank=triage()
+          assert rank['static_review_candidates']==160 and rank['errors']==[]
+          assert rank['priority_counts']=={'P0':5,'P1':127,'P2':28}
+          p1={x['id'] for x in rank['cases'] if x['priority']=='P1'}
+          ids=set(first)|set(previous)|set(new)
+          assert len(first)==len(previous)==len(new)==10
+          assert len(ids)==30 and ids<=p1
+          result={
+            'schema':'azure-p1-comparator-coverage/v3',
+            'original_p1_cases':127,
+            'previous_p1_comparators':20,
+            'new_ids':sorted(new),
+            'total_p1_comparators':len(ids),
+            'p1_without_new_comparator':len(p1-ids),
+            'independently_reviewed_p1':0,
+            'azure_live_passes':0,
+            'release_decision':'NO_GO'
+          }
+          assert result['p1_without_new_comparator']==97
+          Path('artifacts/p1-30-coverage.json').write_text(
+              json.dumps(result,sort_keys=True,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Check immutable 1716 inventory and safe release refusal
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > artifacts/dependency.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('artifacts/dependency.json',encoding='utf-8'))
+          assert not x['errors'] and x['canonical_test_ids']==1716
+          assert x['literal_script_reference']=={
+              'TRACKED_SCRIPT_REFERENCE':986,
+              'MISSING_SCRIPT_REFERENCE':13,
+              'NO_DIRECT_SCRIPT_REFERENCE':717
+          }
+          assert x['cases_with_missing_input']==0
+          assert x['azure_live_passes_verified']==0
+          assert x['release_decision']=='NO_GO'
+          PY
+          rc=0
+          python3 scripts/audit_semantic_readiness.py --strict > /dev/null || rc=$?
+          test "$rc" -eq 2
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          x=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert x['decision']=='NO_GO' and x['verified_live_azure_passes']==0
+          PY
+      - name: Upload offline review metadata only (no real Azure evidence)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-source-evidence-30-review-only
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
