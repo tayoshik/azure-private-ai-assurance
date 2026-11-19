@@ -1,0 +1,96 @@
+name: Phase 7 frozen original source, Plan triage and dependency audit (offline)
+on:
+  push:
+    paths:
+      - 'specs/phase7_220.json'
+      - 'scripts/phase7_guard.py'
+      - 'scripts/phase7_plan_policy.py'
+      - 'fixtures/plan_*.json'
+      - 'tests/test_phase7_primary_source.py'
+      - 'specs/test-automation-ledger.json'
+      - '.github/workflows/phase7-primary-source.yml'
+  pull_request:
+    paths:
+      - 'specs/phase7_220.json'
+      - 'scripts/phase7_guard.py'
+      - 'scripts/phase7_plan_policy.py'
+      - 'fixtures/plan_*.json'
+      - 'tests/test_phase7_primary_source.py'
+      - 'specs/test-automation-ledger.json'
+      - '.github/workflows/phase7-primary-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-source-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Confirm all 110 controls, 220 cases, and source provenance
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/phase7_guard.py --selftest ALL --spec specs/phase7_220.json > artifacts/phase7-synthetic.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/phase7-synthetic.json",encoding="utf-8") as f:
+              x=json.load(f)
+          assert x["case_labels_tested"] == 220
+          assert x["synthetic_checks_succeeded"] == 220
+          assert x["azure_live_passes"] == 0 and x["release_decision"] == "NO_GO"
+          PY
+      - name: Reuse English CLI without substituting translated source
+        run: python3 scripts/phase7_guard.py --selftest AZ-T69-02 --spec specs/phase7_220_en.json
+      - name: Terraform Plan 3 original synthetic fixtures only
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/phase7_plan_policy.py --selftest > artifacts/plan-synthetic.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/plan-synthetic.json",encoding="utf-8") as f:
+              x=json.load(f)
+          assert x["synthetic_cases"] == 3 and x["selftest_pass"] == 3
+          assert x["azure_live_passes"] == 0 and x["release_decision"] == "NO_GO"
+          PY
+      - name: 14 negative-path / provenance regressions
+        run: python3 -m unittest discover -s tests -p 'test_phase7_primary_source.py' -v
+      - name: Recompute complete 1716 ledger and fail closed for release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/dependency.json > artifacts/dependency-summary.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/dependency.json",encoding="utf-8") as f:
+              x=json.load(f)
+          assert x["canonical_test_ids"] == 1716 and not x["errors"]
+          assert x["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"] == 13
+          assert x["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"] == 986
+          assert x["literal_script_reference"]["NO_DIRECT_SCRIPT_REFERENCE"] == 717
+          assert x["cases_with_missing_input"] == 0
+          assert x["release_decision"] == "NO_GO" and x["azure_live_passes_verified"] == 0
+          PY
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          with open("artifacts/release.json",encoding="utf-8") as f:
+              x=json.load(f)
+          assert x["decision"] == "NO_GO"
+          assert x["verified_live_azure_passes"] == 0
+          PY
+      - name: Preserve audit without credentials
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase7-frozen-offline-audit
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
