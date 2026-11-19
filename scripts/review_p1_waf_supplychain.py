@@ -67,6 +67,56 @@ def exact_digest(observation, approved, key):
     require_sha256(observation[key], key)
 
 
+def safe_json_sbom(filename, expected_sha, kind, image_sha, claimed_count):
+    """Read actual offline SBOM bytes and inspect the artifact-specific contents."""
+    require_sha256(expected_sha, "approved_sbom")
+    base.need(base.text(filename), "MISSING_SBOM_FILE_PATH")
+    path = Path(filename)
+    try:
+        base.need(path.is_file() and not path.is_symlink(),
+                  "SBOM_FILE_NOT_PRESENT_OR_SYMLINK")
+        base.need(0 < path.stat().st_size <= MAX_XML_BYTES, "SBOM_FILE_SIZE_INVALID")
+        raw = path.read_bytes()
+        base.agree(hashlib.sha256(raw).hexdigest() == expected_sha,
+                   "SBOM_SHA256_DIFFERS_FROM_APPROVED_SOURCE")
+        doc = json.loads(raw)
+    except (OSError, UnicodeError, ValueError):
+        raise base.Incomplete("INVALID_OR_UNREADABLE_SBOM") from None
+    base.need(type(doc) is dict, "INVALID_SBOM_OBJECT")
+
+    if kind == "CycloneDX":
+        base.agree(doc.get("bomFormat") == "CycloneDX", "SBOM_NOT_CYCLONEDX")
+        metadata = doc.get("metadata")
+        base.need(type(metadata) is dict, "MISSING_SBOM_METADATA")
+        component = metadata.get("component")
+        base.need(type(component) is dict, "MISSING_SBOM_ARTIFACT_COMPONENT")
+        hashes = component.get("hashes")
+        base.need(type(hashes) is list, "MISSING_SBOM_ARTIFACT_HASHES")
+        base.agree(any(type(h) is dict and h.get("alg") == "SHA-256" and
+                       h.get("content") == image_sha for h in hashes),
+                   "SBOM_ARTIFACT_HASH_UNBOUND")
+        components = doc.get("components")
+    elif kind == "SPDX":
+        version = doc.get("spdxVersion")
+        base.need(base.text(version), "MISSING_SPDX_VERSION")
+        base.agree(version.startswith("SPDX-2."), "UNSUPPORTED_SPDX_VERSION")
+        components = doc.get("packages")
+        base.need(type(components) is list, "MISSING_SPDX_PACKAGES")
+        base.agree(any(type(c) is dict and type(c.get("checksums")) is list and
+                       any(type(h) is dict and h.get("algorithm") == "SHA256" and
+                           h.get("checksumValue") == image_sha
+                           for h in c["checksums"]) for c in components),
+                   "SPDX_ARTIFACT_HASH_UNBOUND")
+    else:
+        raise base.Incomplete("UNSUPPORTED_SBOM_KIND")
+
+    base.need(type(components) is list, "MISSING_SBOM_COMPONENTS")
+    base.agree(len(components) == claimed_count, "SBOM_COMPONENT_COUNT_MISMATCH")
+    base.need(claimed_count > 0, "EMPTY_SBOM_COMPONENTS")
+    for component in components:
+        base.need(type(component) is dict, "INVALID_SBOM_COMPONENT")
+
+
 def safe_xml_junit(filename, approved_sha, expected_case):
     """Parse a *local* JUnit summary, not execute tests or trust the producer."""
     require_sha256(approved_sha, "approved_junit")
@@ -97,6 +147,10 @@ def safe_xml_junit(filename, approved_sha, expected_case):
         base.need(declared is not None and declared.isdecimal(),
                   "JUNIT_MISSING_TEST_COUNT")
         base.agree(int(declared) == len(rows), "JUNIT_DECLARED_TESTS_MISMATCH")
+        for attr in ("failures", "errors", "skipped"):
+            count = suite.get(attr, "0")
+            base.need(count.isdecimal(), "JUNIT_NONNUMERIC_" + attr.upper())
+            base.agree(int(count) == 0, "JUNIT_SUITE_HAS_" + attr.upper())
         for row in rows:
             for forbidden in ("failure", "error", "skipped"):
                 base.agree(row.find(forbidden) is None,
@@ -121,6 +175,8 @@ def compare(case_id, o, approved):
                   "SBOM_HAS_NO_COMPONENTS")
         boolean(o, "sbom_artifact_digest_matches", True)
         required_string(o.get("immutable_sbom_reference"), "SBOM_REFERENCE")
+        safe_json_sbom(o.get("sbom_path"), a["sbom_sha256"], o["sbom_format"],
+                       o["image_digest"], o["component_count"])
     elif case_id == "AZ-T50-21":
         same(o, approved, "policy_resource_id", "unapproved_image_ref",
              "test_request_id", "denial_rule_id")
