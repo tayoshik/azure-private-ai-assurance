@@ -1,0 +1,102 @@
+name: Phase 3 original-source and IPAM offline assurance
+on:
+  push:
+    paths:
+      - 'specs/phase3_264.json'
+      - 'scripts/phase3_guard.py'
+      - 'fixtures/ipam_ok.json'
+      - 'fixtures/ipam_bad.json'
+      - 'tests/test_phase3_source_recovery.py'
+      - 'specs/test-automation-ledger.json'
+      - '.github/workflows/phase3-source-recovery.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phase3-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Pin original Phase 3 primary source
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo '66d389a459bd0abc6ce930a1995e6d1328b087c3532849957f2bc458f7336c14  specs/phase3_264.json' | sha256sum -c -
+      - name: Check 264 original IDs and 132 fixture controls (NOT live acceptance)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/phase3_guard.py --selftest ALL > artifacts/phase3-fixture-smoke.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/phase3-fixture-smoke.json", encoding="utf-8") as file:
+              result = json.load(file)
+          assert result["checked_test_ids"] == 264
+          assert result["detector_smoke_pass"] == 264
+          assert result["detector_smoke_fail"] == 0
+          assert result["azure_live_passes"] == 0
+          assert result["release_decision"] == "NO_GO"
+          print("264 ID-labeled fixture checks; no Azure tests executed")
+          PY
+      - name: Verify sample IPAM never returns accepted PASS
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/phase3_guard.py --cidr-check fixtures/ipam_ok.json > artifacts/ipam-structural-good.json || rc=$?
+          test "$rc" -eq 2
+          rc=0
+          python3 scripts/phase3_guard.py --cidr-check fixtures/ipam_bad.json > artifacts/ipam-structural-bad.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          def load(path):
+              with open(path,encoding="utf-8") as file: return json.load(file)
+          good=load("artifacts/ipam-structural-good.json")
+          bad=load("artifacts/ipam-structural-bad.json")
+          assert good["result"] == "REVIEW_REQUIRED"
+          assert bad["result"] == "DIFFERENCE_REVIEW_REQUIRED"
+          assert good["azure_live_passes"] == bad["azure_live_passes"] == 0
+          print("IPAM outcomes are review-only")
+          PY
+      - name: Phase 3 primary source and adversarial regressions
+        run: python3 -m unittest discover -s tests -p 'test_phase3_source_recovery.py' -v
+      - name: Recalculate entire 1716-case ledger and ensure release denial
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/verify_publication.py > artifacts/publication.json
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/dependencies.json > artifacts/dependency-summary.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/dependencies.json",encoding="utf-8") as file: d=json.load(file)
+          assert d["canonical_test_ids"] == 1716 and not d["errors"]
+          assert d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"] == 536
+          assert d["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"] == 463
+          assert d["cases_with_missing_input"] == 145
+          assert d["release_decision"] == "NO_GO"
+          PY
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          with open("artifacts/release.json",encoding="utf-8") as file: d=json.load(file)
+          assert d["decision"] == "NO_GO"
+          assert d["verified_live_azure_passes"] == 0
+          print("Release remains denied as required")
+          PY
+      - name: Retain sanitized offline artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-primary-source-and-ipam-review
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
