@@ -52,10 +52,12 @@ jobs:
           import json
           with open('/tmp/dependency-phase6.json',encoding='utf-8') as f: a=json.load(f)
           assert a['canonical_test_ids'] == 1716 and a['errors'] == []
-          assert a['literal_script_reference'] == {
-            'MISSING_SCRIPT_REFERENCE':126,'NO_DIRECT_SCRIPT_REFERENCE':717,
-            'TRACKED_SCRIPT_REFERENCE':873}
-          assert a['cases_with_missing_input'] == 2
+          assert a['literal_script_reference']['MISSING_SCRIPT_REFERENCE'] <= 126
+          assert a['literal_script_reference']['TRACKED_SCRIPT_REFERENCE'] >= 873
+          assert a['literal_script_reference']['NO_DIRECT_SCRIPT_REFERENCE'] == 717
+          assert a['cases_with_missing_input'] <= 2
+          assert 'scripts/phase6_guard.py' not in a['missing_script_paths']
+          assert 'scripts/phase6_result_classifier.py' not in a['missing_script_paths']
           assert a['azure_live_passes_verified'] == 0 and a['release_decision'] == 'NO_GO'
           print('Remaining missing scripts:',a['missing_script_paths'])
           PY
