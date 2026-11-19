@@ -1,0 +1,98 @@
+name: Phase 1-2 canonical source and fail-closed review (offline)
+on:
+  push:
+    paths:
+      - 'specs/phase1_policies_110.json'
+      - 'specs/phase2_220.json'
+      - 'scripts/phase1_policy_check.py'
+      - 'scripts/phase2_policy_check.py'
+      - 'tests/test_phase12_canonical_sources.py'
+      - '.github/workflows/phase12-source-recovery.yml'
+  pull_request:
+    paths:
+      - 'specs/phase1_policies_110.json'
+      - 'specs/phase2_220.json'
+      - 'scripts/phase1_policy_check.py'
+      - 'scripts/phase2_policy_check.py'
+      - 'tests/test_phase12_canonical_sources.py'
+      - '.github/workflows/phase12-source-recovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-source-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Verify 440 Phase 1 and 2 published test IDs and commands
+        run: python3 scripts/verify_english_tests.py
+      - name: Phase 1 all 110 synthetic triples
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/phase1_policy_check.py --selftest --all | tee artifacts/phase1-synthetic.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/phase1-synthetic.json",encoding="utf-8") as f:
+              j=json.load(f)
+          assert j["summary"] == {"SELFTEST_PASS":110,"SELFTEST_FAIL":0}
+          assert j["azure_live_pass_count"] == 0
+          PY
+      - name: Phase 2 all 110 synthetic triplets against restored canonical source
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/phase2_policy_check.py --selftest ALL | tee artifacts/phase2-synthetic.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/phase2-synthetic.json",encoding="utf-8") as f:
+              j=json.load(f)
+          assert j["synthetic_cases"] == 110 and j["selftest_pass"] == 110
+          assert j["azure_live_passes"] == 0
+          PY
+      - name: Source identity, tampered inputs, and fail-closed negative tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase12_canonical_sources.py' -v
+          python3 -m unittest discover -s tests -p 'test_phase2_policy.py' -v
+      - name: Recalculate whole-catalogue dependency status
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/dependency-status.json > artifacts/dependency-summary.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/dependency-status.json",encoding="utf-8") as f:
+              j=json.load(f)
+          assert not j["errors"] and j["canonical_test_ids"] == 1716
+          assert j["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"] <= 669
+          assert j["cases_with_missing_input"] <= 277
+          assert j["release_decision"] == "NO_GO"
+          print("Remaining missing-code cases:", j["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"])
+          print("Remaining missing-input cases:", j["cases_with_missing_input"])
+          PY
+      - name: Release must still be denied
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          with open("artifacts/release.json",encoding="utf-8") as f:
+              j=json.load(f)
+          assert j["decision"] == "NO_GO" and j["verified_live_azure_passes"] == 0
+          print("Expected release denial: NO_GO")
+          PY
+      - name: Save sanitized audit evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: phase12-canonical-offline-evidence
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
