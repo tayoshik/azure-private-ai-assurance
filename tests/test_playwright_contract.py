@@ -171,6 +171,16 @@ class PlaywrightContractTests(unittest.TestCase):
                 self.assertEqual(report["result"], "NOT_READY")
                 self.assertEqual(report["release_decision"], "NO_GO")
 
+    def test_owner_template_is_intentionally_invalid(self):
+        path = ROOT / "docs/playwright-contract.template.json"
+        self.assertTrue(path.is_file())
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(set(data["scenarios"]), set(p.KIND_BY_ID))
+        report = p.validate(data)
+        self.assertEqual(report["result"], "NOT_READY")
+        self.assertEqual(report["azure_live_passes"], 0)
+        self.assertEqual(report["release_decision"], "NO_GO")
+
     def test_invalid_root_and_unexpected_types_do_not_crash(self):
         for bad in (None, [], ["unexpected"], {"schema": "unknown"},
                     {"schema": "azure-private-ai-playwright-contract/v1",
