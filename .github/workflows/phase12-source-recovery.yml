@@ -42,7 +42,7 @@ jobs:
           assert j["summary"] == {"SELFTEST_PASS":110,"SELFTEST_FAIL":0}
           assert j["azure_live_pass_count"] == 0
           PY
-      - name: Phase 2 all 110 synthetic triplets against restored canonical source
+      - name: Phase 2 110 ID-labeled generic comparator smoke tests (not per-control proof)
         shell: bash
         run: |
           set -Eeuo pipefail
