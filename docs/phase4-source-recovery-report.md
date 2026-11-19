@@ -21,14 +21,18 @@ The replacement scripts/phase4_guard.py uses typed predicates, strict 286 ID / 1
 
 | Category | Before Phase 4 guard | Now |
 | --- | ---: | ---: |
-| Cases referencing a missing code path | 536 | 393 |
-| Cases referencing a tracked code path | 463 | 606 |
+| Cases referencing a missing code path | 536 | **389** |
+| Cases referencing a tracked code path | 463 | **610** |
 | Cases with no direct script path | 717 | 717 |
 | Cases referencing missing literal input file | 145 | 145 |
 | Azure live accepted passes | 0 | 0 |
 | Release | NO_GO | NO_GO |
 
-**This restores only the script path, not the 143 control-specific rule input references or their Azure execution.** The program is not ready for 286 original-case selftests on GitHub until the exact source is checked in.
+**This restores the 143 Phase 4 Guard script references plus four Step 45 plan-policy script references, not the 143 source-rule inputs or any Azure execution.** The program is not ready for 286 original-case selftests on GitHub until the exact source is checked in.
+
+## Stage 45 plan guard provenance and release behavior
+
+The Stage 45 plan-policy source in English Turn 05 (original SHA-256 d5ca30c66a6024fa4d52b967c9c5c2e95a00cd86d404375025b8768446538b71) has been independently reviewed and hardened. The original returned exit 0 on REVIEW_REQUIRED; the replacement always exits 2 on REVIEW_REQUIRED/NOT_READY and exits 1 for an observed synthetic policy FAIL. It parses a read-only local plan JSON and requires a pinned plan hash and approved scope, but cannot independently attest those records or approve a deployment. Four canonical Phase 4 commands for AZ-T45-09/11/13/15 now resolve to this tracked script. Source-specific regressions cover public IP creation, PaaS public access, broad RBAC, diagnostics removal, malformed or absent evidence, and forced NO_GO. No Terraform plan or apply is executed.
 
 ## Read-only local source review
 
