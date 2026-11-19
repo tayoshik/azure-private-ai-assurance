@@ -12,10 +12,10 @@ from pathlib import Path
 import re
 
 if __package__:
-    from .audit_semantic_readiness import ROOT, STATIC_PRESENCE, review
+    from .audit_semantic_readiness import ROOT, STATIC_PRESENCE, phase_for, review
     from .audit_catalogue_dependencies import SOURCES
 else:
-    from audit_semantic_readiness import ROOT, STATIC_PRESENCE, review
+    from audit_semantic_readiness import ROOT, STATIC_PRESENCE, phase_for, review
     from audit_catalogue_dependencies import SOURCES
 
 # Five source-grounded semantic traps to be triaged ahead of existence-only checks.
@@ -89,9 +89,7 @@ def classify(case):
                 "Review against its full approved criterion and observed source", 20)
 
     key, score, reason = max(hits, key=lambda x: x[1])
-    if "private" in case.get("command", "").lower() or any(
-        word in ident for word in ()
-    ):
+    if "private" in case.get("command", "").lower():
         # No uncontrolled leap from a string match to P0 vulnerability.
         score = min(score + 2, 89)
     return (
@@ -138,14 +136,7 @@ def triage(root: Path = ROOT, include_rows: bool = True):
         priority, code, reason, action, score = classify(item)
         priorities.append({
             "id": ident,
-            "phase": audit.get("by_phase", {}) and next(
-                p for p, counts in audit["by_phase"].items()
-                if int(ident[4:6]) in (
-                    {"P1": range(1,11), "P2":range(11,21), "P3":range(21,33),
-                     "P4":range(33,46), "P5":range(46,59), "P6":range(59,69),
-                     "P7":range(69,79)}[p]
-                )
-            ),
+            "phase": phase_for(ident),
             "catalogue": rel,
             "priority": priority,
             "review_score": score,
