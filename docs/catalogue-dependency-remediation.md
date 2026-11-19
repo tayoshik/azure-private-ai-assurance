@@ -6,6 +6,8 @@
 
 The former release_gate.py imported a nonexistent validate_catalogue.py and read a nonexistent catalogue_index_1716.json. Its output could not be trusted as a functioning release decision. The replacement reads the tracked six source catalogues (440+264+286+286+220+220) and always returns NO_GO with exit code 2.
 
+> **2026-11-19 update after Phase 1/2 restoration:** The table immediately below is the frozen **pre-restoration** snapshot, retained for historical traceability. The current snapshot has **669 missing script/test references**, **330 tracked script/test references**, **717 cases with no direct script path**, and **277 cases referencing missing inputs**. See [Phase 1/2 source recovery](phase12-source-recovery-report.md). The Azure live acceptance count remains 0/1,716 and release decision NO_GO.
+
 ## Initial snapshot: 2026-11-19
 
 | Literal command classification | Cases | Note |
