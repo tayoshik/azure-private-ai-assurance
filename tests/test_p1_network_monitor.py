@@ -203,6 +203,9 @@ class NextTenNetworkMonitorTests(unittest.TestCase):
         o,a=fixture(cid)
         o["observation"]["public_probes"][0]["destination_ip"]="10.10.10.10"
         self.assertNotEqual(p.assess(cid,o,a)["result"],"REVIEW_REQUIRED")
+        o,a=fixture(cid)
+        o["observation"]["public_probes"][1]["flow_log_id"]=o["observation"]["public_probes"][0]["flow_log_id"]
+        self.assertEqual(p.assess(cid,o,a)["result"],"DIFFERENCE_REVIEW_REQUIRED")
 
     def test_waf_revision_requires_exact_rules_exceptions_and_rollback(self):
         cid="AZ-T51-21"
