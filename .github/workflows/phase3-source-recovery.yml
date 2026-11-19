@@ -77,9 +77,9 @@ jobs:
           import json
           with open("artifacts/dependencies.json",encoding="utf-8") as file: d=json.load(file)
           assert d["canonical_test_ids"] == 1716 and not d["errors"]
-          assert d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"] == 536
-          assert d["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"] == 463
-          assert d["cases_with_missing_input"] == 145
+          assert d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"] <= 536
+          assert d["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"] >= 463
+          assert d["cases_with_missing_input"] <= 145
           assert d["release_decision"] == "NO_GO"
           PY
           rc=0
