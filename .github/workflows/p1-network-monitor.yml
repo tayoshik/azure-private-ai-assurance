@@ -1,0 +1,101 @@
+name: P1 DNS, auth, WAF and monitoring correlation (offline only)
+on:
+  push:
+    paths:
+      - 'scripts/review_p1_network_monitor.py'
+      - 'tests/test_p1_network_monitor.py'
+      - 'docs/p1-network-monitor-ten.md'
+      - '.github/workflows/p1-network-monitor.yml'
+  pull_request:
+    paths:
+      - 'scripts/review_p1_network_monitor.py'
+      - 'tests/test_p1_network_monitor.py'
+      - 'docs/p1-network-monitor-ten.md'
+      - '.github/workflows/p1-network-monitor.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-grounded-ten:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Ten new scoped, typed, negative-path regressions
+        run: python3 -m unittest discover -s tests -p 'test_p1_network_monitor.py' -v
+      - name: Retain PR12 ten previous evidence checks and source review
+        run: |
+          python3 -m unittest discover -s tests -p 'test_p1_evidence_correlation.py' -v
+          python3 -m unittest discover -s tests -p 'test_static_criteria_review.py' -v
+      - name: Verify exact 20 selected P1 original IDs and no invented PASS
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/triage_static_criteria.py --summary > artifacts/static-summary.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.triage_static_criteria import triage
+          from scripts.review_p1_network_monitor import CASES as new
+          from scripts.review_p1_evidence_correlation import CASE_CRITERIA as old
+          x=triage()
+          all_p1={v['id'] for v in x['cases'] if v['priority']=='P1'}
+          chosen=set(old)|set(new)
+          assert len(old)==10 and len(new)==10 and len(chosen)==20
+          assert chosen <= all_p1
+          assert x['priority_counts']=={'P0':5,'P1':127,'P2':28}
+          assert not x['errors'] and x['static_review_candidates']==160
+          report={'schema':'p1-correlation-review/v1',
+                  'original_p1_count':len(all_p1),
+                  'new_case_ids':sorted(new),
+                  'previous_case_ids':sorted(old),
+                  'covered_by_offline_comparators':len(chosen),
+                  'not_yet_covered':len(all_p1-chosen),
+                  'independent_review_completed':0,
+                  'verified_azure_live_passes':0,
+                  'release_decision':'NO_GO'}
+          assert report['not_yet_covered']==107
+          Path('artifacts/p1-comparator-coverage.json').write_text(
+              json.dumps(report,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+      - name: Entire 1716 dependency audit and strict NO_GO
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > artifacts/dependency.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('artifacts/dependency.json',encoding='utf-8'))
+          assert d['canonical_test_ids']==1716 and not d['errors']
+          assert d['literal_script_reference']=={
+            'TRACKED_SCRIPT_REFERENCE':986,
+            'MISSING_SCRIPT_REFERENCE':13,
+            'NO_DIRECT_SCRIPT_REFERENCE':717
+          }
+          assert d['cases_with_missing_input']==0
+          assert d['azure_live_passes_verified']==0
+          assert d['release_decision']=='NO_GO'
+          PY
+          rc=0
+          python3 scripts/audit_semantic_readiness.py --strict > /dev/null || rc=$?
+          test "$rc" -eq 2
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          r=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert r['decision']=='NO_GO' and r['verified_live_azure_passes']==0
+          PY
+      - name: Persist offline source analysis only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-network-monitor-review-only
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
