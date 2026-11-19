@@ -1,0 +1,74 @@
+name: Phase 6 frozen source and transport triage (offline only)
+on:
+  pull_request:
+  push:
+    paths:
+      - 'specs/phase6_220.json'
+      - 'specs/phase6_220_en.json'
+      - 'scripts/phase6_guard.py'
+      - 'scripts/phase6_result_classifier.py'
+      - 'specs/test-automation-ledger.json'
+      - 'tests/test_phase6_primary_source.py'
+      - '.github/workflows/phase6-primary-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-classifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Phase 6 all 220 original-source synthetic checks
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/phase6_guard.py --selftest ALL --spec specs/phase6_220.json > /tmp/phase6.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/phase6.json',encoding='utf-8') as f: r=json.load(f)
+          assert r['case_labels_tested'] == 220
+          assert r['synthetic_checks_succeeded'] == 220
+          assert r['azure_live_passes'] == 0 and r['release_decision'] == 'NO_GO'
+          print('Phase6 synthetic ID coverage:',r['case_labels_tested'])
+          PY
+      - name: English catalogue legacy synthetic command refers back to pinned original
+        run: python3 scripts/phase6_guard.py --selftest AZ-T59-02 --spec specs/phase6_220_en.json
+      - name: Transport classifier synthetic regression (never actual Azure PASS)
+        run: python3 scripts/phase6_result_classifier.py --selftest
+      - name: Primary source, tampering, untrusted input and release negative tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase6_primary_source.py' -v
+          python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
+      - name: Machine ledger and all 1716 canonical IDs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > /tmp/dependency-phase6.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/dependency-phase6.json',encoding='utf-8') as f: a=json.load(f)
+          assert a['canonical_test_ids'] == 1716 and a['errors'] == []
+          assert a['literal_script_reference'] == {
+            'MISSING_SCRIPT_REFERENCE':126,'NO_DIRECT_SCRIPT_REFERENCE':717,
+            'TRACKED_SCRIPT_REFERENCE':873}
+          assert a['cases_with_missing_input'] == 2
+          assert a['azure_live_passes_verified'] == 0 and a['release_decision'] == 'NO_GO'
+          print('Remaining missing scripts:',a['missing_script_paths'])
+          PY
+      - name: Release gate must fail closed with exit code 2
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > /tmp/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          with open('/tmp/release.json',encoding='utf-8') as f: r=json.load(f)
+          assert r['decision'] == 'NO_GO'
+          assert r['verified_live_azure_passes'] == 0
+          PY
