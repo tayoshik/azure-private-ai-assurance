@@ -1,0 +1,70 @@
+name: P1 Azure IaC evidence comparison (offline)
+on:
+  push:
+    paths:
+      - 'scripts/review_p1_azure_iac.py'
+      - 'scripts/plan_policy_guard.py'
+      - 'tests/test_p1_azure_iac.py'
+      - 'specs/phase4_286_en.json'
+      - '.github/workflows/p1-azure-iac.yml'
+  pull_request:
+    paths:
+      - 'scripts/review_p1_azure_iac.py'
+      - 'scripts/plan_policy_guard.py'
+      - 'tests/test_p1_azure_iac.py'
+      - 'specs/phase4_286_en.json'
+      - '.github/workflows/p1-azure-iac.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Run offline regression tests
+        run: python3 -m unittest discover -s tests -v
+      - name: Verify frozen catalogue, coverage and release refusal
+        shell: bash
+        run: |
+          test "$(git hash-object specs/phase4_286_en.json)" = b10e821492df155c48a1c411117512e15fe49113
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > "${RUNNER_TEMP}/r20-dependencies.json"
+          rc=0
+          python3 scripts/release_gate.py > "${RUNNER_TEMP}/r20-release.json" || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from scripts.triage_static_criteria import triage
+          from scripts.review_p1_evidence_correlation import CASE_CRITERIA as c1
+          from scripts.review_p1_network_monitor import CASES as c2
+          from scripts.review_p1_source_evidence import CASES as c3
+          from scripts.review_p1_waf_supplychain import CASES as c4
+          from scripts.review_p1_azure_iac import CASES as c5
+
+          temp = Path(os.environ["RUNNER_TEMP"])
+          dependencies = json.loads((temp / "r20-dependencies.json").read_text())
+          assert dependencies["canonical_test_ids"] == 1716
+          assert not dependencies["errors"] and dependencies["cases_with_missing_input"] == 0
+          assert dependencies["literal_script_reference"] == {
+              "TRACKED_SCRIPT_REFERENCE": 986, "MISSING_SCRIPT_REFERENCE": 13,
+              "NO_DIRECT_SCRIPT_REFERENCE": 717,
+          }
+          assert dependencies["azure_live_passes_verified"] == 0
+          assert dependencies["release_decision"] == "NO_GO"
+          ranking = triage()
+          assert not ranking["errors"]
+          p1 = {row["id"] for row in ranking["cases"] if row["priority"] == "P1"}
+          groups = (c1, c2, c3, c4, c5)
+          checked = set().union(*groups)
+          assert all(len(group) == 10 for group in groups)
+          assert len(p1) == 127 and len(checked) == 50 and checked <= p1
+          release = json.loads((temp / "r20-release.json").read_text())
+          assert release["decision"] == "NO_GO" and release["verified_live_azure_passes"] == 0
+          print("50/127 local comparators; 0/1716 Azure live passes; NO_GO")
+          PY
