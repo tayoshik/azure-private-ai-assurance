@@ -1,0 +1,88 @@
+name: Phase 4 guarded recovery (offline, source pending)
+on:
+  push:
+    paths:
+      - 'scripts/phase4_guard.py'
+      - 'specs/phase4_286.json'
+      - 'specs/test-automation-ledger.json'
+      - 'tests/test_phase4_guard_recovery.py'
+      - 'tests/test_catalogue_dependencies.py'
+      - '.github/workflows/phase4-guard-recovery.yml'
+  pull_request:
+    paths:
+      - 'scripts/phase4_guard.py'
+      - 'specs/phase4_286.json'
+      - 'specs/test-automation-ledger.json'
+      - 'tests/test_phase4_guard_recovery.py'
+      - 'tests/test_catalogue_dependencies.py'
+      - '.github/workflows/phase4-guard-recovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guarded-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Validate source-derived Phase 4 guard logic (synthetic test fixture)
+        run: python3 -m unittest discover -s tests -p 'test_phase4_guard_recovery.py' -v
+      - name: Existing catalogue and release gate regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
+          python3 scripts/verify_publication.py
+          python3 scripts/build_test_automation_ledger.py --check
+      - name: Source absent must fail closed; never disguise missing data as PASS
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          rc=0
+          python3 scripts/phase4_guard.py --selftest ALL > artifacts/phase4-source-status.json || rc=$?
+          if [[ "$rc" -ne 2 ]]; then
+            echo "Expected strict NOT_READY until frozen original spec is committed: rc=$rc"
+            exit 1
+          fi
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/phase4-source-status.json",encoding="utf-8"))
+          assert d["result"]=="NOT_READY" and d["azure_live_passes"]==0
+          assert d["release_decision"]=="NO_GO"
+          print("Missing original rule source correctly refuses Phase 4 synthetic execution")
+          PY
+      - name: Recalculate 1716-row dependency state
+        run: |
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/phase4-dependencies.json > artifacts/dependencies-summary.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/phase4-dependencies.json",encoding="utf-8"))
+          assert d["canonical_test_ids"]==1716 and not d["errors"]
+          assert d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"]<=393
+          assert d["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"]>=606
+          assert d["cases_with_missing_input"]<=145
+          assert d["release_decision"]=="NO_GO"
+          print("Remaining missing code:",d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"])
+          print("Remaining missing inputs:",d["cases_with_missing_input"])
+          PY
+      - name: Release denial remains mandatory
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release-gate.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/release-gate.json",encoding="utf-8"))
+          assert d["decision"]=="NO_GO" and d["verified_live_azure_passes"]==0
+          PY
+      - name: Store offline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-guard-offline-source-pending
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
