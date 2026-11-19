@@ -1,0 +1,65 @@
+name: Canonical 1716 dependency audit (offline only)
+on:
+  push:
+    paths:
+      - 'specs/**'
+      - 'scripts/audit_catalogue_dependencies.py'
+      - 'scripts/release_gate.py'
+      - 'scripts/verify_publication.py'
+      - 'tests/test_catalogue_dependencies.py'
+      - '.github/workflows/catalogue-dependency-audit.yml'
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Canonical publication audit
+        run: python3 scripts/verify_publication.py
+      - name: Dependency inventory (NOT an acceptance result)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/audit_catalogue_dependencies.py --cases --out artifacts/catalogue-dependencies.json > artifacts/dependency-summary.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/catalogue-dependencies.json", encoding="utf-8") as f:
+              result = json.load(f)
+          assert result["canonical_test_ids"] == 1716
+          assert result["errors"] == []
+          assert result["azure_live_passes_verified"] == 0
+          assert result["release_decision"] == "NO_GO"
+          print("Inventory complete, unresolved dependencies:", result["cases_with_unresolved_literal_dependencies"])
+          PY
+      - name: Release denial must return exit 2 (not a CI failure)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release-gate.json || rc=$?
+          if [[ "$rc" -ne 2 ]]; then echo "Release gate must refuse with exit 2; got $rc"; exit 1; fi
+          python3 - <<'PY'
+          import json
+          with open("artifacts/release-gate.json", encoding="utf-8") as f:
+              result = json.load(f)
+          assert result["decision"] == "NO_GO"
+          assert result["verified_live_azure_passes"] == 0
+          print("Expected refusal: NO_GO (not Azure acceptance).")
+          PY
+      - name: Mutation and negative-path tests
+        run: python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
+      - name: Retain sanitized offline audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-catalogue-dependency-audit
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
