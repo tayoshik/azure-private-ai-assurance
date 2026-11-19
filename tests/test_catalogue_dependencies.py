@@ -36,9 +36,9 @@ class DependencyAuditTests(unittest.TestCase):
 
     def test_current_missing_references_are_reported(self):
         self.assertGreater(self.report["cases_with_unresolved_literal_dependencies"], 0)
-        self.assertIn("scripts/phase3_guard.py", self.report["missing_script_paths"])
-        self.assertIn("specs/phase3_264.json", self.report["missing_input_paths"])
-        self.assertIn("AZ-T21-02", self.report["unresolved_ids"])
+        self.assertIn("scripts/phase4_guard.py", self.report["missing_script_paths"])
+        self.assertIn("specs/phase4_286.json", self.report["missing_input_paths"])
+        self.assertIn("AZ-T33-02", self.report["unresolved_ids"])
 
     def test_literal_parser_does_not_misclassify_azure_cli(self):
         command = 'az network vnet show -g "$RG" -n "$NAME" --query id'
@@ -52,7 +52,8 @@ class DependencyAuditTests(unittest.TestCase):
         self.assertEqual(inputs, ["specs/phase1_policies_110.json"])
         self.assertTrue(path_exists(ROOT, "scripts/release_gate.py"))
         self.assertFalse(path_exists(ROOT, "../untrusted.py"))
-        self.assertFalse(path_exists(ROOT, "scripts/phase3_guard.py"))
+        self.assertTrue(path_exists(ROOT, "scripts/phase3_guard.py"))
+        self.assertFalse(path_exists(ROOT, "scripts/phase4_guard.py"))
 
     def test_modified_claim_is_not_accepted(self):
         with tempfile.TemporaryDirectory() as folder:
