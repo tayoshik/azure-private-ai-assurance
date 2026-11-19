@@ -26,6 +26,8 @@ def classify(record, *, synthetic_testing=False):
             or record.get("source") == "SYNTHETIC"):
         return "NOT_READY"
     observation = record.get("observation")
+    if not isinstance(observation, str):
+        return "NOT_READY"
     mode = record.get("mode", "external_negative")
     if observation in DEVIATIONS:
         return "DIFFERENCE_REVIEW_REQUIRED"
