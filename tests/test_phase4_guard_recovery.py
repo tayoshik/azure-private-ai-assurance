@@ -78,6 +78,9 @@ class Phase4FailClosedTests(unittest.TestCase):
 
     def test_predicates_use_strict_types_and_missing_is_unknown(self):
         self.assertEqual(g.verdict("eq", {"expected": True}, 1), "MISMATCH")
+        self.assertEqual(g.verdict("eq", {"expected": {"flag": True}}, {"flag": 1}), "MISMATCH")
+        self.assertEqual(g.verdict("eq", {"expected": [1, [True]]}, [1, [1]]), "MISMATCH")
+        self.assertEqual(g.verdict("eq", {"expected": float("nan")}, float("nan")), "MISMATCH")
         self.assertEqual(g.verdict("eq", {"expected": "OpenAI"}, "OpenAI"), "MATCH")
         self.assertEqual(g.verdict("eq", {"expected": "OpenAI"}, "Other"), "MISMATCH")
         self.assertEqual(g.verdict("is_true", {}, True), "MATCH")
