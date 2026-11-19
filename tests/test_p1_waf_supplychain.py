@@ -18,10 +18,17 @@ def fixture(case_id, root):
     a, o = {}, {}
     h = "a" * 64
     if case_id == "AZ-T50-13":
+        sbom = root / "synthetic-sbom.json"
+        sbom.write_text(json.dumps({
+            "bomFormat":"CycloneDX","specVersion":"1.5",
+            "metadata":{"component":{"name":"synthetic/app",
+                "hashes":[{"alg":"SHA-256","content":h}]}},
+            "components":[{"name":"dep-a"},{"name":"dep-b"}]
+        }),encoding="utf-8")
         o = {"image_resource_id":"acr-test","repository_name":"synthetic/app",
              "image_version":"v1","image_digest":h,"sbom_format":"CycloneDX",
-             "sbom_sha256":"b"*64,"component_count":2,
-             "sbom_artifact_digest_matches":True,
+             "sbom_path":str(sbom),"sbom_sha256":sha256(sbom.read_bytes()).hexdigest(),
+             "component_count":2,"sbom_artifact_digest_matches":True,
              "immutable_sbom_reference":"synthetic-artifact#bom"}
         a = {k:o[k] for k in ("image_resource_id","repository_name",
                               "image_version","image_digest","sbom_sha256")}
@@ -164,6 +171,21 @@ class TenSourceReviewTests(unittest.TestCase):
             ob["observation"][key]=val
             self.assertNotEqual(p.assess(id,ob,ap)["result"],"REVIEW_REQUIRED")
 
+    def test_sbom_actual_json_contents_must_bind_artifact_digest(self):
+        id="AZ-T50-13"
+        ob,ap=self.f(id)
+        path=Path(ob["observation"]["sbom_path"])
+        data=json.loads(path.read_text())
+        data["metadata"]["component"]["hashes"][0]["content"]="e"*64
+        path.write_text(json.dumps(data),encoding="utf-8")
+        actual=sha256(path.read_bytes()).hexdigest()
+        ob["observation"]["sbom_sha256"]=actual
+        ap["expected"]["sbom_sha256"]=actual
+        self.assertEqual(p.assess(id,ob,ap)["result"],"DIFFERENCE_REVIEW_REQUIRED")
+        ob,ap=self.f(id)
+        ob["observation"]["sbom_path"]=str(self.root/"missing-bom.json")
+        self.assertEqual(p.assess(id,ob,ap)["result"],"NOT_READY")
+
     def test_untrusted_image_must_be_denied_by_right_policy(self):
         id="AZ-T50-21"
         for key,val in (("denied",False),("decision","Allowed"),
@@ -209,6 +231,11 @@ class TenSourceReviewTests(unittest.TestCase):
                 self.assertEqual(result,"NOT_READY")
             else:
                 self.assertNotEqual(result,"REVIEW_REQUIRED", content)
+        ob,ap=self.f(id)
+        path=Path(ob["observation"]["junit_path"])
+        path.write_text('<testsuite tests="1" failures="1"><testcase name="sqli-denied"/></testsuite>',encoding="utf-8")
+        ap["expected"]["approved_junit_sha256"]=sha256(path.read_bytes()).hexdigest()
+        self.assertEqual(p.assess(id,ob,ap)["result"],"DIFFERENCE_REVIEW_REQUIRED")
         ob,ap=self.f(id)
         ob["observation"]["junit_path"]=str(self.root/"absent.xml")
         self.assertEqual(p.assess(id,ob,ap)["result"],"NOT_READY")
