@@ -21,6 +21,19 @@ RULES = {"eq", "is_true", "is_false", "nonempty", "minimum", "private_ip"}
 RELEASE = "NO_GO"
 
 
+def equal_typed(a, b):
+    """Recursive equality without bool/int coercion or nonfinite float acceptance."""
+    if type(a) is not type(b):
+        return False
+    if isinstance(a, float) and (not math.isfinite(a) or not math.isfinite(b)):
+        return False
+    if isinstance(a, list):
+        return len(a) == len(b) and all(equal_typed(x, y) for x, y in zip(a, b))
+    if isinstance(a, dict):
+        return a.keys() == b.keys() and all(equal_typed(a[k], b[k]) for k in a)
+    return a == b
+
+
 def verdict(rule, arguments, value):
     """Strict, synthetic-only predicate result; never a production verdict."""
     if value is None:
@@ -31,7 +44,7 @@ def verdict(rule, arguments, value):
         expected = arguments.get("expected")
         if expected is None:
             return "NOT_READY"
-        return "MATCH" if type(value) is type(expected) and value == expected else "MISMATCH"
+        return "MATCH" if equal_typed(value, expected) else "MISMATCH"
     if rule == "is_true":
         return "MATCH" if value is True else "MISMATCH"
     if rule == "is_false":
