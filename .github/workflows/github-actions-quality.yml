@@ -52,7 +52,7 @@ jobs:
           assert p["main_only_push_workflow_count"] == 34
           assert p["sha_pin_manifest"] == "specs/github-actions-approved-pins.json"
           assert p["artifact_uploaders_guarded"] == 16
-          assert p["approved_artifact_files"] == 69
+          assert p["approved_artifact_files"] == 71
           assert p["artifact_retention_days"] == 14
           assert p["artifact_policy"] == "specs/github-actions-artifact-policy.json"
           assert p["required_ruleset_status_contexts"] == ["offline-main-gate", "offline-catalogue"]
