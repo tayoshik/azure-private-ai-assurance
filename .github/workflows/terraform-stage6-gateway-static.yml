@@ -1,6 +1,7 @@
 name: Terraform Stage 6 Gateway static review
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/modules/application-gateway/**'
       - 'infra/modules/monitoring/**'
@@ -13,10 +14,12 @@ on:
 permissions:
   contents: read
 jobs:
-  offline-contracts:
+  stage6-gateway-contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
       - name: Stage 6 offline configuration contracts
         run: python3 scripts/check_terraform_gw01_gw05.py
       - name: Terraform regression and mutation tests
