@@ -41,7 +41,7 @@ RISK_HINTS = {
         rb"(?i)::(?:add-mask|set-output|save-state)::"
     ),
     "terraform_sensitive_state_or_plan_reference": re.compile(
-        rb"(?i)(?:\.tfstate(?:\b|["'])|\.tfplan(?:\b|["'])|terraform\.tfvars(?:\b|["']))"
+        rb"(?i)(?:\.tfstate(?:\b|[\x22\x27])|\.tfplan(?:\b|[\x22\x27])|terraform\.tfvars(?:\b|[\x22\x27]))"
     ),
     "unmasked_long_secret_field": re.compile(
         rb"(?i)\b(?:client[_-]?secret|refresh[_-]?token|access[_-]?token|password|api[_-]?key)\s*[:=]\s*"
