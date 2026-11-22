@@ -29,6 +29,22 @@ class AssertionSemantics19Tests(unittest.TestCase):
         self.assertEqual(sum(sum(v.values()) for v in
                              self.review["source_group_counts"].values()), 19)
 
+    def test_four_local_review_queues_are_disjoint_and_exhaustive(self):
+        from audit_shell_149_review import build_review as shell_review
+        from audit_approved_input_283 import build_review as input_review
+        from audit_tool_semantics_13 import build_review as tool_review
+        groups = (
+            set(shell_review(ROOT)["cases"]),
+            set(input_review(ROOT)["cases"]),
+            set(tool_review(ROOT)["cases"]),
+            set(self.review["cases"]),
+        )
+        self.assertEqual(tuple(map(len, groups)), (149, 283, 13, 19))
+        for i in range(len(groups)):
+            for j in range(i + 1, len(groups)):
+                self.assertFalse(groups[i] & groups[j])
+        self.assertEqual(set.union(*groups), set(self.upstream["cases"]))
+
     def test_per_id_original_contract_fingerprint_and_review_checklist(self):
         for ident, row in self.review["cases"].items():
             with self.subTest(ident=ident):
