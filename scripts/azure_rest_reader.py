@@ -87,8 +87,24 @@ class AzureReadOnlyClient:
         if not self.read_enabled:
             raise NotReadyError("live REST reads require explicit approved opt-in")
         if method == "GET":
-            if body is not None or not path.startswith("/subscriptions/"):
+            # Enforce the exact same subscription and API-version boundary at
+            # transport level.  An internal caller must not bypass get_resource
+            # by calling _send with another subscription or an unsafe path.
+            if body is not None or not isinstance(path, str):
                 raise ValueError("GET only permits scoped ARM resource paths")
+            resource_path, separator, version_query = path.partition("?")
+            match = RESOURCE_RE.fullmatch(resource_path)
+            if (not separator or not match
+                    or any(part in (".", "..") for part in resource_path.split("/"))
+                    or not version_query.startswith("api-version=")
+                    or not VERSION_RE.fullmatch(version_query[len("api-version="):])):
+                raise ValueError("GET only permits scoped ARM resource paths")
+            try:
+                target_subscription = _uuid(match.group(1))
+            except ValueError as exc:
+                raise ValueError("GET subscription ID invalid") from exc
+            if target_subscription not in self.subscriptions:
+                raise ValueError("GET subscription is outside approved scope")
         elif method == "POST":
             if path != GRAPH_PATH or not isinstance(body, dict):
                 raise ValueError("POST permitted only for fixed read-only Resource Graph query")
@@ -145,7 +161,8 @@ class AzureReadOnlyClient:
     def get_resource(self, resource_id: str, api_version: str) -> dict:
         """Fetch a single resource, but never claim PASS for its configuration."""
         match = RESOURCE_RE.fullmatch(resource_id)
-        if not match or _uuid(match[1]) not in self.subscriptions:
+        if (not match or any(part in (".", "..") for part in resource_id.split("/"))
+                or _uuid(match[1]) not in self.subscriptions):
             raise ValueError("resource ID is invalid or outside approved subscription")
         if not VERSION_RE.fullmatch(api_version):
             raise ValueError("pinned API version required")
@@ -182,7 +199,21 @@ class AzureReadOnlyClient:
                     scope = _uuid(item.get("subscriptionId", ""))
                 except ValueError as exc:
                     raise NotReadyError("out-of-scope or incomplete Resource Graph row") from exc
-                if scope not in self.subscriptions or str(item.get("type", "")).lower() not in types:
+                rid = item.get("id")
+                rid_match = RESOURCE_RE.fullmatch(rid) if isinstance(rid, str) else None
+                if not rid_match or any(part in (".", "..") for part in rid.split("/")):
+                    raise NotReadyError("Resource Graph row has invalid resource ID")
+                try:
+                    id_scope = _uuid(rid_match.group(1))
+                except ValueError as exc:
+                    raise NotReadyError("Resource Graph row has invalid subscription ID") from exc
+                # The row's resource ID, subscriptionId and type must
+                # corroborate one another before an inventory is returned.
+                derived_type = (rid_match.group(3) + "/" +
+                                rid_match.group(4).split("/")[0]).lower()
+                if (scope not in self.subscriptions or id_scope != scope
+                        or str(item.get("type", "")).lower() not in types
+                        or derived_type != str(item.get("type", "")).lower()):
                     raise NotReadyError("Resource Graph returned unexpected scope/type")
                 rows.append(item)
             token = response.get("$skipToken")
