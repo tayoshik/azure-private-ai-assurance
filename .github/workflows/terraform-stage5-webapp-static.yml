@@ -1,6 +1,7 @@
 name: Terraform Stage 5 W01-W05 offline contracts
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/check_terraform_w01_w05.py'
@@ -11,13 +12,16 @@ on:
       - 'infra/**'
       - 'scripts/check_terraform_w01_w05.py'
       - 'tests/test_terraform_w01_w05.py'
+      - '.github/workflows/terraform-stage5-webapp-static.yml'
 permissions:
   contents: read
 jobs:
-  offline:
+  stage5-webapp-contracts:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
       - name: Static W01-W05 checks (no Azure auth)
         run: python3 scripts/check_terraform_w01_w05.py
       - name: Terraform mutation regression
