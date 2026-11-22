@@ -25,6 +25,21 @@ PATHS = {
     "tests/playwright.config.ts": set(EXPECTED[:4]),
     "tests/phase6/phase6.spec.ts": set(EXPECTED[4:]),
 }
+EXPECTED_DISPOSITIONS = {
+    "AZ-T20-07": "REPLACE_WITH_REST_RUNNER_TOPOLOGY",
+    "AZ-T20-09": "REPLACE_WITH_REST_RUNNER_TOPOLOGY",
+    "AZ-T20-15": "REPLACE_WITH_REST_EVIDENCE_FORMAT",
+    "AZ-T20-17": "REPLACE_WITH_REST_EVIDENCE_CUSTODY",
+    "AZ-T64-01": "REST_INTEGRATION_REDRAFT",
+    "AZ-T64-03": "REST_TLS_INTEGRATION_REDRAFT",
+    "AZ-T64-05": "REST_AUTH_REDRAFT",
+    "AZ-T64-07": "REQUIRES_API_SPECIFIC_REBASELINE",
+    "AZ-T64-09": "UI_ONLY_NOT_APPLICABLE_PENDING_APPROVAL",
+    "AZ-T64-11": "SERVICE_DATA_PLANE_REDRAFT_IF_IN_SCOPE",
+    "AZ-T64-13": "SERVICE_DATA_PLANE_REDRAFT_IF_IN_SCOPE",
+    "AZ-T64-15": "REST_TOKEN_VALIDITY_REDRAFT",
+    "AZ-T64-17": "REST_ERROR_REDACTION_REDRAFT",
+}
 
 
 def read_json(root: Path, relative: str):
@@ -120,6 +135,8 @@ def inspect(root: Path = ROOT) -> dict:
         }.items():
             if case.get(name) != value:
                 errors.append(f"{case_id}: {name} must remain {value!r}")
+        if case.get("proposed_disposition") != EXPECTED_DISPOSITIONS[case_id]:
+            errors.append(f"{case_id}: proposed disposition changed without new proposal version")
         for name in ("proposed_disposition", "proposed_rest_check", "qualification"):
             if not isinstance(case.get(name), str) or not case[name].strip():
                 errors.append(f"{case_id}: missing {name}")
