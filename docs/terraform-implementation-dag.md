@@ -48,36 +48,36 @@ flowchart TD
 | **G06** Module interface contracts | G02, G03, G05 | `infra/modules/README.md` | CODE |
 | **G07** Approve actual nonproduction environment | G01, G02, G03 | `evidence/restricted/approved-environment-scope.json` | APPROVAL |
 | **B01** Separate bootstrap state stack | G06 | `infra/bootstrap/main.tf` | CODE |
-| **B02** Secure Blob state storage | B01 | `infra/bootstrap/storage_security.tf` | CODE |
+| **B02** Secure Blob state storage | B01 | `infra/bootstrap/main.tf` | CODE |
 | **B03** CI runner and OIDC identity | G02, B01 | `infra/ci/identity-and-runner.md` | DESIGN |
 | **B04** Private Blob endpoint and backend DNS | B02, B03 | `infra/bootstrap/private_state.tf` | CODE |
 | **B05** Verified private state connectivity | B04 | `evidence/restricted/backend-readiness.json` | LIVE_GATE |
 | **N01** Resource groups and tags | G06 | `infra/modules/foundation/main.tf` | CODE |
-| **N02** VNet and IPAM | G01, N01 | `infra/modules/network/vnet.tf` | CODE |
-| **N03** Dedicated delegated subnets | N02, G03 | `infra/modules/network/subnets.tf` | CODE |
+| **N02** VNet and IPAM | G01, N01 | `infra/modules/network/main.tf` | CODE |
+| **N03** Dedicated delegated subnets | N02, G03 | `infra/modules/network/main.tf` | CODE |
 | **N04** NSG route and egress policy | N03, G02 | `infra/modules/network/policy.tf` | CODE |
 | **N05** Private DNS zones and VNet links | N02, N03 | `infra/modules/private-dns/main.tf` | CODE |
 | **N06** Optional DNS Resolver | N05, G01 | `infra/modules/dns-resolver/main.tf` | OPTIONAL |
 | **O01** Log Analytics diagnostics baseline | N01 | `infra/modules/monitoring/main.tf` | CODE |
-| **O02** Optional AMPLS and VNet flow logs | O01, N03, N05 | `infra/modules/monitoring/private-observability.tf` | OPTIONAL |
+| **O02** Optional AMPLS and VNet flow logs | O01, N03, N05 | `infra/modules/monitoring/private-link.tf` | OPTIONAL |
 | **I01** Managed identity | N01 | `infra/modules/identity/main.tf` | CODE |
 | **I02** Key Vault security and RBAC | N01, I01 | `infra/modules/key-vault/main.tf` | CODE |
 | **I03** Key Vault private endpoint | I02, N03, N05 | `infra/modules/private-endpoints/key-vault.tf` | CODE |
-| **A01** Azure OpenAI account | N01, G03 | `infra/modules/azure-openai/account.tf` | CODE |
-| **A02** Approved model deployment | A01, G03 | `infra/modules/azure-openai/deployment.tf` | CODE |
+| **A01** Azure OpenAI account | N01, G03 | `infra/modules/azure-openai/main.tf` | CODE |
+| **A02** Approved model deployment | A01, G03 | `infra/modules/azure-openai/main.tf` | CODE |
 | **A03** Azure AI Search service | N01, G03 | `infra/modules/ai-search/main.tf` | CODE |
 | **A04** Cosmos DB NoSQL | N01, G03 | `infra/modules/cosmos-db/main.tf` | CODE |
-| **A05** PaaS private endpoints and DNS | A01, A03, A04, N03, N05 | `infra/modules/private-endpoints/ai-data.tf` | CODE |
-| **A06** OpenAI Search Cosmos data-plane roles | I01, A01, A03, A04 | `infra/modules/identity/data-roles.tf` | CODE |
+| **A05** PaaS private endpoints and DNS | A01, A03, A04, N03, N05 | `infra/modules/ai-private-endpoints/main.tf` | CODE |
+| **A06** OpenAI Search Cosmos data-plane roles | I01, A01, A03, A04 | `infra/modules/ai-data-rbac/main.tf` | CODE |
 | **A07** Optional Search shared private link | A03, A05 | `infra/modules/ai-search/shared-private-link.tf` | OPTIONAL |
 | **W01** Linux App Service plan | N01, G03 | `infra/modules/app-service/plan.tf` | CODE |
 | **W02** Hardened Linux Web App | W01, I01 | `infra/modules/app-service/webapp.tf` | CODE |
 | **W03** Outbound VNet integration | W02, N03, N04 | `infra/modules/app-service/outbound-vnet.tf` | CODE |
-| **W04** Inbound Web App private endpoint | W02, N03, N05 | `infra/modules/private-endpoints/webapp.tf` | CODE |
+| **W04** Inbound Web App private endpoint | W02, N03, N05 | `infra/modules/webapp-private-endpoint/webapp.tf` | CODE |
 | **W05** App settings and private AI dependencies | W02, W03, W04, A05, A06, I03 | `infra/modules/app-service/app-settings.tf` | CODE |
 | **W06** Optional private ACR | W02, I01, N03, N05, B03 | `infra/modules/container-registry/main.tf` | OPTIONAL |
 | **GW01** WAF policy | N01, O01 | `infra/modules/application-gateway/waf-policy.tf` | CODE |
-| **GW02** TLS certificate via Key Vault | I01, I02, I03 | `infra/modules/application-gateway/tls-cert.tf` | CODE |
+| **GW02** TLS certificate via Key Vault | I01, I02, I03 | `infra/modules/application-gateway/gateway.tf` | CODE |
 | **GW03** Private-only Application Gateway | GW01, GW02, N03, N04, W04, G03 | `infra/modules/application-gateway/gateway.tf` | CODE |
 | **GW04** TLS listener backend and health probes | GW03, W02, W04 | `infra/modules/application-gateway/routing.tf` | CODE |
 | **GW05** WAF diagnostic settings and alerts | GW04, O01 | `infra/modules/application-gateway/diagnostics.tf` | CODE |
@@ -96,6 +96,34 @@ flowchart TD
 | **V08** Independent security and operations acceptance | V07 | `docs/independent-acceptance-record.md` | APPROVAL |
 | **V09** Formal Go or No Go decision | V08 | `docs/go-no-go-decision.md` | APPROVAL |
 
+## Verified source-path reconciliation — 2026-11-22
+
+**This section is an as-built source inventory, not an amendment to approved requirements or Azure acceptance.** The 55-node / 147-edge DAG remains unchanged. The original declared paths were compared against the current Git repository tree, and code aliases were updated only where real HCL implementing the same node is present. Multiple planned nodes may intentionally map to one HCL file.
+
+- Initially **35 of 55 declared deliverable paths were absent**. A missing deliverable is not automatically a defect: `LIVE_GATE`, `APPROVAL`, and `OPTIONAL` paths may correctly remain absent before Azure approval.
+- **9 CODE nodes** were remapped from obsolete file names to verified, existing HCL. **G06** gained an actual `infra/modules/README.md` source/interface index. **O02** was remapped to its existing AMPLS source file but remains **PARTIAL_OPTIONAL** (VNet flow-log implementation/approval is not proven).
+- The remaining **24 declared deliverable paths are absent** after reconciliation. These must remain explicitly planned or optional/approval-gated rather than being replaced by empty placeholder files. File existence alone never closes a DAG node.
+- The machine-readable, per-node route and absence classification is `specs/terraform-dag-source-map.json`, validated by `scripts/audit_terraform_dag_paths.py` and `tests/test_terraform_dag_paths.py`. Each record includes the current deliverable, source evidence references, and non-acceptance state.
+
+| DAG node | Original obsolete location | Verified source location | Source-only limitation |
+| --- | --- | --- | --- |
+| B02 | `infra/bootstrap/storage_security.tf` | `infra/bootstrap/main.tf` | Storage security settings are HCL, not proven deployed |
+| N02 / N03 | `infra/modules/network/vnet.tf`, `infra/modules/network/subnets.tf` | `infra/modules/network/main.tf` | VNet and subnet resources share the same file |
+| O02 | `infra/modules/monitoring/private-observability.tf` | `infra/modules/monitoring/private-link.tf` | AMPLS source exists; VNet flow log remains a separate unverified optional requirement |
+| A01 / A02 | `infra/modules/azure-openai/account.tf`, `infra/modules/azure-openai/deployment.tf` | `infra/modules/azure-openai/main.tf` | Account and deployment resources share one source |
+| A05 | `infra/modules/private-endpoints/ai-data.tf` | `infra/modules/ai-private-endpoints/main.tf` | AI/data PE is separate from the Key Vault PE module |
+| A06 | `infra/modules/identity/data-roles.tf` | `infra/modules/ai-data-rbac/main.tf` | Source binds roles; no approved assignment/evidence yet |
+| W04 | `infra/modules/private-endpoints/webapp.tf` | `infra/modules/webapp-private-endpoint/webapp.tf` | Inbound web PE is separate from app outbound VNet integration |
+| GW02 | `infra/modules/application-gateway/tls-cert.tf` | `infra/modules/application-gateway/gateway.tf` | Gateway references a versionless Key Vault secret; certificate provisioning/approval remain external |
+
+**Mandatory unmaterialized artifacts:** G01–G04 design/inputs, B03 private runner design, G07 approved scope, B05 private state connectivity, Q01/Q02 named evidence/policy deliverables, Q03–Q05 nonprod plan and approvals, V01–V09 live evidence and security acceptance remain OPEN where their exact declared output is absent. Existing related source such as `docs/private-terraform-execution.md` and `evidence/offline/terraform-q01-q02-summary.json` is *supporting context only* until an owner approves it as the complete declared deliverable. No file under `evidence/restricted/` is synthesized.
+
+**Optional decisions:** N06 (DNS Resolver), A07 (Search shared private link), and W06 (private ACR) have no declared module file in the repository. O02 has AMPLS HCL but does not prove flow logging. These remain optional, NOT_DECIDED; absence is not a source defect and is not an implicit N/A.
+
+**Repeatable check (read-only):** `python3 scripts/audit_terraform_dag_paths.py` builds a 55-node snapshot and rejects any missing declared `CODE` file, stale path, mutated status-map, unexpected source change or DAG node/edge drift. It does not run `terraform plan/apply`, Azure CLI or browser commands.
+
+---
+ 
 ## Definition of Done
 
 - A `CODE` node is complete only after its declared HCL output exists, its inputs/outputs are reviewed, and version-pinned fmt/validate/static checks run where the provider is available.

@@ -1,0 +1,341 @@
+{
+  "schema": "terraform-dag-path-status/v1",
+  "source_dag": "docs/terraform-implementation-dag.md",
+  "snapshot_utc": "2026-11-22",
+  "dag_nodes": 55,
+  "dag_edges": 147,
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "nodes": [
+    {
+      "id": "G01",
+      "mode": "INPUT",
+      "declared_path": "docs/terraform-inputs-template.md",
+      "classification": "DESIGN_INPUT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "G02",
+      "mode": "DESIGN",
+      "declared_path": "docs/terraform-architecture-decisions.md",
+      "classification": "DESIGN_INPUT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "G03",
+      "mode": "DESIGN",
+      "declared_path": "docs/provider-compatibility-matrix.md",
+      "classification": "DESIGN_INPUT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "G04",
+      "mode": "INPUT",
+      "declared_path": "docs/source-ownership-inventory.md",
+      "classification": "DESIGN_INPUT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "G05",
+      "mode": "CODE",
+      "declared_path": "infra/README.md",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "G06",
+      "mode": "CODE",
+      "declared_path": "infra/modules/README.md",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "G07",
+      "mode": "APPROVAL",
+      "declared_path": "evidence/restricted/approved-environment-scope.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "B01",
+      "mode": "CODE",
+      "declared_path": "infra/bootstrap/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "B02",
+      "mode": "CODE",
+      "declared_path": "infra/bootstrap/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "B03",
+      "mode": "DESIGN",
+      "declared_path": "infra/ci/identity-and-runner.md",
+      "classification": "DESIGN_INPUT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "B04",
+      "mode": "CODE",
+      "declared_path": "infra/bootstrap/private_state.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "B05",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/backend-readiness.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "N01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/foundation/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "N02",
+      "mode": "CODE",
+      "declared_path": "infra/modules/network/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "N03",
+      "mode": "CODE",
+      "declared_path": "infra/modules/network/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "N04",
+      "mode": "CODE",
+      "declared_path": "infra/modules/network/policy.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "N05",
+      "mode": "CODE",
+      "declared_path": "infra/modules/private-dns/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "N06",
+      "mode": "OPTIONAL",
+      "declared_path": "infra/modules/dns-resolver/main.tf",
+      "classification": "OPTIONAL_DECISION_PENDING"
+    },
+    {
+      "id": "O01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/monitoring/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "O02",
+      "mode": "OPTIONAL",
+      "declared_path": "infra/modules/monitoring/private-link.tf",
+      "classification": "OPTIONAL_AMPLS_PARTIAL"
+    },
+    {
+      "id": "I01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/identity/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "I02",
+      "mode": "CODE",
+      "declared_path": "infra/modules/key-vault/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "I03",
+      "mode": "CODE",
+      "declared_path": "infra/modules/private-endpoints/key-vault.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/azure-openai/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A02",
+      "mode": "CODE",
+      "declared_path": "infra/modules/azure-openai/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A03",
+      "mode": "CODE",
+      "declared_path": "infra/modules/ai-search/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A04",
+      "mode": "CODE",
+      "declared_path": "infra/modules/cosmos-db/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A05",
+      "mode": "CODE",
+      "declared_path": "infra/modules/ai-private-endpoints/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A06",
+      "mode": "CODE",
+      "declared_path": "infra/modules/ai-data-rbac/main.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "A07",
+      "mode": "OPTIONAL",
+      "declared_path": "infra/modules/ai-search/shared-private-link.tf",
+      "classification": "OPTIONAL_DECISION_PENDING"
+    },
+    {
+      "id": "W01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/app-service/plan.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "W02",
+      "mode": "CODE",
+      "declared_path": "infra/modules/app-service/webapp.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "W03",
+      "mode": "CODE",
+      "declared_path": "infra/modules/app-service/outbound-vnet.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "W04",
+      "mode": "CODE",
+      "declared_path": "infra/modules/webapp-private-endpoint/webapp.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "W05",
+      "mode": "CODE",
+      "declared_path": "infra/modules/app-service/app-settings.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "W06",
+      "mode": "OPTIONAL",
+      "declared_path": "infra/modules/container-registry/main.tf",
+      "classification": "OPTIONAL_DECISION_PENDING"
+    },
+    {
+      "id": "GW01",
+      "mode": "CODE",
+      "declared_path": "infra/modules/application-gateway/waf-policy.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "GW02",
+      "mode": "CODE",
+      "declared_path": "infra/modules/application-gateway/gateway.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "GW03",
+      "mode": "CODE",
+      "declared_path": "infra/modules/application-gateway/gateway.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "GW04",
+      "mode": "CODE",
+      "declared_path": "infra/modules/application-gateway/routing.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "GW05",
+      "mode": "CODE",
+      "declared_path": "infra/modules/application-gateway/diagnostics.tf",
+      "classification": "CODE_SOURCE_PRESENT_ONLY"
+    },
+    {
+      "id": "Q01",
+      "mode": "OFFLINE_GATE",
+      "declared_path": "evidence/offline/terraform-static.json",
+      "classification": "OFFLINE_ARTIFACT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "Q02",
+      "mode": "OFFLINE_GATE",
+      "declared_path": "policy/terraform-plan/",
+      "classification": "OFFLINE_ARTIFACT_NOT_MATERIALIZED"
+    },
+    {
+      "id": "Q03",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/nonprod-plan-manifest.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "Q04",
+      "mode": "APPROVAL",
+      "declared_path": "evidence/restricted/two-reviewer-approval.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "Q05",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/nonprod-apply-manifest.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V01",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/deployed-inventory.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V02",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/private-connectivity.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V03",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/ai-smoke.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V04",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/playwright-junit.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V05",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/waf-and-exposure.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V06",
+      "mode": "LIVE_GATE",
+      "declared_path": "evidence/restricted/operability.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V07",
+      "mode": "REVIEW",
+      "declared_path": "evidence/restricted/1716-acceptance-overlay.json",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V08",
+      "mode": "APPROVAL",
+      "declared_path": "docs/independent-acceptance-record.md",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    },
+    {
+      "id": "V09",
+      "mode": "APPROVAL",
+      "declared_path": "docs/go-no-go-decision.md",
+      "classification": "LIVE_APPROVAL_NOT_READY"
+    }
+  ]
+}
