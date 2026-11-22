@@ -1,0 +1,77 @@
+name: All 1716 semantic readiness audit (offline, not acceptance)
+on:
+  push:
+    paths:
+      - 'scripts/audit_semantic_readiness.py'
+      - 'tests/test_semantic_readiness.py'
+      - 'docs/semantic-readiness-1716.md'
+      - '.github/workflows/semantic-readiness-1716.yml'
+  pull_request:
+    paths:
+      - 'scripts/audit_semantic_readiness.py'
+      - 'tests/test_semantic_readiness.py'
+      - 'docs/semantic-readiness-1716.md'
+      - '.github/workflows/semantic-readiness-1716.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  semantic-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Verify canonical 1716-row readiness and negative path tests
+        run: |
+          python3 -m unittest discover -s tests -p 'test_semantic_readiness.py' -v
+          python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
+      - name: Export exact per-ID semantics with no Azure evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/audit_semantic_readiness.py --cases --out artifacts/semantic-readiness-1716.json > artifacts/semantic-summary.json
+          python3 - <<'PY'
+          import json
+          with open("artifacts/semantic-summary.json",encoding="utf-8") as f:
+              d=json.load(f)
+          c=d['classification']
+          assert not d['errors'] and d['catalogue_cases_reviewed']==1716
+          assert c['ODD_PROCEDURES']==858 and c['EVEN_SYNTHETIC_LABELS']==858
+          assert c['OFFLINE_SYNTHETIC_ONLY']==858
+          assert c['SOURCE_REFERENCE_MISSING']==13
+          assert c['ODD_SELFTEST_REQUIRES_SEMANTIC_REVIEW']==1
+          assert c['UNVERIFIED_NON_SYNTHETIC_PROCEDURE']==844
+          assert d['flag_case_ids']['ODD_ID_RUNS_SELFTEST_NOT_RUNTIME_EVIDENCE']==['AZ-T74-13']
+          assert len(d['flag_case_ids']['REAL_APP_AUTH_AND_RUNNER_REQUIRED'])==13
+          assert d['independently_approved_azure_passes']==0
+          assert d['release_decision']=='NO_GO'
+          print('1716 audit-only rows, 858 synthetic and 858 odd; no Azure PASS')
+          PY
+      - name: Strict semantic and independent release gate must deny
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_semantic_readiness.py --strict > /dev/null || rc=$?
+          test "$rc" -eq 2
+          python3 scripts/build_test_automation_ledger.py --check
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          j=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert j['decision']=='NO_GO'
+          assert j['verified_live_azure_passes']==0
+          PY
+      - name: Persist sanitized design-only audit (not acceptance evidence)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: semantic-readiness-1716-offline
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
