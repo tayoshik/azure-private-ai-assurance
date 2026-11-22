@@ -1,0 +1,118 @@
+{
+  "schema": "github-actions-offline-artifacts/v1",
+  "snapshot_date": "2026-11-22",
+  "purpose": "Source-only offline metadata; no deployment evidence, credentials, raw Azure state, cloud plan or user data.",
+  "retention_days": 14,
+  "allowed_total_bytes": 16777216,
+  "allowed_file_bytes": 8388608,
+  "workflow_paths": {
+    "catalogue-dependency-audit.yml": [
+      "catalogue-dependencies.json",
+      "dependency-summary.json",
+      "release-gate.json"
+    ],
+    "execution-route-inventory.yml": [
+      "route-1716/execution-route-1716.json",
+      "route-1716/execution-route-compact.json",
+      "route-1716/execution-route-strict.json",
+      "route-1716/execution-route-summary.json"
+    ],
+    "github-actions-quality.yml": [
+      "github-actions-source/audit-console.json",
+      "github-actions-source/audit.json",
+      "github-actions-source/strict.json",
+      "github-actions-source/summary.json"
+    ],
+    "p1-evidence-correlation.yml": [
+      "dependency.json",
+      "release.json",
+      "semantic-summary.json",
+      "static-160-priority.json"
+    ],
+    "p1-network-monitor.yml": [
+      "dependency.json",
+      "release.json",
+      "static-summary.json"
+    ],
+    "p1-source-evidence.yml": [
+      "dependency.json",
+      "release.json"
+    ],
+    "phase12-source-recovery.yml": [
+      "dependency-status.json",
+      "dependency-summary.json",
+      "phase1-synthetic.json",
+      "phase2-synthetic.json",
+      "release.json"
+    ],
+    "phase3-source-recovery.yml": [
+      "dependencies.json",
+      "dependency-summary.json",
+      "ipam-structural-bad.json",
+      "ipam-structural-good.json",
+      "phase3-fixture-smoke.json",
+      "publication.json",
+      "release.json"
+    ],
+    "phase4-guard-recovery.yml": [
+      "dependencies-summary.json",
+      "phase4-dependencies.json",
+      "phase4-source-status.json",
+      "release-gate.json"
+    ],
+    "phase5-original-source.yml": [
+      "audit-summary.json",
+      "dependencies.json",
+      "phase5-original-source-result.json",
+      "release.json"
+    ],
+    "phase7-primary-source.yml": [
+      "dependency-summary.json",
+      "dependency.json",
+      "phase7-synthetic.json",
+      "plan-synthetic.json",
+      "release.json"
+    ],
+    "playwright-readiness.yml": [
+      "catalogue-status.json",
+      "playwright-readiness.json",
+      "release.json"
+    ],
+    "semantic-readiness-1716.yml": [
+      "release.json",
+      "semantic-readiness-1716.json",
+      "semantic-summary.json"
+    ],
+    "static-criteria-review.yml": [
+      "dependency-audit.json",
+      "ranked-static-criteria-160.json",
+      "release.json",
+      "static-summary.json"
+    ],
+    "terraform-dag-source-audit.yml": [
+      "dag-source/55-node-source-map-report.json",
+      "dag-source/strict.json",
+      "dag-source/summary.json"
+    ],
+    "terraform-provider-schema-real.yml": [
+      "assurance-scope.txt",
+      "bootstrap-init.log",
+      "bootstrap-validate.log",
+      "dev-init.log",
+      "dev-validate.log",
+      "lock-after.txt",
+      "lock-before.txt",
+      "lock-postflight.json",
+      "lock-preflight.json",
+      "provider-lockfile-digests.txt",
+      "terraform-version.txt"
+    ]
+  },
+  "azure_live_passes": 0,
+  "release_decision": "NO_GO",
+  "limits": [
+    "File names and scan signatures are preventive checks, not a guarantee that arbitrary confidential text is absent",
+    "Real Azure evidence, credentials, customer data and private state must stay outside public GitHub CI artifacts",
+    "Allowlist revisions and retention changes require code review and a new versioned policy"
+  ]
+}
