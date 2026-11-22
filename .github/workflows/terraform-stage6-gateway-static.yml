@@ -10,6 +10,13 @@ on:
       - 'tests/test_terraform*.py'
       - '.github/workflows/terraform-stage6-gateway-static.yml'
   pull_request:
+    paths:
+      - 'infra/modules/application-gateway/**'
+      - 'infra/modules/monitoring/**'
+      - 'infra/environments/dev/**'
+      - 'scripts/check_terraform*.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-stage6-gateway-static.yml'
   workflow_dispatch:
 permissions:
   contents: read
