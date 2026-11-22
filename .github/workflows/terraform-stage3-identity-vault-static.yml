@@ -12,8 +12,11 @@ on:
   pull_request:
     paths:
       - 'infra/**'
+      - 'scripts/check_terraform_stage1.py'
+      - 'scripts/check_terraform_n04.py'
       - 'scripts/check_terraform_i01_i03.py'
-      - 'tests/test_terraform_i01_i03.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-stage3-identity-vault-static.yml'
   workflow_dispatch:
 permissions:
   contents: read
