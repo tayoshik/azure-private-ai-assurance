@@ -10,6 +10,8 @@ The former release_gate.py imported a nonexistent validate_catalogue.py and read
 
 > **Current Phase 3 follow-up:** Following the frozen Phase 3 source restoration, current literal reference counts are **536 missing script/test**, **463 tracked script/test**, **717 no direct script/test**, and **145 cases with missing input**. See [Phase 3 source recovery](phase3-source-recovery-report.md). The initial snapshot below is historical; live acceptance remains 0/1,716 and release remains NO_GO.
 
+> **Latest source restoration (Phase 6, 2026-11-19):** Current literal reference counts: **126 missing code**, **873 tracked code**, **717 with no direct script reference**, and **2 with missing input references**. These are file-path checks, not live control validation. See [Phase 6 source recovery](phase6-source-recovery-report.md). Phase 1–5 numbers below remain historical snapshots. Azure acceptance is 0/1,716 and release remains NO_GO.
+
 ## Initial snapshot: 2026-11-19
 
 | Literal command classification | Cases | Note |
