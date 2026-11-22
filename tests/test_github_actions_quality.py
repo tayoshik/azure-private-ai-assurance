@@ -268,6 +268,7 @@ class WorkflowQualityTests(unittest.TestCase):
                     "          persist-credentials: true\n")
         report = self.reject()
         self.assertTrue(any("exactly one" in x for x in report["errors"]))
+
     def test_individual_multistep_checkouts_must_disable_credentials(self):
         self.mutate("terraform-provider-schema-real.yml",
                     "persist-credentials: false", "persist-credentials: true")
