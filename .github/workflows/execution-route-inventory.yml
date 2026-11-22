@@ -11,6 +11,8 @@ on:
       - 'tests/test_execution_route_1716.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   pull_request:
     paths:
       - 'specs/**'
@@ -21,6 +23,8 @@ on:
       - 'tests/test_execution_route_1716.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   workflow_dispatch:
 permissions:
   contents: read
