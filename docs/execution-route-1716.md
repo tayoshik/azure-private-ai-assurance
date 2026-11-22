@@ -258,6 +258,69 @@ test "$rc" -eq 2
 
 **Independent approval gates:** owner supplies evidence in approved private storage with immutable hash and explicit asset scope; reviewer 1 verifies the actual bytes, provenance, rights/identities and intended predicate; reviewer 2 independently signs the evidentiary judgment; only then consider a separately authorized execution. A successful static predicate, signature-pattern match or a local environment variable value cannot promote any of the 283 to Azure PASS. No source test was executed and all 1,716 accepted live cases remain at zero; release remains NO_GO.
 
+## P2.4 — thirteen tool-semantics candidates (source-locked; NO execution)
+
+After P2.1–P2.3 established 464 local candidates, 149 shell-risk cases and 283 input/custody cases, the remaining **13 P2 tool-only cases** are audited by `scripts/audit_tool_semantics_13.py`. This program cross-checks each original test ID, original command/expected SHA-256 fingerprint, preexisting P2 classification and exact tool operation, and emits only reviewer metadata. It does not execute Terraform, Python, Checkov, TFLint or Node, read fixtures, connect to Azure, or validate an actual approval.
+
+| Reviewer queue (exclusive) | Case ID(s) | Cases | Mandatory manual evidence gate |
+| --- | --- | ---: | --- |
+| Terraform init / backend & download risk | `AZ-T15-17` | 1 | Even `-lockfile=readonly` does **not** prohibit provider downloads or a configured remote backend; require isolated environment, approved runner and owner-specific network/backend authorization before execution |
+| Terraform provider metadata | `AZ-T14-13` | 1 | Compare provider constraints, lockfile and installed versions against a signed approved baseline |
+| Terraform fmt | `AZ-T16-01`, `AZ-T44-05` | 2 | Check pinned formatter and exact source revision; success proves formatting only |
+| Terraform validate | `AZ-T16-03`, `AZ-T44-07` | 2 | Preapproved, initialized provider context required; syntax validation does not attest deployed Azure state |
+| TFLint | `AZ-T16-07`, `AZ-T44-11` | 2 | Pin lint plugins, config, rule versions and exception approval; prevent uncontrolled plugin installation |
+| Checkov | `AZ-T16-09`, `AZ-T44-13` | 2 | Review scan policy/configuration, disabled checks, finding severity and approved exceptions; no uncontrolled external modules |
+| Node runtime version | `AZ-T20-03` | 1 | Compare output to independently approved pinned version, not process exit code alone |
+| Python negative synthetic fixtures | `AZ-T74-01`, `AZ-T74-03` | 2 | Pin both synthetic plan fixtures, script and expected **Fail** assertions; a negative synthetic result cannot be counted as a live Azure policy rejection |
+| **Total** | | **13** | **All independent acceptance pending** |
+
+**Why special treatment is required:** Terraform `init` is a genuine potential side-effect operation despite its *leading command* appearing local. TFLint/Checkov might load remote plugins or modules depending on configuration. These cases must not be placed in a generic safe-to-run batch. `fmt -check`, `validate` and `node --version` have narrower semantics than actual security or Azure acceptance. The two Python tests use synthetic plans with expected failure; they are not live policy enforcement tests.
+
+### Reproducible offline-only WSL verification
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"  # trusted, owner-reviewed checkout
+OUT="$(mktemp -d "$HOME/tool-semantics-13-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/audit_tool_semantics_13.py --out "$OUT/tool-semantics-13.json" \
+  > "$OUT/summary.json"
+python3 -m unittest discover -s tests -p 'test_tool_semantics_13.py' -v
+python3 - "$OUT/tool-semantics-13.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1], encoding="utf-8"))
+expected_counts = {
+    "TERRAFORM_INIT_BACKEND_AND_PROVIDER_RISK": 1,
+    "TERRAFORM_PROVIDERS_DISCOVERY": 1,
+    "TERRAFORM_FMT_SOURCE_STYLE_ONLY": 2,
+    "TERRAFORM_VALIDATE_INITIALIZATION_REQUIRED": 2,
+    "TFLINT_CONFIG_PLUGIN_AND_RULESET": 2,
+    "CHECKOV_POLICY_SEVERITY_AND_EXCEPTIONS": 2,
+    "NODE_VERSION_PINNING": 1,
+    "PYTHON_SYNTHETIC_NEGATIVE_FIXTURE": 2,
+}
+assert r["status"] == "TOOL_SEMANTICS_REVIEW_ONLY"
+assert r["tool_review_cases"] == len(r["cases"]) == 13
+assert r["group_counts"] == expected_counts
+assert r["original_commands_executed"] == 0
+assert r["approved_tool_environments_verified"] == 0
+assert r["approved_evidence_verified"] == 0
+assert r["azure_live_passes"] == 0
+assert r["release_decision"] == "NO_GO"
+assert all(not c["original_command_executed"] and
+           not c["owner_approved_execution_environment"] and
+           c["azure_live_acceptance"] == "NOT_READY" for c in r["cases"].values())
+print("13 frozen source IDs reviewed as tool semantics only; live 0/1716")
+PY
+rc=0
+python3 scripts/audit_tool_semantics_13.py --summary-only --strict \
+  > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+**Review closure is separate:** the owner must approve the exact command, pinned binary/provider versions, network isolation, input artefacts, expected predicates and nonproduction scope; both reviewers must independently assess actual evidence from an authorized run. The source-only report records all authorization, execution and review flags as false. The frozen 1,716 tests, Azure PASS 0/1,716 and NO_GO release result are unchanged.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
