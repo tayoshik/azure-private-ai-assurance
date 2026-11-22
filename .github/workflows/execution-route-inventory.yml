@@ -1,0 +1,86 @@
+name: 1716 execution routing inventory (offline only)
+on:
+  push:
+    paths:
+      - 'specs/**'
+      - 'scripts/audit_catalogue_dependencies.py'
+      - 'scripts/audit_semantic_readiness.py'
+      - 'scripts/audit_rest_r41_rescope.py'
+      - 'scripts/build_execution_route_1716.py'
+      - 'tests/test_execution_route_1716.py'
+      - 'docs/execution-route-1716.md'
+      - '.github/workflows/execution-route-inventory.yml'
+  pull_request:
+    paths:
+      - 'specs/**'
+      - 'scripts/audit_catalogue_dependencies.py'
+      - 'scripts/audit_semantic_readiness.py'
+      - 'scripts/audit_rest_r41_rescope.py'
+      - 'scripts/build_execution_route_1716.py'
+      - 'tests/test_execution_route_1716.py'
+      - 'docs/execution-route-1716.md'
+      - '.github/workflows/execution-route-inventory.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-1716-route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build every original ID's metadata-only execution route
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts/route-1716
+          python3 scripts/build_execution_route_1716.py --out artifacts/route-1716/execution-route-1716.json > artifacts/route-1716/execution-route-summary.json
+          python3 scripts/build_execution_route_1716.py --summary-only > artifacts/route-1716/execution-route-compact.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path("artifacts/route-1716/execution-route-1716.json").read_text(encoding="utf-8"))
+          assert r["status"] == "ROUTING_INVENTORY_ONLY", r["errors"]
+          assert r["canonical_test_ids"] == len(r["cases"]) == 1716
+          assert r["route_counts"]["OFFLINE_SYNTHETIC_CANDIDATE"] == 858
+          assert r["route_counts"]["LEGACY_R41_SCOPE_DECISION_REQUIRED"] == 13
+          assert r["route_counts"]["ODD_SELFTEST_SEMANTIC_DECISION_REQUIRED"] == 1
+          assert (r["route_counts"]["LOCAL_APPROVED_INPUT_AND_REVIEW"] +
+                  r["route_counts"]["AZURE_OR_PRIVATE_RUNNER_REQUIRED"]) == 844
+          assert r["source_cases_executed_by_this_report"] == 0
+          assert r["approved_inputs_verified"] == 0
+          assert r["independent_review_approvals_verified"] == 0
+          assert r["azure_live_passes_verified"] == 0
+          assert r["azure_not_ready"] == 1716
+          assert r["release_decision"] == "NO_GO"
+          assert not r["errors"]
+          PY
+      - name: Independent routing and fail-closed mutation tests
+        run: python3 -m unittest discover -s tests -p 'test_execution_route_1716.py' -v
+      - name: Ensure strict mode refuses independent Azure acceptance
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/build_execution_route_1716.py --summary-only --strict > artifacts/route-1716/execution-route-strict.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path("artifacts/route-1716/execution-route-strict.json").read_text())
+          assert r["status"] == "ROUTING_INVENTORY_ONLY"
+          assert r["azure_live_passes_verified"] == 0
+          assert r["release_decision"] == "NO_GO"
+          PY
+      - name: Confirm canonical published catalogues were not modified by inspection
+        run: git diff --exit-code -- specs/
+      - name: Retain source-only routing evidence for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-route-1716-source-only
+          path: artifacts/route-1716/
+          if-no-files-found: ignore
+          retention-days: 14
