@@ -56,11 +56,18 @@ jobs:
           PY
       - name: Mutation and negative-path tests
         run: python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
-      - name: Retain sanitized offline audit
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow catalogue-dependency-audit.yml --root artifacts --stage artifacts-reviewed
+      - name: Retain sanitized offline audit
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: canonical-catalogue-dependency-audit
-          path: artifacts/
-          if-no-files-found: warn
+          path: artifacts-reviewed/
+          if-no-files-found: ignore
           retention-days: 14
