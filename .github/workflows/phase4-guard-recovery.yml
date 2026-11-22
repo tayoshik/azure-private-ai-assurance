@@ -1,0 +1,113 @@
+name: Phase 4 original-source 286-case validation (offline only)
+on:
+  push:
+    paths:
+      - 'scripts/phase4_guard.py'
+      - 'scripts/plan_policy_guard.py'
+      - 'tests/test_phase4_plan_guard.py'
+      - 'specs/phase4_286.json'
+      - 'specs/test-automation-ledger.json'
+      - 'tests/test_phase4_guard_recovery.py'
+      - 'tests/test_phase4_primary_source.py'
+      - 'tests/test_catalogue_dependencies.py'
+      - '.github/workflows/phase4-guard-recovery.yml'
+  pull_request:
+    paths:
+      - 'scripts/phase4_guard.py'
+      - 'scripts/plan_policy_guard.py'
+      - 'tests/test_phase4_plan_guard.py'
+      - 'specs/phase4_286.json'
+      - 'specs/test-automation-ledger.json'
+      - 'tests/test_phase4_guard_recovery.py'
+      - 'tests/test_phase4_primary_source.py'
+      - 'tests/test_catalogue_dependencies.py'
+      - '.github/workflows/phase4-guard-recovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guarded-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Validate security predicates, malformed evidence and source-derived guard logic
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase4_guard_recovery.py' -v
+          python3 -m unittest discover -s tests -p 'test_phase4_primary_source.py' -v
+          python3 -m unittest discover -s tests -p 'test_phase4_plan_guard.py' -v
+      - name: Existing catalogue and release gate regressions
+        run: |
+          python3 -m unittest discover -s tests -p 'test_catalogue_dependencies.py' -v
+          python3 scripts/verify_publication.py
+          python3 scripts/build_test_automation_ledger.py --check
+      - name: Verify frozen Phase 4 source digest and all original 286 source-case IDs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          raw=Path("specs/phase4_286.json").read_bytes()
+          expected="b221babf4a1b7a17763723d06229e868b943748cbbf6c1b0726e8f07465fcf36"
+          assert hashlib.sha256(raw).hexdigest()==expected, "frozen Phase 4 source SHA256 mismatch"
+          src=json.loads(raw)
+          assert len(src["controls"])==143 and len(src["tests"])==286
+          assert src["live_azure_successes"]==0
+          en=json.loads(Path("specs/phase4_286_en.json").read_text(encoding="utf-8"))
+          assert en["source_spec_sha256"]==expected
+          original={x["id"]:x for x in src["tests"]}
+          published={x["id"]:x for x in en["tests"]}
+          required={f"AZ-T{s:02}-{n:02}" for s in range(33,46) for n in range(1,23)}
+          assert set(original)==required and set(published)==required
+          changed={x for x in required if original[x]["command"]!=published[x]["command"]}
+          documented={x["id"] for x in en["command_edits"]}
+          assert changed==documented and len(changed)==37, "unreviewed command drift"
+          print("Original source SHA256 verified; 143 controls, 286 IDs; 37 documented English command edits")
+          PY
+          python3 scripts/phase4_guard.py --selftest ALL > artifacts/phase4-source-status.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/phase4-source-status.json",encoding="utf-8"))
+          assert d["result"]=="SELFTEST_PASS"
+          assert d["case_labels_tested"]==286 and d["synthetic_checks_succeeded"]==286
+          assert d["azure_live_passes"]==0 and d["release_decision"]=="NO_GO"
+          print("286 original-source synthetic checks pass; Azure live acceptance is still ZERO")
+          PY
+      - name: Recalculate 1716-row dependency state
+        run: |
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/phase4-dependencies.json > artifacts/dependencies-summary.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/phase4-dependencies.json",encoding="utf-8"))
+          assert d["canonical_test_ids"]==1716 and not d["errors"]
+          assert d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"]<=389
+          assert d["literal_script_reference"]["TRACKED_SCRIPT_REFERENCE"]>=610
+          assert d["cases_with_missing_input"]<=145
+          assert d["release_decision"]=="NO_GO"
+          print("Remaining missing code:",d["literal_script_reference"]["MISSING_SCRIPT_REFERENCE"])
+          print("Remaining missing inputs:",d["cases_with_missing_input"])
+          PY
+      - name: Release denial remains mandatory
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release-gate.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          d=json.load(open("artifacts/release-gate.json",encoding="utf-8"))
+          assert d["decision"]=="NO_GO" and d["verified_live_azure_passes"]==0
+          PY
+      - name: Store offline evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-original-source-286-offline-evidence
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
