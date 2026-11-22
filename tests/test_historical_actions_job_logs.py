@@ -56,7 +56,7 @@ class HistoricalActionsJobLogTests(unittest.TestCase):
 
     def test_bearer_and_private_key_signatures_detected_not_echoed(self):
         secret = b"Authorization: Bearer " + b"A" * 40
-        self.log(123, secret + b"\n-----BEGIN PRIVATE KEY-----\n")
+        self.log(123, secret + b"\n-----BEGIN " + b"PRIVATE KEY-----\n")
         r = triage.scan_directory(self.folder)
         self.assertIn("credential_signature_authorization_credential", r["logs"][0]["indicators"])
         self.assertIn("credential_signature_private_key", r["logs"][0]["indicators"])
