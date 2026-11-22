@@ -43,11 +43,11 @@ class WorkflowQualityTests(unittest.TestCase):
         report = quality.inspect(self.root)
         self.assertEqual(report["errors"], [])
         self.assertEqual(report["status"], "SOURCE_WORKFLOW_POLICY_VERIFIED_ONLY")
-        self.assertEqual(report["workflow_count"], 34)
-        self.assertEqual(report["total_job_definitions"], 36)
-        self.assertEqual(report["unique_job_contexts"], 36)
+        self.assertEqual(report["workflow_count"], 35)
+        self.assertEqual(report["total_job_definitions"], 37)
+        self.assertEqual(report["unique_job_contexts"], 37)
         self.assertEqual(report["duplicate_status_contexts"], [])
-        self.assertEqual(len(report["workflows"]), 34)
+        self.assertEqual(len(report["workflows"]), 35)
 
     def test_exact_two_unfiltered_ruleset_jobs_are_retained(self):
         result = quality.inspect(self.root)
