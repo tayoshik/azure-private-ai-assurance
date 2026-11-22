@@ -5,16 +5,23 @@ on:
       - 'infra/**'
       - 'scripts/terraform_provider_preflight.py'
       - 'tests/test_terraform_provider_preflight.py'
+      - 'scripts/verify_terraform_lock_consistency.py'
+      - 'tests/test_terraform_lock_consistency.py'
       - '.github/workflows/terraform-provider-schema-real.yml'
   pull_request:
     paths:
       - 'infra/**'
       - 'scripts/terraform_provider_preflight.py'
       - 'tests/test_terraform_provider_preflight.py'
+      - 'scripts/verify_terraform_lock_consistency.py'
+      - 'tests/test_terraform_lock_consistency.py'
       - '.github/workflows/terraform-provider-schema-real.yml'
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "0"
 concurrency:
   group: terraform-provider-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -24,10 +31,18 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Check source and report missing lockfile gates
-        run: python3 scripts/terraform_provider_preflight.py
-      - name: Offline preflight mutation tests
-        run: python3 -m unittest discover -s tests -p 'test_terraform_provider_preflight.py' -v
+      - name: Offline source and pinned lockfile preflight (not provider verification)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/terraform_provider_preflight.py
+          python3 scripts/verify_terraform_lock_consistency.py
+      - name: Offline preflight and lockfile mutation regressions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m unittest discover -s tests -p 'test_terraform_provider_preflight.py' -v
+          python3 -m unittest discover -s tests -p 'test_terraform_lock_consistency.py' -v
 
   format-check:
     runs-on: ubuntu-latest
@@ -50,17 +65,21 @@ jobs:
         with:
           terraform_version: 1.9.8
           terraform_wrapper: false
-      - name: Version and ephemeral format-normalization
+      - name: Record original Terraform version and pinned lockfile hashes
+        shell: bash
         run: |
+          set -Eeuo pipefail
           mkdir -p artifacts
           terraform version | tee artifacts/terraform-version.txt
-          terraform fmt -recursive infra
-          git diff -- infra > artifacts/terraform-fmt.patch || true
+          python3 scripts/verify_terraform_lock_consistency.py > artifacts/lock-preflight.json
+          sha256sum infra/bootstrap/.terraform.lock.hcl infra/environments/dev/.terraform.lock.hcl | tee artifacts/lock-before.txt
+      - name: Verify original HCL formatting without rewriting the checkout
+        run: terraform fmt -check -diff -recursive infra
       - name: Initialize Bootstrap providers (NO backend, NO Azure)
         shell: bash
         run: |
           set -Eeuo pipefail
-          terraform -chdir=infra/bootstrap init -backend=false -input=false -no-color | tee artifacts/bootstrap-init.log
+          terraform -chdir=infra/bootstrap init -backend=false -lockfile=readonly -input=false -no-color | tee artifacts/bootstrap-init.log
       - name: Validate Bootstrap with real AzureRM schema
         shell: bash
         run: |
@@ -70,22 +89,29 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          terraform -chdir=infra/environments/dev init -backend=false -input=false -no-color | tee artifacts/dev-init.log
+          terraform -chdir=infra/environments/dev init -backend=false -lockfile=readonly -input=false -no-color | tee artifacts/dev-init.log
       - name: Validate DEV with real AzureRM schema
         shell: bash
         run: |
           set -Eeuo pipefail
           terraform -chdir=infra/environments/dev validate -no-color | tee artifacts/dev-validate.log
-      - name: Record generated provider lockfile digests (not approval)
+      - name: Confirm lockfiles and tracked HCL unchanged after actual provider validation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_terraform_lock_consistency.py > artifacts/lock-postflight.json
+          sha256sum infra/bootstrap/.terraform.lock.hcl infra/environments/dev/.terraform.lock.hcl | tee artifacts/lock-after.txt
+          diff -u artifacts/lock-before.txt artifacts/lock-after.txt
+          git diff --exit-code -- infra
+      - name: Record sanitized provider lock digests (not Azure acceptance)
         if: always()
         shell: bash
         run: |
           set -Eeuo pipefail
+          mkdir -p artifacts
           for name in infra/bootstrap infra/environments/dev; do
             if [[ -f "$name/.terraform.lock.hcl" ]]; then
-              echo "$name"
-              sha256sum "$name/.terraform.lock.hcl" | tee -a artifacts/generated-lockfile-digests.txt
-              cp "$name/.terraform.lock.hcl" "artifacts/$(echo "$name" | tr / -)-terraform.lock.hcl"
+              sha256sum "$name/.terraform.lock.hcl" | tee -a artifacts/provider-lockfile-digests.txt
             fi
           done
           printf 'Azure plan/apply NOT EXECUTED; live PASS 0; NO-GO\n' > artifacts/assurance-scope.txt
