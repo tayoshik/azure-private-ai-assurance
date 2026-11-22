@@ -12,6 +12,7 @@ on:
       - 'infra/**'
       - 'scripts/check_terraform_w01_w05.py'
       - 'tests/test_terraform_w01_w05.py'
+      - '.github/workflows/terraform-stage5-webapp-static.yml'
 permissions:
   contents: read
 jobs:
