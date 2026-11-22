@@ -1,6 +1,7 @@
 name: Azure Monitor Private Link offline validation
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/azure-monitor-private-link-offline.yml'
       - 'infra/**'
