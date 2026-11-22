@@ -61,7 +61,7 @@ GitHub-side verification of the actual source checks:
 ## Remaining nonblocking quality backlog
 
 - **Closed by P7.2:** the previously reported 13 workflows with mutable Action tags now use repository-reviewed full SHA references; `remaining_unpinned_action_workflows` is required to be **empty** by CI. The full list and GitHub tag-reference provenance are fixed in `specs/github-actions-approved-pins.json`.
-- Some unrelated path-scoped workflows still run on both feature push and PR. The audit reports them in `remaining_unscoped_push_workflows`; each should be migrated to PR + main push only **after** verifying complete PR coverage and any intentional feature-push-only use.
+- **Closed by P7.3:** all 34 automated workflows now have `push.branches: [main]` and retain `pull_request` coverage. The remaining manual-only provider workflow is intentionally `workflow_dispatch` only. The source audit now requires `remaining_unscoped_push_workflows=[]`.
 - Artifact policies differ in older workflows; future hardening should specify evidence class, retention, and confidential-data exclusion before unifying archives.
 - No Actions test produces independent deployment, network isolation, permission, health or release acceptance evidence. **1,716 canonical tests remain NOT_READY, Azure live accepted 0, release NO_GO**.
 
@@ -93,3 +93,40 @@ python3 -m unittest discover -s tests -v
 ```
 
 The Ruleset's only globally required contexts remain `offline-main-gate` and `offline-catalogue`. Paths and credentials for actual Azure deployment are unchanged. Issue #26 remains OPEN for the 27 other workflows with feature-branch push triggers and evidence-retention standardization. All 1,716 original Azure cases remain NOT_READY; accepted live Azure evidence **0**, release **NO_GO**.
+
+
+## P7.3 — Eliminate redundant feature-branch pushes without narrowing PR coverage
+
+**Date:** 2026-11-22. **Scope:** GitHub Actions event triggers, source policy and tests; no change to the required Ruleset contexts, Terraform code, canonical tests or Azure acceptance.
+
+### Audited before/after
+
+| Dimension | Before | After |
+| --- | ---: | ---: |
+| Automated workflows with an unrestricted feature-branch `push` | 27 | **0** |
+| Automated workflows whose push is limited to `main` | 7 | **34** |
+| Manual-only provider workflow | 1 | **1 (unchanged)** |
+| All workflows / job contexts | 35 / 37 | **35 / 37** |
+| Globally required Ruleset checks | `offline-main-gate`, `offline-catalogue` | **Unchanged** |
+| Workflow source-policy regression tests | 27 | **37** |
+
+Every previously unscoped `push` event received `branches: [main]`. The original `pull_request` event remains; existing path filters are retained or broadened. In particular:
+
+- **9** workflows previously ran on **every PR**, even when their main-push event was path-filtered. Their PR events intentionally remain unfiltered. Narrowing those PRs would remove already-working validation coverage and is now rejected by the source-policy audit.
+- `english-catalogue-validation.yml` and `terraform-stage4-ai-data-static.yml` had PR filters narrower than the corresponding push filters. Their PR filters were **expanded** to include the push paths and their own workflow YAML. This makes subsequent workflow edits reviewable by their respective checks.
+- Other filtered workflows retain the existing symmetric push/PR path sets. A changed YAML file is included in both filters, so the workflow can test its own modifications before merging.
+- `offline-main-gate` and `offline-catalogue` still run on **every PR** and every push to main. `terraform-stage4-provider-validate.yml` retains intentional manual-only operation; no live Azure access or `terraform apply` was enabled.
+
+**Why this avoids duplication:** previously, committing to a feature branch could trigger its workflow's `push` *and* `pull_request` for the same code. Now that feature-branch push cannot fire the path-scoped duplicate; PR verification still fires and the merged main commit receives a single main-push run when its paths match. The number of jobs on a given PR can remain high because distinct controls intentionally validate overlapping source paths; this change only removes the redundant event type, not separate controls.
+
+### Fail-closed policy
+
+`scripts/audit_github_actions_quality.py` now rejects any non-`main` push filter, any automated push workflow without PR coverage, any filtered PR whose path set differs from its corresponding main-push filter, or a filtered workflow that cannot trigger on its own YAML. It also maintains an explicit list of the nine historically unfiltered PR workflows and refuses to narrow them without an independently reviewed policy change. Ten new source-policy regression checks (including wildcard self-trigger handling) in `tests/test_github_actions_quality.py` exercise this contract.
+
+```bash
+python3 scripts/audit_github_actions_quality.py --summary-only
+python3 -m unittest discover -s tests -p 'test_github_actions_quality.py' -v
+python3 -m unittest discover -s tests -v
+```
+
+A passing source audit demonstrates a **configured event-routing policy**, not billing reduction, full GitHub Actions runtime semantics, independent security review, Azure connectivity or Azure acceptance. The remaining part of Issue #26 is **standardizing artifact retention, safe outputs and confidentiality**, not trigger normalization. Existing synthetic tests and **1,716 original acceptance records remain unchanged**, Azure live passes **0**, release **NO_GO**.

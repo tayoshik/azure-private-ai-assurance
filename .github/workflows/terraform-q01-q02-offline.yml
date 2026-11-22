@@ -1,6 +1,7 @@
 name: Terraform Q01 Q02 offline assurance
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/check_terraform*.py'

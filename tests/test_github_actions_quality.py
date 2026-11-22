@@ -75,6 +75,73 @@ class WorkflowQualityTests(unittest.TestCase):
                 self.assertTrue(row["path_filtered_pull_request"])
                 self.assertTrue(row["path_filtered_push"])
 
+    def test_all_34_automated_pushes_are_main_only(self):
+        report = quality.inspect(self.root)
+        self.assertEqual(report["errors"], [])
+        self.assertEqual(report["remaining_unscoped_push_workflows"], [])
+        self.assertEqual(report["main_only_push_workflow_count"], 34)
+        for name, workflow in report["workflows"].items():
+            if "push" in workflow["events"]:
+                self.assertIn("pull_request", workflow["events"], name)
+
+    def test_nine_historically_unfiltered_pr_workflows_remain_broad(self):
+        report = quality.inspect(self.root)
+        self.assertEqual(len(quality.BROAD_PR_NO_FILTER), 9)
+        for name in quality.BROAD_PR_NO_FILTER:
+            with self.subTest(name=name):
+                self.assertFalse(report["workflows"][name]["path_filtered_pull_request"])
+
+    def test_old_feature_push_trigger_is_blocked(self):
+        self.mutate("phase3-source-recovery.yml",
+                    "  push:\n    branches: [main]\n",
+                    "  push:\n")
+        self.reject()
+
+    def test_push_branch_set_to_feature_is_blocked(self):
+        self.mutate("terraform-stage1-static.yml",
+                    "    branches: [main]", "    branches: [feature/test]")
+        self.reject()
+
+    def test_duplicate_main_and_feature_push_branches_are_blocked(self):
+        self.mutate("terraform-q01-q02-offline.yml",
+                    "    branches: [main]", "    branches: [main, test]")
+        self.reject()
+
+    def test_filtered_pr_path_cannot_omit_original_source(self):
+        self.mutate("english-catalogue-validation.yml",
+                    "  pull_request:\n    paths:\n      - 'docs/phase1-220-english-tests.md'",
+                    "  pull_request:\n    paths:\n      - 'not-a-test-path.md'")
+        self.reject()
+
+    def test_filtered_pr_must_self_trigger_on_workflow_edits(self):
+        self.mutate("terraform-stage4-ai-data-static.yml",
+                    "  pull_request:\n    paths:\n      - 'infra/**'\n"
+                    "      - 'scripts/check_terraform*.py'\n"
+                    "      - 'tests/test_terraform*.py'\n"
+                    "      - '.github/workflows/terraform-stage4-ai-data-static.yml'\n",
+                    "  pull_request:\n    paths:\n      - 'infra/**'\n"
+                    "      - 'scripts/check_terraform*.py'\n"
+                    "      - 'tests/test_terraform*.py'\n")
+        self.reject()
+
+    def test_glob_self_trigger_is_valid_for_quality_workflow(self):
+        result = quality.inspect(self.root)
+        self.assertEqual(result["errors"], [], result["errors"])
+        self.assertTrue(result["workflows"]["github-actions-quality.yml"]
+                        ["path_filtered_pull_request"])
+
+    def test_loss_of_workflow_glob_self_trigger_is_rejected(self):
+        self.mutate("github-actions-quality.yml",
+                    "      - '.github/workflows/**'",
+                    "      - 'docs/other/**'")
+        self.reject()
+
+    def test_previous_broad_pr_must_not_be_narrowed(self):
+        self.mutate("azure-rest03-offline.yml",
+                    "  pull_request:\n  workflow_dispatch:\n",
+                    "  pull_request:\n    paths:\n      - 'scripts/rest03_resource_audit.py'\n  workflow_dispatch:\n")
+        self.reject()
+
     def test_missing_workflow_is_not_silent_success(self):
         self.source("publication-integrity.yml").unlink()
         self.reject()

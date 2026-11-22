@@ -1,6 +1,7 @@
 name: Playwright implementation contract (offline, fail closed)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/validate_playwright_contract.py'
       - 'tests/test_playwright_contract.py'

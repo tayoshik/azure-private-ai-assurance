@@ -1,6 +1,7 @@
 name: Phase 4 original-source 286-case validation (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/phase4_guard.py'
       - 'scripts/plan_policy_guard.py'

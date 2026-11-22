@@ -1,6 +1,7 @@
 name: P1 ten evidence correlations (offline, untrusted)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/review_p1_evidence_correlation.py'
       - 'tests/test_p1_evidence_correlation.py'

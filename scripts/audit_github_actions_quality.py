@@ -7,6 +7,7 @@ A valid workflow audit is NOT evidence of application or live Azure acceptance.
 from __future__ import annotations
 
 import argparse
+from fnmatch import fnmatchcase
 from collections import Counter, defaultdict
 import json
 from pathlib import Path
@@ -44,6 +45,19 @@ SCOPED_JOBS = {
     "azure-monitor-private-link-offline.yml": "monitor-private-link-offline",
 }
 MANUAL_ONLY = {"terraform-stage4-provider-validate.yml"}
+# These had unrestricted PR events before trigger normalization. Retain the
+# broader coverage rather than narrowing PRs to former push path filters.
+BROAD_PR_NO_FILTER = frozenset({
+    "azure-rest01-rest02-offline.yml",
+    "azure-rest03-offline.yml",
+    "azure-rest04-offline.yml",
+    "azure-rest05-offline.yml",
+    "catalogue-dependency-audit.yml",
+    "phase3-source-recovery.yml",
+    "phase6-primary-source.yml",
+    "terraform-q01-q02-offline.yml",
+    "terraform-stage2-n04-static.yml",
+})
 
 
 def events_of(source: str) -> dict[str, list[str]]:
@@ -157,8 +171,37 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
             if not re.search(r"(?m)^\s+persist-credentials:\s+false\s*$",
                              "\n".join(trailing)):
                 errors.append(name + ": checkout step must disable persisted credentials")
-        if "push" in gates and "branches: [main]" not in "\n".join(gates["push"]):
-            unscoped_push_files.append(name)
+        if "push" in gates:
+            # A feature branch must not generate a redundant push check alongside
+            # its PR check; all 34 automated workflows may push only on main.
+            branches = [line.strip() for line in gates["push"]
+                        if line.startswith("    branches:")]
+            if branches != ["branches: [main]"] or any(
+                    "branches-ignore:" in line for line in gates["push"]):
+                unscoped_push_files.append(name)
+                errors.append(name + ": push must target only the main branch")
+            if "pull_request" not in gates:
+                errors.append(name + ": automated push check must also run on PRs")
+            else:
+                push_paths = event_paths(gates["push"])
+                pr_paths = event_paths(gates["pull_request"])
+                # An unfiltered PR is deliberately broader than a filtered
+                # main push and may not be narrowed without an explicit review.
+                if name in BROAD_PR_NO_FILTER and any(
+                        line.strip() == "paths:" for line in gates["pull_request"]):
+                    errors.append(name + ": preserve previously unfiltered PR coverage")
+                if pr_paths and push_paths != pr_paths:
+                    errors.append(name + ": filtered PR must cover exact main push paths")
+                # GitHub Actions path filters accept glob patterns, such as
+                # .github/workflows/**, which must count as a self-trigger.
+                self_path = WORKFLOWS + "/" + name
+                def covers_self(patterns):
+                    return any(not p.startswith("!") and fnmatchcase(self_path, p)
+                               for p in patterns)
+                if pr_paths and not covers_self(pr_paths):
+                    errors.append(name + ": PR filter must self-trigger on workflow changes")
+                if push_paths and not covers_self(push_paths):
+                    errors.append(name + ": main push filter must self-trigger on workflow changes")
         for job in jobs:
             job_owners[job].append(name)
         workflows[name] = {
@@ -226,8 +269,7 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         warnings.append(
             "Unapproved or unpinned Action reference is a blocking source-policy failure")
     if unscoped_push_files:
-        warnings.append(
-            "Other workflows still push on feature branches as well as PRs; follow-up trigger normalization needed")
+        warnings.append("Non-main push triggers are blocking CI-policy violations")
     return {
         "schema": "github-offline-ci-quality-audit/v1",
         "status": "INVALID_WORKFLOW_POLICY" if errors else "SOURCE_WORKFLOW_POLICY_VERIFIED_ONLY",
@@ -242,6 +284,10 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         "approved_sha_pin_count": len(APPROVED_ACTION_REFS),
         "sha_pin_manifest": PINS_MANIFEST,
         "remaining_unscoped_push_workflows": sorted(unscoped_push_files),
+        "main_only_push_workflow_count": sum(
+            "push" in events_of((root / WORKFLOWS / name).read_text(encoding="utf-8"))
+            for name in workflows
+        ),
         "scope_approved": False,
         "source_workflows_executed": 0,
         "azure_live_passes_verified": 0,

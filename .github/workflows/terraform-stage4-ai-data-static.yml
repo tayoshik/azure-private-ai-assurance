@@ -1,14 +1,20 @@
 name: Terraform A01-A06 offline contract
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/check_terraform*.py'
       - 'tests/test_terraform*.py'
       - '.github/workflows/terraform-stage4-ai-data-static.yml'
+      - 'scripts/check_terraform_a01_a06.py'
+      - 'tests/test_terraform_a01_a06.py'
   pull_request:
     paths:
       - 'infra/**'
+      - 'scripts/check_terraform*.py'
+      - 'tests/test_terraform*.py'
+      - '.github/workflows/terraform-stage4-ai-data-static.yml'
       - 'scripts/check_terraform_a01_a06.py'
       - 'tests/test_terraform_a01_a06.py'
   workflow_dispatch:

@@ -1,6 +1,7 @@
 name: Terraform Stage 1 source guard (no Azure)
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/check_terraform_stage1.py'

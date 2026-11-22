@@ -1,6 +1,7 @@
 name: Phase 1-2 canonical source and fail-closed review (offline)
 on:
   push:
+    branches: [main]
     paths:
       - 'specs/phase1_policies_110.json'
       - 'specs/phase2_220.json'

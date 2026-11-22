@@ -1,6 +1,7 @@
 name: Azure REST03 offline resource assurance
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/azure_rest_reader.py'
       - 'scripts/rest01_catalogue.py'

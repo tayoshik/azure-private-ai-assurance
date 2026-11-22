@@ -1,6 +1,7 @@
 name: Terraform 55-node DAG source paths (offline)
 on:
   push:
+    branches: [main]
     paths:
       - 'docs/terraform-implementation-dag.md'
       - 'infra/**'

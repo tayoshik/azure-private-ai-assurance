@@ -1,6 +1,7 @@
 name: Phase 5 frozen-source and 286 synthetic cases (offline)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/phase5_guard.py'
       - 'specs/phase5_286.json'

@@ -1,6 +1,7 @@
 name: Azure REST04 Private Endpoint and DNS offline
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/azure_rest_reader.py'
       - 'scripts/rest03_resource_audit.py'
