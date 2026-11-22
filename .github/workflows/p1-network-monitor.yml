@@ -1,6 +1,7 @@
 name: P1 DNS, auth, WAF and monitoring correlation (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/review_p1_network_monitor.py'
       - 'tests/test_p1_network_monitor.py'
