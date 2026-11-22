@@ -321,6 +321,60 @@ test "$rc" -eq 2
 
 **Review closure is separate:** the owner must approve the exact command, pinned binary/provider versions, network isolation, input artefacts, expected predicates and nonproduction scope; both reviewers must independently assess actual evidence from an authorized run. The source-only report records all authorization, execution and review flags as false. The frozen 1,716 tests, Azure PASS 0/1,716 and NO_GO release result are unchanged.
 
+## P2.5 — final 19 locally simple assertions: semantic gaps, no execution
+
+The last **19** P3 local-appearing candidates are inspected by `scripts/audit_assertion_semantics_19.py`. This is the final group after 149 P0 shell, 283 P1 input and 13 P2 tool cases: **149 + 283 + 13 + 19 = 464**. The program binds all nineteen IDs to the unchanged canonical ID/command/expected SHA-256 contracts and checks their original command families, but does **not** execute any command or read private inputs. A lexically simple command is **not** proof of a completed control check.
+
+| Reviewer group | Original IDs | Count | Why simple command success is not adequate |
+| --- | --- | ---: | --- |
+| Grep text/regex matching | `AZ-T14-03`, `AZ-T14-05`, `AZ-T15-01`, `AZ-T15-03`, `AZ-T15-11`, `AZ-T20-11`, `AZ-T20-13` | 7 | A text match does not establish effective HCL configuration, HTTP assertions or TLS verification; quoted regex and exclusions must be checked |
+| Find file listing | `AZ-T16-05`, `AZ-T16-11`, `AZ-T16-15`, `AZ-T44-09` | 4 | `find` can exit 0 without finding any file; actual test contents, plan/mock mode and unintended apply risk require independent examination |
+| Git source metadata | `AZ-T14-07`, `AZ-T21-21`, `AZ-T23-21`, `AZ-T45-05` | 4 | Tracking a file or printing a Git SHA does not attest an approved baseline, signed revision, or exact source-to-plan lineage |
+| Jq self-declared approval flags | `AZ-T69-03`, `AZ-T69-11`, `AZ-T69-13`, `AZ-T69-15` | 4 | A JSON `approved: true` field is not an approval signature or authorization to perform WAF traffic; target, scope, request count and time window need independent authorization |
+| **Total** | | **19** | **All remain NOT_READY until authorized execution and evidence review** |
+
+Specific source-risk clarifications: `AZ-T15-01` has nested shell quoting in the backend pattern; confirm the actual regular expression matches intended HCL. `AZ-T20-13` only greps for `ignoreHTTPSErrors` and must demonstrate it is **disabled**, not merely present. `AZ-T45-05` prints HEAD but does not prove it matches the signed plan-generation revision. `AZ-T69-03` reads a WAF ticket document with claims about test authorization; require independent authoritative approver verification. None of these source observations is a live Azure/WAF PASS.
+
+### Safe, source-only WSL check
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"  # trusted and reviewed checkout
+OUT="$(mktemp -d "$HOME/simple-assertions-19-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/audit_assertion_semantics_19.py \
+  --out "$OUT/assertion-semantics-19.json" > "$OUT/summary.json"
+python3 -m unittest discover -s tests -p 'test_assertion_semantics_19.py' -v
+python3 - "$OUT/assertion-semantics-19.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1], encoding="utf-8"))
+expected = {
+    "GREP_TEXT_MATCH_NOT_SEMANTIC_PROOF": 7,
+    "FIND_LISTING_NOT_NONEMPTY_PROOF": 4,
+    "GIT_SOURCE_METADATA_NOT_APPROVAL_PROOF": 4,
+    "JQ_SELF_DECLARED_FLAGS_NOT_INDEPENDENT_APPROVAL": 4,
+}
+assert r["status"] == "ASSERTION_SEMANTICS_REVIEW_ONLY"
+assert len(r["cases"]) == r["simple_assertion_cases"] == 19
+assert r["review_class_counts"] == expected
+assert r["original_commands_executed"] == 0
+assert r["independent_approval_signatures"] == r["azure_live_passes"] == 0
+assert r["release_decision"] == "NO_GO"
+assert all(not row["owner_authorized_command_execution"] and
+           not row["effective_assertion_semantics_verified"] and
+           row["azure_live_acceptance"] == "NOT_READY"
+           for row in r["cases"].values())
+print("19 source-locked simple assertion candidates require review; NO_GO")
+PY
+rc=0
+python3 scripts/audit_assertion_semantics_19.py --summary-only --strict \
+  > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+**Acceptance boundary:** all 19 case owners must verify the full original predicate, immutable inputs, expected values, negative conditions and independent reviewer signatures before separately authorized execution. No WAF requests, Azure resource checks or source tests are run by this workflow. With this review queue, **all 464 local-appearing cases have source-only reviewer assignments**, not execution approvals. The 1,716 frozen cases remain unchanged, Azure live accepted **0/1,716**, release **NO_GO**.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
