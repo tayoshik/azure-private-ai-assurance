@@ -58,8 +58,13 @@ class ApprovedInputReviewTests(unittest.TestCase):
                 self.assertNotIn(forbidden, row)
             self.assertEqual(row["required_review_checks"],
                              list(audit.NEXT_REVIEW[row["review_input_class"]]))
-        self.assertNotIn("APPROVED_PLAN", json.dumps(self.review))
-        self.assertNotIn("evidence/ci/", json.dumps(self.review))
+        # Generic checklist code CONFIRM_APPROVED_PLAN_* is intentionally
+        # allowed; raw environment references and original file paths are not.
+        encoded = json.dumps(self.review)
+        for source_literal in ('"$APPROVED_PLAN"', '$APPROVED_BASELINE_JSON',
+                               '$IPAM_JSON', 'evidence/ci/', 'infra/dev.tfvars.json'):
+            with self.subTest(source_literal=source_literal):
+                self.assertNotIn(source_literal, encoded)
 
     def test_plan_has_highest_priority(self):
         group, flags = audit.classify_input('sha256sum "$APPROVED_PLAN"', [])
