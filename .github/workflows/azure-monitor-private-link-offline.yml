@@ -1,0 +1,81 @@
+name: Azure Monitor Private Link offline validation
+on:
+  push:
+    paths:
+      - '.github/workflows/azure-monitor-private-link-offline.yml'
+      - 'infra/**'
+      - 'scripts/azure_monitor_private_audit.py'
+      - 'scripts/azure_rest_reader.py'
+      - 'scripts/azure_private_dns_step30.py'
+      - 'scripts/azure_private_endpoint_step26.py'
+      - 'scripts/azure_gateway_step28.py'
+      - 'scripts/azure_entra_step29.py'
+      - 'scripts/private_terraform_ci.py'
+      - 'ci/private-terraform.CANDIDATE.yml'
+      - 'scripts/rest04_private_dns_audit.py'
+      - 'scripts/validate_package.py'
+      - 'scripts/build_test_automation_ledger.py'
+      - 'specs/**'
+      - 'tests/test_azure_monitor_private_audit.py'
+      - 'tests/test_azure_private_dns_step30.py'
+      - 'tests/test_azure_private_endpoint_step26.py'
+      - 'tests/test_azure_gateway_step28.py'
+      - 'tests/test_azure_entra_step29.py'
+      - 'tests/test_private_terraform_ci.py'
+      - 'tests/test_rest04_private_dns_audit.py'
+      - 'tests/test_terraform_*.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1 (Node 24)
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1 (Node 24)
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+      - name: Check package and Monitor logic
+        run: |
+          python3 -B scripts/validate_package.py
+          python3 -B scripts/build_test_automation_ledger.py --check
+          python3 -B -m unittest discover -s tests -p 'test_azure_monitor_private_audit.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_terraform_gw01_gw05.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_terraform_provider_preflight.py' -v
+      - name: Check AZ-T30 without Azure or DNS
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_private_dns_step30.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_rest04_private_dns_audit.py' -v
+          python3 -B scripts/azure_private_dns_step30.py --selftest --out "$RUNNER_TEMP/az-t30-synthetic"
+      - name: Verify AZ-T26 configuration and synthetic evidence without Azure
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_private_endpoint_step26.py' -v
+          python3 -B tests/test_azure_private_endpoint_step26.py --evidence "$RUNNER_TEMP/az-t26-synthetic"
+      - name: Verify AZ-T28 rules, precedence and evidence without Azure
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_gateway_step28.py' -v
+          python3 -B tests/test_azure_gateway_step28.py --evidence "$RUNNER_TEMP/az-t28-synthetic"
+      - name: Verify AZ-T29 without live DNS, Azure or identity requests
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_azure_entra_step29.py' -v
+          python3 -B tests/test_azure_entra_step29.py --evidence "$RUNNER_TEMP/az-t29-synthetic"
+      - name: Verify private Terraform input and workflow contracts without Azure
+        run: |
+          python3 -B -m unittest discover -s tests -p 'test_private_terraform_ci.py' -v
+          python3 -B -m unittest discover -s tests -p 'test_terraform_stage1.py' -v
+      - name: Format and validate provider contracts
+        run: |
+          terraform fmt -check -recursive infra/bootstrap
+          terraform fmt -check infra/environments/dev/main.tf infra/environments/dev/monitoring-private-link*.tf
+          terraform fmt -check -recursive infra/modules/monitoring
+          terraform fmt -check -recursive infra/environments/dev/tests
+          for root in infra/bootstrap infra/environments/dev; do
+            terraform -chdir="$root" init -backend=false -input=false -lockfile=readonly
+            terraform -chdir="$root" validate
+          done
+          terraform -chdir=infra/bootstrap test -filter=tests/private_ci.tftest.hcl
+          terraform -chdir=infra/environments/dev test -filter=tests/monitoring_private_link.tftest.hcl

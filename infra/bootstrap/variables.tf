@@ -62,9 +62,10 @@ variable "bootstrap_pe_subnet_cidr" {
 
 variable "ci_principal_object_id" {
   type        = string
-  description = "Approved federated CI service principal Object ID (not client ID)."
+  description = "Legacy federated CI principal Object ID. Leave null for a new split-identity installation."
+  default     = null
   validation {
-    condition     = can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.ci_principal_object_id)) && lower(var.ci_principal_object_id) != "00000000-0000-0000-0000-000000000000"
+    condition     = var.ci_principal_object_id == null ? true : can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", var.ci_principal_object_id)) && lower(var.ci_principal_object_id) != "00000000-0000-0000-0000-000000000000"
     error_message = "Supply approved CI principal object UUID via restricted CI."
   }
 }

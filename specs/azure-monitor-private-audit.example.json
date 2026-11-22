@@ -1,0 +1,29 @@
+{
+  "environment": "nonproduction",
+  "approved_private_runner": false,
+  "mode": null,
+  "topology_approval_ref": null,
+  "query_approval_ref": null,
+  "log_source_approval_ref": null,
+  "subscriptions": [],
+  "tenant_id": null,
+  "client_id": null,
+  "workspace_guid": null,
+  "transaction_guid": null,
+  "scope_id": null,
+  "workspace_id": null,
+  "association_id": null,
+  "endpoint_id": null,
+  "zone_group_id": null,
+  "gateway_id": null,
+  "zone_ids": {
+    "privatelink.monitor.azure.com": null,
+    "privatelink.oms.opinsights.azure.com": null,
+    "privatelink.ods.opinsights.azure.com": null,
+    "privatelink.agentsvc.azure-automation.net": null,
+    "privatelink.blob.core.windows.net": null
+  },
+  "endpoint_ips": [],
+  "lookback_hours": 1,
+  "optional_observations": {}
+}

@@ -1,0 +1,44 @@
+{
+  "topology": null,
+  "approval_ref": null,
+  "scope_ref": null,
+  "tenant_id": null,
+  "entra_issuer": null,
+  "schema": "azure-entra-egress/az-t29/v1",
+  "environment": "nonproduction",
+  "approved_private_runner": false,
+  "cloud": "AzurePublic",
+  "subscriptions": [],
+  "identity": {
+    "app": {
+      "issuer": null,
+      "audience": null,
+      "design_ref": null
+    },
+    "managed": {
+      "platform": "app_service",
+      "client_id": null,
+      "audience": null
+    },
+    "github": {
+      "issuer": "https://token.actions.githubusercontent.com",
+      "subject": null,
+      "exchange_audience": "api://AzureADTokenExchange",
+      "resource_scope": "https://management.azure.com/.default",
+      "client_id": null
+    }
+  },
+  "dependencies": [
+    {
+      "category": null,
+      "actor": null,
+      "host": null,
+      "port": null,
+      "control": null,
+      "owner": null,
+      "purpose": null,
+      "approval_ref": null,
+      "expires": null
+    }
+  ]
+}

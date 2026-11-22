@@ -66,11 +66,14 @@ def private_ip(s):
 
 def validate_target(target):
     """Validate manifest scope without guessing asset IDs, IPs or FQDNs."""
-    if not isinstance(target, dict) or set(target) != {
-        *PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id", "group_id",
-        "expected_private_ips", "expected_record_fqdn"}:
+    required = {*PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id", "group_id",
+                "expected_private_ips", "expected_record_fqdn"}
+    if (not isinstance(target, dict) or not required <= set(target)
+            or set(target) - required - {"expected_link_vnet_id"}):
         raise ValueError("REST04 manifest requires exactly the documented fields")
     ids = [*PATH_KEYS.values(), "service_id", "subnet_id", "vnet_id"]
+    if "expected_link_vnet_id" in target:
+        ids.append("expected_link_vnet_id")
     for key in ids:
         value = target.get(key)
         if not isinstance(value, str) or not RESOURCE.fullmatch(value) or not SUBSCRIPTION.match(value):
@@ -78,6 +81,10 @@ def validate_target(target):
     subs = {SUBSCRIPTION.match(target[k]).group(1).casefold() for k in ids}
     if len(subs) != 1:
         raise ValueError("REST04 v1 requires single approved subscription scope")
+    if "expected_link_vnet_id" in target and not re.fullmatch(
+            r"/subscriptions/[0-9a-f-]+/resourceGroups/[^/?#]+/providers/Microsoft[.]Network/virtualNetworks/[A-Za-z0-9_.-]+",
+            target["expected_link_vnet_id"], re.I):
+        raise ValueError("expected linked VNet must be an exact VNet resource ID")
     pe = target["private_endpoint_id"].casefold()
     zone = target["dns_zone_id"].casefold()
     expected_types = {"private_endpoint_id": "/microsoft.network/privateendpoints/",
@@ -156,17 +163,10 @@ def _verified_observations(target, observations):
     return raw
 
 
-def assess_target(target, observations, *, synthetic=False):
-    """Verify ARM control-plane consistency; a good observation is NOT a DNS probe."""
-    target = validate_target(target)
-    result = {"target_sha256": digest(target), "status": "NOT_READY", "azure_live_acceptance": "NOT_READY",
-              "private_dns_runtime_proven": False, "azure_live_passes": 0}
-    data = _verified_observations(target, observations)
-    if data is None:
-        return {**result, "missing": ["complete, scoped, digest-verified REST02 observations"]}
-    problems, missing = [], []
-    pe, nic, grp, zone, arec, link = (data[k] for k in ROLES)
+def assess_endpoint(target, pe, nic):
+    """Check PE/NIC inventory without inferring effective connectivity."""
     pep = get_path(pe, "properties") or {}
+    problems, missing = [], []
     def must_equal(actual, expected, check):
         if actual is None:
             missing.append(check)
@@ -233,6 +233,29 @@ def assess_target(target, observations, *, synthetic=False):
                 problems.append("nic.publicIPAddress configured")
     if ips and set(ips) != set(target["expected_private_ips"]):
         problems.append("nic.privateIPAddress != approved IP set")
+    return problems, missing
+
+
+def assess_target(target, observations, *, synthetic=False):
+    """Verify ARM control-plane consistency; a good observation is NOT a DNS probe."""
+    target = validate_target(target)
+    result = {"target_sha256": digest(target), "status": "NOT_READY", "azure_live_acceptance": "NOT_READY",
+              "private_dns_runtime_proven": False, "azure_live_passes": 0}
+    data = _verified_observations(target, observations)
+    if data is None:
+        return {**result, "missing": ["complete, scoped, digest-verified REST02 observations"]}
+    pe, nic, grp, zone, arec, link = (data[k] for k in ROLES)
+    problems, missing = assess_endpoint(target, pe, nic)
+    def must_equal(actual, expected, check):
+        if actual is None:
+            missing.append(check)
+        elif not same_id(actual, expected):
+            problems.append(check)
+    def status_ok(actual, expected, check):
+        if not isinstance(actual, str):
+            missing.append(check)
+        elif actual.casefold() != expected.casefold():
+            problems.append(check)
     gp = get_path(grp,"properties") or {}
     status_ok(gp.get("provisioningState"),"Succeeded","zoneGroup.provisioningState")
     configs = gp.get("privateDnsZoneConfigs")
@@ -257,7 +280,7 @@ def assess_target(target, observations, *, synthetic=False):
                             problems.append("zoneGroup.recordSets IP mismatch")
     # Zone object identity/type already checked by REST02 observation wrapper.
     lp = get_path(link,"properties") or {}
-    must_equal(get_path(lp,"virtualNetwork","id"),target["vnet_id"],"vnetLink.vnet")
+    must_equal(get_path(lp,"virtualNetwork","id"),target.get("expected_link_vnet_id", target["vnet_id"]),"vnetLink.vnet")
     if lp.get("registrationEnabled") is not False:
         if lp.get("registrationEnabled") is None:
             missing.append("vnetLink.registrationEnabled")

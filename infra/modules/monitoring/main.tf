@@ -1,5 +1,4 @@
-# O01 prerequisite for GW05. Workspace only: AMPLS / private ingestion is
-# a separate O02 control, not implemented by this resource.
+# O01 prerequisite for GW05. Public query and ingestion remain disabled.
 resource "azurerm_log_analytics_workspace" "audit" {
   name                       = var.name
   resource_group_name        = var.resource_group_name
