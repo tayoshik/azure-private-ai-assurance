@@ -44,6 +44,19 @@ SCOPED_JOBS = {
     "azure-monitor-private-link-offline.yml": "monitor-private-link-offline",
 }
 MANUAL_ONLY = {"terraform-stage4-provider-validate.yml"}
+# These had unrestricted PR events before trigger normalization. Retain the
+# broader coverage rather than narrowing PRs to former push path filters.
+BROAD_PR_NO_FILTER = frozenset({
+    "azure-rest01-rest02-offline.yml",
+    "azure-rest03-offline.yml",
+    "azure-rest04-offline.yml",
+    "azure-rest05-offline.yml",
+    "catalogue-dependency-audit.yml",
+    "phase3-source-recovery.yml",
+    "phase6-primary-source.yml",
+    "terraform-q01-q02-offline.yml",
+    "terraform-stage2-n04-static.yml",
+})
 
 
 def events_of(source: str) -> dict[str, list[str]]:
@@ -173,6 +186,9 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
                 pr_paths = event_paths(gates["pull_request"])
                 # An unfiltered PR is deliberately broader than a filtered
                 # main push and may not be narrowed without an explicit review.
+                if name in BROAD_PR_NO_FILTER and any(
+                        line.strip() == "paths:" for line in gates["pull_request"]):
+                    errors.append(name + ": preserve previously unfiltered PR coverage")
                 if pr_paths and push_paths != pr_paths:
                     errors.append(name + ": filtered PR must cover exact main push paths")
                 if pr_paths and WORKFLOWS + "/" + name not in pr_paths:
