@@ -109,14 +109,14 @@ class WorkflowQualityTests(unittest.TestCase):
 
     def test_filtered_pr_path_cannot_omit_original_source(self):
         self.mutate("english-catalogue-validation.yml",
-                    "      - 'scripts/verify_english_tests.py'\n",
-                    "")
+                    "  pull_request:\n    paths:\n      - 'docs/phase1-220-english-tests.md'",
+                    "  pull_request:\n    paths:\n      - 'not-a-test-path.md'")
         self.reject()
 
     def test_filtered_pr_must_self_trigger_on_workflow_edits(self):
         self.mutate("terraform-stage4-ai-data-static.yml",
-                    "      - '.github/workflows/terraform-stage4-ai-data-static.yml'\n",
-                    "")
+                    "      - '.github/workflows/terraform-stage4-ai-data-static.yml'\n  workflow_dispatch:",
+                    "  workflow_dispatch:")
         self.reject()
 
     def test_previous_broad_pr_must_not_be_narrowed(self):
