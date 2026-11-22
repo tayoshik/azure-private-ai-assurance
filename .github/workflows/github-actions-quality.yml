@@ -1,0 +1,72 @@
+name: GitHub Actions source policy (offline)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/audit_github_actions_quality.py'
+      - 'tests/test_github_actions_quality.py'
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'scripts/audit_github_actions_quality.py'
+      - 'tests/test_github_actions_quality.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  workflow-source-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Audit 35 source workflows, 37 unique contexts and two mandatory checks
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts/github-actions-source
+          python3 scripts/audit_github_actions_quality.py --out artifacts/github-actions-source/audit.json > /dev/null
+          python3 scripts/audit_github_actions_quality.py --summary-only > artifacts/github-actions-source/summary.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path("artifacts/github-actions-source/summary.json").read_text())
+          assert p["status"] == "SOURCE_WORKFLOW_POLICY_VERIFIED_ONLY", p["errors"]
+          assert p["workflow_count"] == 35
+          assert p["total_job_definitions"] == 37
+          assert p["unique_job_contexts"] == 37
+          assert p["duplicate_status_contexts"] == []
+          assert p["required_ruleset_status_contexts"] == ["offline-main-gate", "offline-catalogue"]
+          assert p["source_workflows_executed"] == 0
+          assert p["azure_live_passes_verified"] == 0
+          assert p["release_decision"] == "NO_GO"
+          assert p["errors"] == []
+          PY
+      - name: Offline status name and event mutation regression tests
+        run: python3 -m unittest discover -s tests -p 'test_github_actions_quality.py' -v
+      - name: Strict mode refuses synthetic promotion to Azure acceptance
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_github_actions_quality.py --summary-only --strict > artifacts/github-actions-source/strict.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path("artifacts/github-actions-source/strict.json").read_text())
+          assert p["status"] == "SOURCE_WORKFLOW_POLICY_VERIFIED_ONLY"
+          assert p["azure_live_passes_verified"] == 0 and p["release_decision"] == "NO_GO"
+          PY
+      - name: Confirm source audit did not edit workflows
+        run: git diff --exit-code -- .github/workflows/
+      - name: Retain sanitized source policy evidence for 14 days
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: github-actions-source-policy-audit
+          path: artifacts/github-actions-source/
+          if-no-files-found: ignore
+          retention-days: 14
