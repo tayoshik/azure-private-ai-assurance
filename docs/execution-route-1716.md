@@ -102,6 +102,52 @@ test "$rc" -eq 2
 
 **Review boundary:** All outputs above remain private source-only routing evidence. The command cannot run Azure, and it does not sign off any case. No restricted customer information should be copied into the public repository or public GitHub Actions logs.
 
+## P2.1 — local-appearing 464-case pre-execution review (no execution)
+
+A source-only risk triage is available in `scripts/triage_local_464.py`. It reads the six **unchanged** English catalogues through `scripts/build_execution_route_1716.py`, checks each of the exact 464 local-appearing IDs against its canonical ID/command/expected fingerprint, and produces a **JSON** case-by-case priority queue without storing or executing command strings. Existing 858 synthetic / 380 live / 13 R41 / 1 odd-selftest cases are not relabeled.
+
+The exclusive priority categories are: **P0 Shell or indirect execution review** (compound shell, redirection, substitution, nested network/indirect tools, uncertain quoting); **P1 Private input and custody review** (environment variables, evidence/plan/baseline paths, missing literal input); **P2 Source tool semantics review** (Python, Terraform, Checkov, TFLint, Node, unknown command); and **P3 Local assertion semantics review** (simple jq/test/grep/find/git/hash predicates with no *detected* higher-priority indicator). Priority refers to **review order, not permission to execute**. A shell-lexical heuristic cannot prove a command is safe, and a local `jq` can require restricted Azure-produced evidence.
+
+Concrete source-grounded illustrations (not claimed passed):
+
+- `AZ-T20-21` begins `cd tests && npm ... && npx`; although its first token is local, it is a compound tool invocation and must never be automatically executed. The historical browser target/source is separately unresolved.
+- `AZ-T01-01` uses a Python policy script with an approved baseline environment variable. Merely having the script in Git does not establish an approved, signed baseline.
+- `AZ-T21-03` begins with a JSON predicate but requires `$IPAM_JSON` from the appropriate owner; a true expression is not proof of actual network policy.
+- `AZ-T45-03` hashes `$APPROVED_PLAN`; plan bytes may contain sensitive material and cannot be uploaded to public CI or read from unapproved locations.
+- `AZ-T14-01` reports the Terraform CLI version. Static tool output cannot by itself satisfy live infrastructure control acceptance.
+
+### Safe reproducible WSL procedure (read-only, no az login)
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"  # trusted checkout, no raw evidence checked in
+OUT="$(mktemp -d "$HOME/local-review-464-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/triage_local_464.py --out "$OUT/local-review-464.json" > "$OUT/summary.json"
+python3 -m unittest discover -s tests -p 'test_local_review_464.py' -v
+python3 - "$OUT/local-review-464.json" <<'PY'
+import json, sys
+from collections import Counter
+r = json.load(open(sys.argv[1], encoding="utf-8"))
+assert r["status"] == "REVIEW_PRIORITIES_ONLY"
+assert r["local_candidate_cases"] == len(r["cases"]) == 464
+assert sum(r["source_only_priority_counts"].values()) == 464
+assert r["commands_executed"] == r["approved_inputs_verified"] == 0
+assert r["independent_approvals"] == r["azure_live_passes"] == 0
+assert r["release_decision"] == "NO_GO"
+assert all(not v["command_executed"] and
+           not v["approved_input_verified"] and
+           v["azure_live_acceptance"] == "NOT_READY" for v in r["cases"].values())
+print("464 source-only priority records checked, no live acceptance")
+PY
+rc=0
+python3 scripts/triage_local_464.py --summary-only --strict > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+The owner/reviewer must **individually** approve each command's purpose, complete shell parsing, dependencies, input classification, immutable checksum, expected predicate and custody **before** execution. No command is authorized by its placement in a lower numbered or lower risk queue. Never run a batch of the canonical 464 commands automatically. All 464 remain `NOT_READY`; this queue changes neither the 1,716 original catalogues nor release NO_GO. CI only runs the source-audit generator and synthetic regressions, and prints a summary instead of archiving commands or private inputs.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
