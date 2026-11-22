@@ -168,7 +168,7 @@ def build_review(root: Path = ROOT, *, include_cases: bool = True) -> dict:
             raise TriageError("parent risk flag mismatch")
         bucket, flags = classify(rec["command"], reasons)
         counts[bucket] += 1
-        phases[rec["step"] // 10 if False else meta["canonical_source"]][bucket] += 1
+        phases[meta["canonical_source"]][bucket] += 1
         flags_count.update(flags)
         rows[ident] = {
             "source": meta["canonical_source"],
