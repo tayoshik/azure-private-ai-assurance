@@ -108,7 +108,7 @@ The Ruleset's only globally required contexts remain `offline-main-gate` and `of
 | Manual-only provider workflow | 1 | **1 (unchanged)** |
 | All workflows / job contexts | 35 / 37 | **35 / 37** |
 | Globally required Ruleset checks | `offline-main-gate`, `offline-catalogue` | **Unchanged** |
-| Workflow source-policy regression tests | 27 | **35** |
+| Workflow source-policy regression tests | 27 | **37** |
 
 Every previously unscoped `push` event received `branches: [main]`. The original `pull_request` event remains; existing path filters are retained or broadened. In particular:
 
@@ -121,7 +121,7 @@ Every previously unscoped `push` event received `branches: [main]`. The original
 
 ### Fail-closed policy
 
-`scripts/audit_github_actions_quality.py` now rejects any non-`main` push filter, any automated push workflow without PR coverage, any filtered PR whose path set differs from its corresponding main-push filter, or a filtered workflow that cannot trigger on its own YAML. It also maintains an explicit list of the nine historically unfiltered PR workflows and refuses to narrow them without an independently reviewed policy change. Eight new mutation tests in `tests/test_github_actions_quality.py` exercise this contract.
+`scripts/audit_github_actions_quality.py` now rejects any non-`main` push filter, any automated push workflow without PR coverage, any filtered PR whose path set differs from its corresponding main-push filter, or a filtered workflow that cannot trigger on its own YAML. It also maintains an explicit list of the nine historically unfiltered PR workflows and refuses to narrow them without an independently reviewed policy change. Ten new source-policy regression checks (including wildcard self-trigger handling) in `tests/test_github_actions_quality.py` exercise this contract.
 
 ```bash
 python3 scripts/audit_github_actions_quality.py --summary-only
