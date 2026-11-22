@@ -7,6 +7,7 @@ on:
       - 'docs/playwright-readiness-handoff.md'
       - '.github/workflows/playwright-readiness.yml'
   push:
+    branches: [main]
     paths:
       - 'scripts/audit_playwright_readiness.py'
       - 'tests/test_playwright_readiness.py'
