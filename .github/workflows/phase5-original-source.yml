@@ -1,0 +1,97 @@
+name: Phase 5 frozen-source and 286 synthetic cases (offline)
+on:
+  push:
+    paths:
+      - 'scripts/phase5_guard.py'
+      - 'specs/phase5_286.json'
+      - 'tests/test_phase5_primary_source.py'
+      - 'specs/test-automation-ledger.json'
+      - '.github/workflows/phase5-original-source.yml'
+  pull_request:
+    paths:
+      - 'scripts/phase5_guard.py'
+      - 'specs/phase5_286.json'
+      - 'tests/test_phase5_primary_source.py'
+      - 'specs/test-automation-ledger.json'
+      - '.github/workflows/phase5-original-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Verify original source, 286 fixtures, provenance and negative-path security
+        run: |
+          python3 -m unittest discover -s tests -p 'test_phase5_primary_source.py' -v
+      - name: Run frozen Phase 5 original 286 synthetic labels
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/phase5_guard.py --selftest ALL --spec specs/phase5_286.json > artifacts/phase5-original-source-result.json
+          python3 - <<'PY'
+          import json
+          with open('artifacts/phase5-original-source-result.json',encoding='utf-8') as f:
+              x=json.load(f)
+          assert x['result']=='SELFTEST_PASS'
+          assert x['case_labels_tested']==286 and x['synthetic_checks_succeeded']==286
+          assert x['azure_live_passes']==0 and x['release_decision']=='NO_GO'
+          print('286 synthetic source cases checked; ZERO Azure live acceptance')
+          PY
+      - name: Compare original/English command strings without assuming equivalence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path('specs/phase5_286.json').read_text(encoding='utf-8'))
+          b=json.loads(Path('specs/phase5_286_en.json').read_text(encoding='utf-8'))
+          orig={x['id']:x['command'] for x in a['tests']}
+          pub={x['id']:x['command'] for x in b['tests']}
+          assert len(orig)==len(pub)==286 and orig.keys()==pub.keys()
+          changed={x for x in orig if orig[x]!=pub[x]}
+          evens={x for x in changed if int(x[-2:])%2==0}
+          odds=changed-evens
+          assert len(changed)==197 and len(evens)==143 and len(odds)==54
+          assert all('--spec specs/phase5_286_en.json' in pub[x] for x in evens)
+          print('197 published command differences: 143 EN spec paths, 54 positive-case rewrites; approval NOT implied')
+          PY
+      - name: Recalculate 1716-case dependency status and deny release
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py --out artifacts/dependencies.json > artifacts/audit-summary.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('artifacts/dependencies.json',encoding='utf-8'))
+          assert x['canonical_test_ids']==1716 and not x['errors']
+          assert x['literal_script_reference']['MISSING_SCRIPT_REFERENCE']==246
+          assert x['literal_script_reference']['TRACKED_SCRIPT_REFERENCE']==753
+          assert x['literal_script_reference']['NO_DIRECT_SCRIPT_REFERENCE']==717
+          assert x['cases_with_missing_input']==2
+          assert x['release_decision']=='NO_GO' and x['azure_live_passes_verified']==0
+          print('Missing code references:',x['literal_script_reference']['MISSING_SCRIPT_REFERENCE'])
+          PY
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          x=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert x['decision']=='NO_GO' and x['verified_live_azure_passes']==0
+          PY
+      - name: Upload sanitized offline audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase5-source-offline-evidence
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
