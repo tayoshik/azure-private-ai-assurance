@@ -1,0 +1,83 @@
+name: Terraform 55-node DAG source paths (offline)
+on:
+  push:
+    paths:
+      - 'docs/terraform-implementation-dag.md'
+      - 'infra/**'
+      - 'specs/terraform-dag-source-map.json'
+      - 'scripts/audit_terraform_dag_paths.py'
+      - 'tests/test_terraform_dag_paths.py'
+      - '.github/workflows/terraform-dag-source-audit.yml'
+  pull_request:
+    paths:
+      - 'docs/terraform-implementation-dag.md'
+      - 'infra/**'
+      - 'specs/terraform-dag-source-map.json'
+      - 'scripts/audit_terraform_dag_paths.py'
+      - 'tests/test_terraform_dag_paths.py'
+      - '.github/workflows/terraform-dag-source-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dag-source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify source-only 55 nodes and 147 directed edges
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts/dag-source
+          python3 scripts/audit_terraform_dag_paths.py --out artifacts/dag-source/55-node-source-map-report.json > /dev/null
+          python3 scripts/audit_terraform_dag_paths.py --summary-only > artifacts/dag-source/summary.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          report = json.loads(Path("artifacts/dag-source/summary.json").read_text())
+          assert report["status"] == "SOURCE_PATHS_RECONCILED_NOT_ACCEPTED", report["errors"]
+          assert report["dag_node_count"] == 55
+          assert report["dag_edge_count"] == 147
+          assert report["source_classes"] == {
+              "CODE_SOURCE_PRESENT_ONLY": 30,
+              "DESIGN_INPUT_NOT_MATERIALIZED": 5,
+              "LIVE_APPROVAL_NOT_READY": 14,
+              "OFFLINE_ARTIFACT_NOT_MATERIALIZED": 2,
+              "OPTIONAL_DECISION_PENDING": 3,
+              "OPTIONAL_AMPLS_PARTIAL": 1,
+          }
+          assert report["code_nodes_approved"] == 0
+          assert report["independent_review_approvals"] == 0
+          assert report["azure_live_passes"] == 0
+          assert report["release_decision"] == "NO_GO"
+          assert not report["errors"]
+          PY
+      - name: 17 source-path mutation and fail-closed regression tests
+        run: python3 -m unittest discover -s tests -p 'test_terraform_dag_paths.py' -v
+      - name: Verify independent review/live readiness strict gate denies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_terraform_dag_paths.py --summary-only --strict > artifacts/dag-source/strict.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          x = json.loads(Path("artifacts/dag-source/strict.json").read_text())
+          assert x["status"] == "SOURCE_PATHS_RECONCILED_NOT_ACCEPTED"
+          assert x["azure_live_passes"] == 0 and x["release_decision"] == "NO_GO"
+          PY
+      - name: Inspection must not rewrite HCL or restricted evidence
+        run: git diff --exit-code -- infra/ docs/terraform-implementation-dag.md specs/terraform-dag-source-map.json
+      - name: Preserve synthetic-only source audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-dag-source-audit
+          path: artifacts/dag-source/
+          if-no-files-found: ignore
+          retention-days: 14
