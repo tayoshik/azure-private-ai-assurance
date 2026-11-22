@@ -25,7 +25,7 @@ Both are credential-free and Azure-offline. Do **not** configure either job as r
 
 ## Administrator activation: repository ruleset
 
-1. Open `tayoshik/azure-private-ai-assurance` → **Settings** → **Rules** → **Rulesets** → **New branch ruleset**.
+1. Open `tayoshik/azure-private-ai-assurance` → **Settings**. In the current GitHub UI, look under **Code, planning, and automation** for **Rulesets** → **Rulesets**; in the alternate/older sidebar, use **Code and automation** → **Rules** → **Rulesets**. Then click **New ruleset** → **New branch ruleset**. If the menu is hidden, open the repository Rulesets settings directly: `https://github.com/tayoshik/azure-private-ai-assurance/settings/rules`. GitHub documentation: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository .
 2. Name `main-protected-offline`. Select **Active** enforcement and target **the exact `main` branch**.
 3. Enable **Require a pull request before merging**, **Require status checks to pass before merging**, **Require conversation resolution before merging**, **Block force pushes**, and **Restrict deletions** (labels can vary slightly).
 4. Add two exact required checks, preferably with source **GitHub Actions**:
