@@ -31,11 +31,13 @@
     ],
     "p1-network-monitor.yml": [
       "dependency.json",
+      "p1-comparator-coverage.json",
       "release.json",
       "static-summary.json"
     ],
     "p1-source-evidence.yml": [
       "dependency.json",
+      "p1-30-coverage.json",
       "release.json"
     ],
     "phase12-source-recovery.yml": [
