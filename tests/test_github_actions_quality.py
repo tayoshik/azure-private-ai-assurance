@@ -21,6 +21,9 @@ class WorkflowQualityTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         shutil.copytree(ROOT / quality.WORKFLOWS, self.root / quality.WORKFLOWS)
+        manifest = self.root / quality.PINS_MANIFEST
+        manifest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / quality.PINS_MANIFEST, manifest)
 
     def source(self, name):
         return self.root / quality.WORKFLOWS / name
@@ -149,6 +152,51 @@ class WorkflowQualityTests(unittest.TestCase):
     def test_manual_provider_validation_remains_dispatch_only(self):
         self.mutate("terraform-stage4-provider-validate.yml",
                     "  workflow_dispatch:\n", "  push:\n    branches: [main]\n")
+        self.reject()
+
+    def test_all_actions_are_approved_full_sha_pins(self):
+        result = quality.inspect(self.root)
+        self.assertEqual(result["remaining_unpinned_action_workflows"], [])
+        self.assertEqual(result["approved_sha_pin_count"], 5)
+        self.assertEqual(result["sha_pin_manifest"], quality.PINS_MANIFEST)
+        self.assertEqual(result["status"], "SOURCE_WORKFLOW_POLICY_VERIFIED_ONLY")
+
+    def test_unapproved_action_even_with_a_sha_is_denied(self):
+        self.mutate("terraform-stage1-static.yml",
+                    quality.CHECKOUT,
+                    "actions/checkout@" + "0" * 40)
+        self.reject()
+
+    def test_mutable_tag_in_optional_workflow_is_denied(self):
+        self.mutate("azure-rest04-offline.yml",
+                    quality.CHECKOUT, "actions/checkout@v4")
+        self.reject()
+
+    def test_untrusted_external_action_is_denied(self):
+        self.mutate("azure-rest03-offline.yml",
+                    quality.CHECKOUT,
+                    "untrusted/checkout@" + "a" * 40)
+        self.reject()
+
+    def test_optional_checkout_must_not_persist_credentials(self):
+        self.mutate("terraform-stage1-static.yml",
+                    "persist-credentials: false", "persist-credentials: true")
+        self.reject()
+
+    def test_individual_multistep_checkouts_must_disable_credentials(self):
+        self.mutate("terraform-provider-schema-real.yml",
+                    "persist-credentials: false", "persist-credentials: true")
+        self.reject()
+
+    def test_pinned_actions_manifest_tampering_is_denied(self):
+        path = self.root / quality.PINS_MANIFEST
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        manifest["approved_refs"][0]["uses"] = "actions/checkout@" + "f" * 40
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        self.reject()
+
+    def test_missing_action_pin_manifest_is_denied(self):
+        (self.root / quality.PINS_MANIFEST).unlink()
         self.reject()
 
     def test_strict_denies_azure_acceptance_while_static_audit_passes(self):
