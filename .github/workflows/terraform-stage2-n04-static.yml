@@ -1,6 +1,7 @@
 name: Terraform N04 static contract (no cloud credentials)
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/check_terraform_stage1.py'
