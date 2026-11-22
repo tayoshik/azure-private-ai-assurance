@@ -187,3 +187,86 @@ not enumerate or download anything, call GitHub/Azure, or execute a log command.
 
 **Acceptance invariant:** Azure live PASS **0/1,716**, 1,716 **NOT_READY**,
 release **NO_GO**. The historical security issue remains **OPEN**.
+
+## Crosswalk actual job IDs against exported runs and private log triage (follow-up)
+
+A job log named `job-123.log` is **not self-authenticating**: the name alone
+cannot prove that it belongs to an in-scope historical GitHub Actions workflow
+run. A metadata-only investigation can also omit failed/cancelled attempts,
+rerun attempts or deleted/expired jobs. Therefore the dedicated offline
+`scripts/reconcile_historical_job_log_coverage.py` binds the
+**owner-exported job ID, run ID, attempt and commit SHA** to the restricted
+`runs.ndjson` metadata and the private job-log triage report prepared above.
+
+### Authorized metadata export (no ZIP or log bytes)
+
+Only after a repository security owner has approved the exact historical
+workflow run IDs, and only with an already authorized/authenticated GitHub
+CLI on the restricted workstation, export each relevant run's **job metadata**.
+Use the previously acquired restricted `runs.ndjson` and ensure the GitHub
+run attempt selection is independently checked. This command does not
+download or read any job log content:
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"
+ROOT="$HOME/.local/share/private-actions-history-review"
+command -v gh >/dev/null
+gh auth status >/dev/null
+# Owner-approved numeric run ID only; repeat for every in-scope run and attempt.
+RUN_ID="REPLACE_WITH_OWNER_APPROVED_NUMERIC_GITHUB_RUN_ID"
+case "$RUN_ID" in ''|*[!0-9]*) echo 'Invalid run ID' >&2; exit 2;; esac
+gh api --paginate "repos/tayoshik/azure-private-ai-assurance/actions/runs/$RUN_ID/jobs?per_page=100&filter=all" \
+  --jq '.jobs[] | {id, run_id, run_attempt, head_sha, status, conclusion} | @json' \
+  >> "$ROOT/jobs.ndjson"
+chmod 600 "$ROOT/jobs.ndjson"
+```
+
+This append-only example is **not a complete run inventory** by itself.
+Review the approved source run list and ensure the export contains every
+attempt/job selected for review, including jobs without retained logs.
+Avoid repeating the same run export, because duplicate job IDs cause the
+reconciliation to fail closed. Never put the metadata export or private job
+SHA list in the public issue.
+
+After the operator has run the **local-only** job-log scanner and saved
+`joblog-...json`, join metadata to the triage output:
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"
+ROOT="$HOME/.local/share/private-actions-history-review"
+TRIAGE="$ROOT/reports/REPLACE_WITH_EXISTING_PRIVATE_JOBLOG_TRIAGE_REPORT.json"
+python3 scripts/reconcile_historical_job_log_coverage.py \
+  --runs "$ROOT/runs.ndjson" \
+  --jobs "$ROOT/jobs.ndjson" \
+  --triage-report "$TRIAGE" \
+  --report "$ROOT/reports/coverage-$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 -m unittest discover -s tests -p 'test_historical_job_log_coverage.py' -v
+```
+
+### Fail-closed coverage semantics
+
+- A job in the export with **no local log** is classified
+  `LOCAL_JOB_LOG_MISSING_OR_NOT_COLLECTED`. An oversized/unreadable
+  log remains unexamined. A local file absent from exported job metadata
+  becomes `LOCAL_LOG_WITHOUT_EXPORTED_JOB_METADATA`.
+- Job/run commit drift, missing run records or unrecognized workflow paths
+  are **review exceptions**, never evidence of safe source revisions.
+  The cut-off time alone does not prove an individual run used the later
+  guarded workflow. Known historical runs retain the exposure review queue.
+- The scanner's SHA-256 is a fingerprint of bytes reported by the private
+  triage, **not a verified GitHub server signature**. An independent reviewer
+  must corroborate custody, actual run/job API IDs, source SHA, retention,
+  access visibility and archived log bytes. Reports are protected 0600 JSON
+  outside the repository; stdout only contains aggregate categories/counts.
+- The metadata API may omit expired or deleted jobs and the operator could
+  omit in-scope runs. This tool **never claims complete historical coverage**,
+  even when every *exported* job has a local log. All actual exposures,
+  independent sign-offs and remediation decisions remain **UNKNOWN/OPEN**.
+  No real logs or Azure services are accessed by public CI. The synthetic
+  test suite alone is never an incident closure artifact.
+
+**Issue #30 stays OPEN. Azure accepted 0/1,716; release NO_GO.**
