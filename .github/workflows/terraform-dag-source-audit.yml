@@ -32,7 +32,6 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           persist-credentials: false
-          persist-credentials: false
       - name: Verify source-only 55 nodes and 147 directed edges
         shell: bash
         run: |

@@ -36,7 +36,6 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         with:
           persist-credentials: false
-          persist-credentials: false
       - name: Build every original ID's metadata-only execution route
         shell: bash
         run: |

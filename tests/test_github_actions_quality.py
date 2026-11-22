@@ -253,6 +253,22 @@ class WorkflowQualityTests(unittest.TestCase):
                     "persist-credentials: false", "persist-credentials: true")
         self.reject()
 
+    def test_duplicate_checkout_credential_key_is_rejected(self):
+        self.mutate("execution-route-inventory.yml",
+                    "          persist-credentials: false\n",
+                    "          persist-credentials: false\n"
+                    "          persist-credentials: false\n")
+        report = self.reject()
+        self.assertTrue(any("exactly one" in x for x in report["errors"]))
+
+    def test_conflicting_duplicate_checkout_credential_key_is_rejected(self):
+        self.mutate("terraform-dag-source-audit.yml",
+                    "          persist-credentials: false\n",
+                    "          persist-credentials: false\n"
+                    "          persist-credentials: true\n")
+        report = self.reject()
+        self.assertTrue(any("exactly one" in x for x in report["errors"]))
+
     def test_individual_multistep_checkouts_must_disable_credentials(self):
         self.mutate("terraform-provider-schema-real.yml",
                     "persist-credentials: false", "persist-credentials: true")

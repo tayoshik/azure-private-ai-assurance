@@ -219,9 +219,13 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
                 if line.strip() and leading <= step_indent:
                     break
                 trailing.append(line)
-            if not re.search(r"(?m)^\s+persist-credentials:\s+false\s*$",
-                             "\n".join(trailing)):
-                errors.append(name + ": checkout step must disable persisted credentials")
+            # Duplicate YAML mapping keys make GitHub reject a workflow before a job runs.
+            # Test one correctly indented and unique credential setting per checkout.
+            credential_fields = re.findall(
+                r"(?m)^([ ]*)persist-credentials:[ \t]*([^ \t\r\n#]+)[ \t]*$",
+                "\n".join(trailing))
+            if credential_fields != [(" " * (step_indent + 4), "false")]:
+                errors.append(name + ": checkout must set exactly one correctly indented persist-credentials: false")
         if "push" in gates:
             # A feature branch must not generate a redundant push check alongside
             # its PR check; all 34 automated workflows may push only on main.
