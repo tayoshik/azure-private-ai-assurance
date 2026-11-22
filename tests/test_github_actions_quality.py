@@ -119,6 +119,18 @@ class WorkflowQualityTests(unittest.TestCase):
                     "  workflow_dispatch:")
         self.reject()
 
+    def test_glob_self_trigger_is_valid_for_quality_workflow(self):
+        result = quality.inspect(self.root)
+        self.assertEqual(result["errors"], [], result["errors"])
+        self.assertTrue(result["workflows"]["github-actions-quality.yml"]
+                        ["path_filtered_pull_request"])
+
+    def test_loss_of_workflow_glob_self_trigger_is_rejected(self):
+        self.mutate("github-actions-quality.yml",
+                    "      - '.github/workflows/**'",
+                    "      - 'docs/other/**'")
+        self.reject()
+
     def test_previous_broad_pr_must_not_be_narrowed(self):
         self.mutate("azure-rest03-offline.yml",
                     "  pull_request:\n  workflow_dispatch:\n",
