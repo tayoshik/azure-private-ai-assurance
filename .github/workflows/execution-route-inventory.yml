@@ -13,6 +13,8 @@ on:
       - 'tests/test_local_review_464.py'
       - 'scripts/audit_shell_149_review.py'
       - 'tests/test_shell_149_review.py'
+      - 'scripts/audit_approved_input_283.py'
+      - 'tests/test_approved_input_283.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -29,6 +31,8 @@ on:
       - 'tests/test_local_review_464.py'
       - 'scripts/audit_shell_149_review.py'
       - 'tests/test_shell_149_review.py'
+      - 'scripts/audit_approved_input_283.py'
+      - 'tests/test_approved_input_283.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -91,6 +95,15 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_shell_149_review.py' -v
           rc=0
           python3 scripts/audit_shell_149_review.py --summary-only --strict >/dev/null || rc=$?
+          test "$rc" -eq 2
+      - name: Review 283 restricted-input candidate source references without reading private bytes
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_approved_input_283.py --summary-only
+          python3 -m unittest discover -s tests -p 'test_approved_input_283.py' -v
+          rc=0
+          python3 scripts/audit_approved_input_283.py --summary-only --strict >/dev/null || rc=$?
           test "$rc" -eq 2
       - name: Ensure strict mode refuses independent Azure acceptance
         shell: bash
