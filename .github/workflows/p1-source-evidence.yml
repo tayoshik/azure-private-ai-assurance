@@ -1,6 +1,7 @@
 name: P1 additional source-evidence ten checks (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/review_p1_source_evidence.py'
       - 'tests/test_p1_source_evidence.py'
