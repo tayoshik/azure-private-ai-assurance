@@ -24,6 +24,9 @@ class WorkflowQualityTests(unittest.TestCase):
         manifest = self.root / quality.PINS_MANIFEST
         manifest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / quality.PINS_MANIFEST, manifest)
+        artifact_policy = self.root / quality.ARTIFACT_POLICY_PATH
+        artifact_policy.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / quality.ARTIFACT_POLICY_PATH, artifact_policy)
 
     def source(self, name):
         return self.root / quality.WORKFLOWS / name
@@ -264,6 +267,59 @@ class WorkflowQualityTests(unittest.TestCase):
 
     def test_missing_action_pin_manifest_is_denied(self):
         (self.root / quality.PINS_MANIFEST).unlink()
+        self.reject()
+
+    def test_all_16_public_artifact_uploaders_are_reviewed_and_bound(self):
+        report = quality.inspect(self.root)
+        self.assertEqual(report["errors"], [], report["errors"])
+        self.assertEqual(report["artifact_uploaders_guarded"], 16)
+        self.assertEqual(report["approved_artifact_files"], 69)
+        self.assertEqual(report["artifact_retention_days"], 14)
+        self.assertEqual(report["artifact_policy"], quality.ARTIFACT_POLICY_PATH)
+
+    def test_upload_cannot_bypass_preupload_success(self):
+        self.mutate("phase3-source-recovery.yml",
+                    "steps.artifact_safety.outcome == 'success'",
+                    "steps.artifact_safety.outcome != 'failure'")
+        self.reject()
+
+    def test_upload_cannot_revert_to_raw_artifacts_folder(self):
+        self.mutate("p1-network-monitor.yml",
+                    "path: artifacts-reviewed/", "path: artifacts/")
+        self.reject()
+
+    def test_upload_retention_cannot_expand_silently(self):
+        self.mutate("terraform-provider-schema-real.yml",
+                    "retention-days: 14", "retention-days: 90")
+        self.reject()
+
+    def test_preupload_scan_command_cannot_be_silenced(self):
+        self.mutate("semantic-readiness-1716.yml",
+                    "python3 scripts/verify_offline_ci_artifacts.py --workflow",
+                    "echo 'success' --workflow")
+        self.reject()
+
+    def test_preupload_safety_step_must_execute_after_failed_tests(self):
+        self.mutate("execution-route-inventory.yml",
+                    "id: artifact_safety\n        if: always()",
+                    "id: artifact_safety\n        if: success()")
+        self.reject()
+
+    def test_unapproved_artifact_uploader_is_denied(self):
+        self.mutate("offline-validation.yml",
+                    "      - name: Offline regression tests",
+                    "      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02\n"
+                    "      - name: Offline regression tests")
+        self.reject()
+
+    def test_missing_artifact_policy_denies_every_upload(self):
+        (self.root / quality.ARTIFACT_POLICY_PATH).unlink()
+        self.reject()
+
+    def test_new_policy_file_changes_must_trigger_producer_ci(self):
+        self.mutate("phase5-original-source.yml",
+                    "      - 'specs/github-actions-artifact-policy.json'\n  pull_request:",
+                    "  pull_request:")
         self.reject()
 
     def test_strict_denies_azure_acceptance_while_static_audit_passes(self):
