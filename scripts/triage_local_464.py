@@ -13,7 +13,7 @@ from pathlib import Path
 import re
 import shlex
 
-from build_execution_route_1716 import ROOT, ROUTE_LOCAL, build
+from build_execution_route_1716 import ROOT, ROUTE_LOCAL, build, digest_case
 
 SCHEMA = "azure-local-464-review-queue/v1"
 PRIORITY_SHELL = "P0_SHELL_OR_INDIRECT_EXECUTION_REVIEW"
@@ -128,9 +128,7 @@ def make_queue(root: Path = ROOT, *, include_cases: bool = True) -> dict:
         if row["route"] != ROUTE_LOCAL:
             continue
         case = cases.get(case_id)
-        if not case or row["catalogue_contract_sha256"] != (
-            __import__("build_execution_route_1716").digest_case(case)
-        ):
+        if not case or row["catalogue_contract_sha256"] != digest_case(case):
             raise TriageError("immutable source fingerprint mismatch")
         priority, reasons = inspect_command(
             case["command"], row["direct_command_family"], row["missing_input_paths"])
