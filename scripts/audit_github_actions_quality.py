@@ -14,8 +14,8 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ".github/workflows"
-EXPECTED_MIN_WORKFLOWS = 34
-EXPECTED_MIN_JOBS = 36
+EXPECTED_MIN_WORKFLOWS = 35
+EXPECTED_MIN_JOBS = 37
 CHECKOUT = "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd"
 REQUIRED_GATES = {
     "offline-main-gate": {
