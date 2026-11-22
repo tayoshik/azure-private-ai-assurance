@@ -40,6 +40,8 @@ ALLOWED_EXTENSIONS = frozenset({".json", ".txt", ".log"})
 
 
 def _safe_path(rel: str) -> bool:
+    if not isinstance(rel, str):
+        return False
     path = PurePosixPath(rel)
     return bool(
         isinstance(rel, str) and rel and "\\" not in rel and
