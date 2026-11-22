@@ -7,12 +7,18 @@ on:
       - 'scripts/audit_github_actions_quality.py'
       - 'tests/test_github_actions_quality.py'
       - 'specs/github-actions-approved-pins.json'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
+      - 'tests/test_offline_ci_artifacts.py'
   pull_request:
     paths:
       - '.github/workflows/**'
       - 'scripts/audit_github_actions_quality.py'
       - 'tests/test_github_actions_quality.py'
       - 'specs/github-actions-approved-pins.json'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
+      - 'tests/test_offline_ci_artifacts.py'
   workflow_dispatch:
 permissions:
   contents: read
