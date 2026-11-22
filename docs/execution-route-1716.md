@@ -148,6 +148,62 @@ test "$rc" -eq 2
 
 The owner/reviewer must **individually** approve each command's purpose, complete shell parsing, dependencies, input classification, immutable checksum, expected predicate and custody **before** execution. No command is authorized by its placement in a lower numbered or lower risk queue. Never run a batch of the canonical 464 commands automatically. All 464 remain `NOT_READY`; this queue changes neither the 1,716 original catalogues nor release NO_GO. CI only runs the source-audit generator and synthetic regressions, and prints a summary instead of archiving commands or private inputs.
 
+## P2.2 — detailed, non-executing P0 review of 149 shell-risk local cases
+
+Following the completed P2.1 **464-case** source-only classification, a second independent source-locked review in `scripts/audit_shell_149_review.py` selects exactly **149** `P0_SHELL_OR_INDIRECT_EXECUTION_REVIEW` IDs. It reads each test's original command **as data only**, checks the canonical ID/command/expected SHA-256 fingerprint against the inherited review queue, and generates only a per-ID JSON **review checklist** (no raw shell commands or private evidence). Original tests are never invoked.
+
+The deterministic **exclusive reviewer order** is:
+
+| Class | Review trigger | Required independent investigation |
+| --- | --- | --- |
+| A Dynamic/indirect execution | Command substitution, nested network tools, indirect shells/dispatchers, dynamic Python | Review every expansion and nested command; prohibit accidental network/mutating behavior; authorize tool+identity+dependencies separately |
+| B Chain/exit status | Shell `&&`, `||`, `;` and background operators after higher-priority checks | Review **all** segments, short-circuit behavior, side effects and final exit status, not merely the first command |
+| C Pipeline/data flow | Shell pipelines after A/B checks | Verify every producer/consumer, confidentiality, `pipefail` semantics, actual predicate and safe destination |
+| D Redirection/custody | Input/output/fd redirection after A/B/C | Verify allowed paths, no secret uploads, overwrite controls and error suppression |
+| E Unparseable/unknown | Incomplete quoting, unsupported punctuation, parent lexical mismatch, or unrecognized P0 | **Do not run**; require explicit manual parsing and correction/approval |
+
+Individual cases can have **multiple overlapping redacted flag codes**; classification is exclusive by precedence A/B/C/D/E except that unparseable/unsupported syntax is escalated to E. This classification is not an executable Bash parser: no class is certified safe, and original canonical commands might have hidden shell behavior even where not flagged.
+
+**Illustrations from frozen source:**
+
+- `AZ-T11-01`: a `test` command joined to `find`. Verify both predicates, whether the output is meaningful, and permissions before running.
+- `AZ-T11-19`: source enumeration with an error redirection; ensure suppressed stderr cannot conceal a missing or inaccessible path.
+- `AZ-T20-21`: chained `cd`/`npm`/`npx` steps. Its first-token classification as local **does not** permit package installation, browser tests or a network operation. The original Playwright references and R41 decision remain separate pending scope approval.
+- `AZ-T45-03`: a direct hash of `$APPROVED_PLAN` is in the **other 464-case P1 data-custody group**, not the shell-risk 149. It still cannot be run without protected, signed inputs. Detailed P0 classification **does not** remove or downgrade that risk.
+
+**WSL source-only check (never executes original commands):**
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"    # trusted checkout of reviewed main
+OUT="$(mktemp -d "$HOME/review-shell-p0-149-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/audit_shell_149_review.py --out "$OUT/p0-149.json" \
+  > "$OUT/summary.json"
+python3 -m unittest discover -s tests -p 'test_shell_149_review.py' -v
+python3 - "$OUT/p0-149.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1], encoding="utf-8"))
+assert r["status"] == "SHELL_SOURCE_TRIAGE_ONLY"
+assert r["shell_p0_count"] == len(r["cases"]) == 149
+assert sum(r["review_class_counts"].values()) == 149
+assert r["commands_executed"] == r["case_reviews_approved"] == 0
+assert r["azure_live_passes"] == 0 and r["release_decision"] == "NO_GO"
+assert all(not row["command_executed"] and
+           not row["actual_command_authorized"] and
+           not row["reviewer1_signed"] and
+           not row["reviewer2_signed"] for row in r["cases"].values())
+print("149 frozen shell-risk cases classified for review only; no execution")
+PY
+rc=0
+python3 scripts/audit_shell_149_review.py --summary-only --strict \
+  > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+**Closure gate per original case:** two independent reviewers confirm the exact intended assertion, current inputs/permissions, validated shell parsing, path/network/data-side effects, pinned version, baseline/evidence custody and rollback/incident behavior. Only after owner authorization may a case's actual command be considered for execution in its approved environment. The generated queue makes no acceptance decisions and cannot alter 0/1,716 Azure accepted cases or release NO_GO.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
