@@ -1,6 +1,7 @@
 name: Prioritize 160 static check semantics (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/triage_static_criteria.py'
       - 'scripts/review_high_risk_static.py'
