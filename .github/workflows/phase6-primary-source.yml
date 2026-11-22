@@ -2,6 +2,7 @@ name: Phase 6 frozen source and transport triage (offline only)
 on:
   pull_request:
   push:
+    branches: [main]
     paths:
       - 'specs/phase6_220.json'
       - 'specs/phase6_220_en.json'
