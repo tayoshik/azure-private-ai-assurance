@@ -1,6 +1,7 @@
 name: All 1716 semantic readiness audit (offline, not acceptance)
 on:
   push:
+    branches: [main]
     paths:
       - 'scripts/audit_semantic_readiness.py'
       - 'tests/test_semantic_readiness.py'
