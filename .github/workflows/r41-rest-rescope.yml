@@ -6,6 +6,8 @@ on:
       - 'specs/r41-rest-api-rescope-proposal.json'
       - 'scripts/audit_rest_r41_rescope.py'
       - 'tests/test_rest_r41_rescope.py'
+      - 'scripts/build_r41_owner_decision_packet.py'
+      - 'tests/test_r41_owner_decision_packet.py'
       - 'docs/r41-rest-api-rescope.md'
       - '.github/workflows/r41-rest-rescope.yml'
   pull_request:
@@ -13,6 +15,8 @@ on:
       - 'specs/r41-rest-api-rescope-proposal.json'
       - 'scripts/audit_rest_r41_rescope.py'
       - 'tests/test_rest_r41_rescope.py'
+      - 'scripts/build_r41_owner_decision_packet.py'
+      - 'tests/test_r41_owner_decision_packet.py'
       - 'docs/r41-rest-api-rescope.md'
       - '.github/workflows/r41-rest-rescope.yml'
   workflow_dispatch:
@@ -74,4 +78,35 @@ jobs:
           import json
           x = json.load(open('/tmp/r41-strict.json', encoding='utf-8'))
           assert x['approved'] is False and x['release_decision'] == 'NO_GO'
+          PY
+      - name: Build 13 owner decision gates without approving or executing any case
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/build_r41_owner_decision_packet.py --summary-only > /tmp/r41-decision-summary.json
+          python3 -m unittest discover -s tests -p 'test_r41_owner_decision_packet.py' -v
+          python3 - <<'PY'
+          import json
+          r = json.load(open('/tmp/r41-decision-summary.json', encoding='utf-8'))
+          assert r['status'] == 'DECISION_PACKET_PREPARED_NOT_APPROVED'
+          assert r['r41_cases'] == 13
+          assert sum(r['review_group_counts'].values()) == 13
+          assert r['scope_decisions_approved'] == 0
+          assert r['original_commands_executed'] == 0
+          assert r['azure_live_passes'] == 0
+          assert r['release_decision'] == 'NO_GO'
+          PY
+      - name: Strict owner decision gate refuses missing approvals
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/build_r41_owner_decision_packet.py --summary-only --strict > /tmp/r41-decision-strict.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          r = json.load(open('/tmp/r41-decision-strict.json', encoding='utf-8'))
+          assert r['scope_decisions_approved'] == 0
+          assert r['azure_live_passes'] == 0
+          assert r['release_decision'] == 'NO_GO'
           PY

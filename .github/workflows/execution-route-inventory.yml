@@ -19,6 +19,8 @@ on:
       - 'tests/test_tool_semantics_13.py'
       - 'scripts/audit_assertion_semantics_19.py'
       - 'tests/test_assertion_semantics_19.py'
+      - 'scripts/audit_synthetic_858_source.py'
+      - 'tests/test_synthetic_858_source.py'
       - 'scripts/review_live_380_preflight.py'
       - 'tests/test_live_380_preflight.py'
       - 'docs/live-380-risk-review.md'
@@ -44,6 +46,8 @@ on:
       - 'tests/test_tool_semantics_13.py'
       - 'scripts/audit_assertion_semantics_19.py'
       - 'tests/test_assertion_semantics_19.py'
+      - 'scripts/audit_synthetic_858_source.py'
+      - 'tests/test_synthetic_858_source.py'
       - 'scripts/review_live_380_preflight.py'
       - 'tests/test_live_380_preflight.py'
       - 'docs/live-380-risk-review.md'
@@ -136,6 +140,15 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_assertion_semantics_19.py' -v
           rc=0
           python3 scripts/audit_assertion_semantics_19.py --summary-only --strict >/dev/null || rc=$?
+          test "$rc" -eq 2
+      - name: Source-verify all 858 offline detector commands without executing them
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_synthetic_858_source.py --summary-only
+          python3 -m unittest discover -s tests -p 'test_synthetic_858_source.py' -v
+          rc=0
+          python3 scripts/audit_synthetic_858_source.py --summary-only --strict >/dev/null || rc=$?
           test "$rc" -eq 2
       - name: Build 380 Azure/private-runner preflight risk queue without network activity
         shell: bash

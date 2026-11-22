@@ -94,3 +94,179 @@ python3 -m unittest discover -s tests -p 'test_historical_actions_metadata.py' -
 ```
 
 **Manual gate remains:** the reviewer must inspect actual historical ZIPs, job logs and exposure in approved restricted storage; metadata-only reconciliation cannot close Issue #30.
+
+## Historical job-log content triage — restricted operator only (P1 next slice)
+
+The previous metadata inventory and ZIP scanner do **not** cover GitHub Actions
+**job logs**. These may have disclosed environment variables, authentication
+headers, job/step output, Terraform state/plan paths, masked secrets, or protected
+identifiers even if no historical ZIP is available. The new
+`scripts/triage_historical_actions_job_logs.py` is **local-only** and accepts
+**only operator-supplied regular `job-<numeric GitHub job ID>.log` files**,
+already obtained under separately authorized incident investigation. It does
+not enumerate or download anything, call GitHub/Azure, or execute a log command.
+
+### Authorized workstation workflow (no auto-download)
+
+1. Have the repository security owner approve **which historical run/job IDs**
+   require investigation, log access, confidential storage and reviewers.
+   Confirm repository/account access limitations, retention, audit logs and
+   incident-preservation requirements. Historical log availability is not
+   guaranteed; missing logs remain unresolved.
+2. Only on an approved encrypted WSL ext4 or Linux restricted workstation,
+   prepare folders outside the public Git checkout:
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   mkdir -p "$ROOT/job-logs" "$ROOT/reports"
+   chmod 700 "$ROOT" "$ROOT/job-logs" "$ROOT/reports"
+   ```
+
+3. Once separately authorized and already authenticated with GitHub CLI,
+   an operator may obtain one explicitly approved job log using the
+   **owner-approved numeric GitHub Actions job ID**, with no token in a command
+   argument or log output. Do **not** run this against an arbitrary job or on
+   public CI.
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   JOB_ID="REPLACE_WITH_OWNER_APPROVED_NUMERIC_GITHUB_JOB_ID"
+   case "$JOB_ID" in ''|*[!0-9]*) echo 'Invalid job ID' >&2; exit 2;; esac
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   command -v gh >/dev/null
+   gh auth status >/dev/null
+   gh api "repos/tayoshik/azure-private-ai-assurance/actions/jobs/$JOB_ID/logs" \
+       > "$ROOT/job-logs/job-$JOB_ID.log"
+   chmod 600 "$ROOT/job-logs/job-$JOB_ID.log"
+   ```
+
+   This example accesses **job logs**, not the run-wide ZIP log bundle.
+   Follow the approved audit's ID inventory and document uncollected,
+   inaccessible, deleted or expired jobs separately. Never echo file contents
+   or transfer them into the public repo, chat, CI, or issue.
+
+4. Run the local-only scanner against the restricted directory; keep its
+   **new** report solely under the protected reports path:
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   cd "$HOME/azure-private-ai-assurance"
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   python3 scripts/triage_historical_actions_job_logs.py \
+       --log-dir "$ROOT/job-logs" \
+       --report "$ROOT/reports/joblog-$(date -u +%Y%m%dT%H%M%SZ).json"
+   python3 -m unittest discover -s tests -p 'test_historical_actions_job_logs.py' -v
+   ```
+
+### Security properties and limitations
+
+- Each input must be a single permission-restricted (0600), non-symlink,
+  single-link, `job-<numeric>.log` file in a 0700 directory outside Git.
+  Reject extra file types, duplicate job IDs, nonregular inputs and insecure
+  permissions; at most 5,000 logs, 16 MiB per log, 128 MiB total. Oversize logs
+  are **unexamined**, not declared safe. An empty input is not successful.
+- The scanner checks high-confidence credential patterns (GitHub tokens,
+  JWTs, private keys, Authorization, SAS/storage keys, etc.) and additional
+  risk markers (OIDC runtime token environment, Azure/client-secret assignment,
+  GitHub masking workflow directives, Terraform state/plan references,
+  potential shell xtrace). It records only **indicator category names** and
+  content SHA-256 in a private 0600 report, and only counts in stdout.
+- An absent signature cannot establish that the log contains no PII,
+  private endpoints, secret material, output masking bypass or information
+  leakage. `***` masking alone is not confidentiality proof.
+  **All jobs require restricted manual review**, correlation to runs/artifacts
+  and a separate independent signed conclusion.
+- A clean CI run tests only **invented synthetic logs**. No actual historical
+  log has been read, scanned, retained, downloaded or approved by this change.
+  Do not close Issue #30 until owner-approved comprehensive content and
+  access/exposure assessment, remediation decisions and custody review.
+
+**Acceptance invariant:** Azure live PASS **0/1,716**, 1,716 **NOT_READY**,
+release **NO_GO**. The historical security issue remains **OPEN**.
+
+## Crosswalk actual job IDs against exported runs and private log triage (follow-up)
+
+A job log named `job-123.log` is **not self-authenticating**: the name alone
+cannot prove that it belongs to an in-scope historical GitHub Actions workflow
+run. A metadata-only investigation can also omit failed/cancelled attempts,
+rerun attempts or deleted/expired jobs. Therefore the dedicated offline
+`scripts/reconcile_historical_job_log_coverage.py` binds the
+**owner-exported job ID, run ID, attempt and commit SHA** to the restricted
+`runs.ndjson` metadata and the private job-log triage report prepared above.
+
+### Authorized metadata export (no ZIP or log bytes)
+
+Only after a repository security owner has approved the exact historical
+workflow run IDs, and only with an already authorized/authenticated GitHub
+CLI on the restricted workstation, export each relevant run's **job metadata**.
+Use the previously acquired restricted `runs.ndjson` and ensure the GitHub
+run attempt selection is independently checked. This command does not
+download or read any job log content:
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"
+ROOT="$HOME/.local/share/private-actions-history-review"
+command -v gh >/dev/null
+gh auth status >/dev/null
+# Owner-approved numeric run ID only; repeat for every in-scope run and attempt.
+RUN_ID="REPLACE_WITH_OWNER_APPROVED_NUMERIC_GITHUB_RUN_ID"
+case "$RUN_ID" in ''|*[!0-9]*) echo 'Invalid run ID' >&2; exit 2;; esac
+gh api --paginate "repos/tayoshik/azure-private-ai-assurance/actions/runs/$RUN_ID/jobs?per_page=100&filter=all" \
+  --jq '.jobs[] | {id, run_id, run_attempt, head_sha, status, conclusion} | @json' \
+  >> "$ROOT/jobs.ndjson"
+chmod 600 "$ROOT/jobs.ndjson"
+```
+
+This append-only example is **not a complete run inventory** by itself.
+Review the approved source run list and ensure the export contains every
+attempt/job selected for review, including jobs without retained logs.
+Avoid repeating the same run export, because duplicate job IDs cause the
+reconciliation to fail closed. Never put the metadata export or private job
+SHA list in the public issue.
+
+After the operator has run the **local-only** job-log scanner and saved
+`joblog-...json`, join metadata to the triage output:
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"
+ROOT="$HOME/.local/share/private-actions-history-review"
+TRIAGE="$ROOT/reports/REPLACE_WITH_EXISTING_PRIVATE_JOBLOG_TRIAGE_REPORT.json"
+python3 scripts/reconcile_historical_job_log_coverage.py \
+  --runs "$ROOT/runs.ndjson" \
+  --jobs "$ROOT/jobs.ndjson" \
+  --triage-report "$TRIAGE" \
+  --report "$ROOT/reports/coverage-$(date -u +%Y%m%dT%H%M%SZ).json"
+python3 -m unittest discover -s tests -p 'test_historical_job_log_coverage.py' -v
+```
+
+### Fail-closed coverage semantics
+
+- A job in the export with **no local log** is classified
+  `LOCAL_JOB_LOG_MISSING_OR_NOT_COLLECTED`. An oversized/unreadable
+  log remains unexamined. A local file absent from exported job metadata
+  becomes `LOCAL_LOG_WITHOUT_EXPORTED_JOB_METADATA`.
+- Job/run commit drift, missing run records or unrecognized workflow paths
+  are **review exceptions**, never evidence of safe source revisions.
+  The cut-off time alone does not prove an individual run used the later
+  guarded workflow. Known historical runs retain the exposure review queue.
+- The scanner's SHA-256 is a fingerprint of bytes reported by the private
+  triage, **not a verified GitHub server signature**. An independent reviewer
+  must corroborate custody, actual run/job API IDs, source SHA, retention,
+  access visibility and archived log bytes. Reports are protected 0600 JSON
+  outside the repository; stdout only contains aggregate categories/counts.
+- The metadata API may omit expired or deleted jobs and the operator could
+  omit in-scope runs. This tool **never claims complete historical coverage**,
+  even when every *exported* job has a local log. All actual exposures,
+  independent sign-offs and remediation decisions remain **UNKNOWN/OPEN**.
+  No real logs or Azure services are accessed by public CI. The synthetic
+  test suite alone is never an incident closure artifact.
+
+**Issue #30 stays OPEN. Azure accepted 0/1,716; release NO_GO.**

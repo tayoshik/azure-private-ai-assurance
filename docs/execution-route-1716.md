@@ -375,6 +375,58 @@ test "$rc" -eq 2
 
 **Acceptance boundary:** all 19 case owners must verify the full original predicate, immutable inputs, expected values, negative conditions and independent reviewer signatures before separately authorized execution. No WAF requests, Azure resource checks or source tests are run by this workflow. With this review queue, **all 464 local-appearing cases have source-only reviewer assignments**, not execution approvals. The 1,716 frozen cases remain unchanged, Azure live accepted **0/1,716**, release **NO_GO**.
 
+## S1 — 858 offline synthetic detector command contracts (source-only)
+
+After the 464 local-appearing cases were fully *assigned to review queues* in P2.1–P2.5,
+a separate, independent source-only slice checks **all 858 even-numbered detector
+candidates** before any further synthetic runtime execution. The new
+`scripts/audit_synthetic_858_source.py` reads the unchanged six canonical
+English catalogues, the prior 1,716-case execution routing audit and the
+source files referenced by each test. It refuses any command that differs
+from the exact historical interpreter/script/flags/config/ID grammar.
+The original commands are treated only as text; **none is executed**.
+
+| Source-only group | Exact cases | Required command family |
+| --- | ---: | --- |
+| Phase 1 policy | 110 | `phase1_policy_check.py` with rules and exact test ID |
+| Phase 2 policy | 110 | `phase2_policy_check.py --selftest` with phase 2 spec |
+| Phase 3 guard | 132 | `phase3_guard.py --selftest` with phase 3 source spec |
+| Phase 4 guard | 143 | `phase4_guard.py --selftest` with phase 4 source spec |
+| Phase 5 guard | 143 | `phase5_guard.py --selftest` with phase 5 English spec |
+| Phase 6 guard | 110 | `phase6_guard.py --selftest` with phase 6 English spec |
+| Phase 7 guard | 110 | `phase7_guard.py --selftest` with phase 7 English spec |
+| **Total** | **858** | **Source grammar only, never execution or live acceptance** |
+
+Each reviewed case retains the inherited SHA-256 fingerprint of
+canonical ID/command/expected criterion, and identifies its script and spec
+source. It explicitly leaves runtime version pin, fixture integrity,
+negative-detector semantics, approval, execution, independent signature and
+Azure live acceptance **unverified**. A source file existing in Git does
+not certify that it is safe to run. The tests include exact 858 ID membership,
+source/phase checks, shell-injection and altered-command rejection,
+non-promotion and strict-mode exit-code checks.
+
+Offline WSL validation (trusted checkout, no Azure login):
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"
+OUT="$(mktemp -d "$HOME/synthetic-source-858-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/audit_synthetic_858_source.py --out "$OUT/synthetic-858.json"
+python3 -m unittest discover -s tests -p 'test_synthetic_858_source.py' -v
+rc=0
+python3 scripts/audit_synthetic_858_source.py --summary-only --strict > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+This source review does not re-run the 858 synthetic cases, establish new
+detector PASS counts, authorize private inputs or execute the 464 local
+cases. Historic Azure accepted remains **0/1,716**, 1,716
+`NOT_READY`, release **NO_GO**. Historical Actions ZIP Issue #30 is
+still a separate authorized-workstation incident review.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
