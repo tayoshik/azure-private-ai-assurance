@@ -1,6 +1,7 @@
 name: Terraform provider schema verification (no Azure credentials)
 on:
   push:
+    branches: [main]
     paths:
       - 'infra/**'
       - 'scripts/terraform_provider_preflight.py'
