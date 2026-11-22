@@ -204,6 +204,60 @@ test "$rc" -eq 2
 
 **Closure gate per original case:** two independent reviewers confirm the exact intended assertion, current inputs/permissions, validated shell parsing, path/network/data-side effects, pinned version, baseline/evidence custody and rollback/incident behavior. Only after owner authorization may a case's actual command be considered for execution in its approved environment. The generated queue makes no acceptance decisions and cannot alter 0/1,716 Azure accepted cases or release NO_GO.
 
+## P2.3 — restricted input / evidence review for 283 local candidates (no real input access)
+
+After P2.1 reviewed 464 local-appearing source commands and P2.2 classified 149 shell-risk cases, the remaining **283 P1 input-and-custody review cases** are handled by `scripts/audit_approved_input_283.py`. The program checks each immutable ID/command/expected digest against its upstream route and splits **review priorities only** by coarse source-text clues. The actual input values, evidence bytes, Azure environments, reviewer approvals and full Bash execution semantics are **not accessed or verified**.
+
+| Review class | Source hint | Minimum independent custody and control review |
+| --- | --- | --- |
+| A — Terraform plan, state or variable material | `*.tfplan`, `*.tfstate`, `*.tfvars`, approved-plan variables | Approved owner and encrypted private storage; immutable SHA-256, lineage, precise scope, expiry and signed baseline; no public CI uploads |
+| B — Restricted observations, audit logs and scan reports | `evidence/`, observed logs, attestation/reference evidence | Recorder/collector identity, time, asset ID, redaction, integrity and separately approved custody |
+| C — Network/IPAM/DNS baseline | `IPAM`, subnets/CIDRs, private DNS/VNet/network topology | Versioned owner-approved network truth, resource scope and date; never infer live connectivity from local JSON |
+| D — Policy/approval/signed baseline | baseline, policy, approval / approved input | Independent policy owner, signed version, relevant resource scope and semantic expected-result review |
+| E — Other environment or unknown source | Variables/inputs not covered above | Manually identify full origin, evidence protection, tool behavior and applicable control assertion |
+
+Classes are **exclusive by A → B → C → D → E**, but evidence categories may overlap. Each case also receives multiple **coarse indicator codes** to alert reviewers to overlapping provenance or storage checks. A class name does not certify that the real input exists or belongs to its expected type; file names and JSON approval flags are not independent attestations.
+
+### Source-based, not executed, examples
+
+- `AZ-T45-03` hashes an environment-provided approved plan. Real Terraform plan bytes may contain secrets; its digest and actual approval cannot be established from public CI.
+- `AZ-T21-03` tests a network CIDR property in a locally referenced IPAM JSON. This does not observe actual private routing.
+- `AZ-T01-01` runs a policy checker referencing an approved baseline. Script existence alone does not prove the baseline came from the policy owner.
+- `AZ-T58-05` references a CI plan artifact. Even a path/hash check cannot establish accepted, signed Azure state or deployment.
+
+### Reproduce safely on WSL (no Azure login, no real input reads)
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"   # trusted reviewed checkout
+OUT="$(mktemp -d "$HOME/review-input-p1-283-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/audit_approved_input_283.py --out "$OUT/283-review.json" \
+  > "$OUT/summary.json"
+python3 -m unittest discover -s tests -p 'test_approved_input_283.py' -v
+python3 - "$OUT/283-review.json" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1], encoding="utf-8"))
+assert r["status"] == "SOURCE_INPUT_REVIEW_ONLY"
+assert len(r["cases"]) == r["restricted_input_283_candidate_count"] == 283
+assert sum(r["review_input_class_counts"].values()) == 283
+assert r["input_bytes_inspected"] == r["approved_inputs_verified"] == 0
+assert r["source_commands_executed"] == r["independent_approvals_verified"] == 0
+assert r["azure_live_passes"] == 0 and r["release_decision"] == "NO_GO"
+assert all(not x["actual_input_bytes_examined"] and not x["approved_input_hash_verified"]
+           and not x["independent_reviewer1_signed"] and not x["independent_reviewer2_signed"]
+           and x["azure_live_acceptance"] == "NOT_READY" for x in r["cases"].values())
+print("283 source-only input review records; 0 verified evidence; NO_GO")
+PY
+rc=0
+python3 scripts/audit_approved_input_283.py --summary-only --strict \
+  > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+**Independent approval gates:** owner supplies evidence in approved private storage with immutable hash and explicit asset scope; reviewer 1 verifies the actual bytes, provenance, rights/identities and intended predicate; reviewer 2 independently signs the evidentiary judgment; only then consider a separately authorized execution. A successful static predicate, signature-pattern match or a local environment variable value cannot promote any of the 283 to Azure PASS. No source test was executed and all 1,716 accepted live cases remain at zero; release remains NO_GO.
+
 ## Per-ID JSON schema
 
 Generate an output-only JSON object with exactly 1,716 `cases` entries. Every entry contains:
