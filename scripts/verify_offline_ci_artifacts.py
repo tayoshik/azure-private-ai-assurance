@@ -20,7 +20,7 @@ POLICY_PATH = "specs/github-actions-artifact-policy.json"
 EXPECTED_SCHEMA = "github-actions-offline-artifacts/v1"
 EXPECTED_RETENTION = 14
 EXPECTED_WORKFLOW_COUNT = 16
-EXPECTED_FILES = 69
+EXPECTED_FILES = 71
 
 # High-confidence signatures, not a complete guarantee against secrets/PII.
 # Use bounded fixed signatures, not generic 'token'/'secret' words in audit JSON.
@@ -76,7 +76,7 @@ def load_policy(repo_root: Path = ROOT) -> dict:
             raise ValueError("unsafe workflow policy key")
         if not isinstance(approved, list) or not approved:
             raise ValueError("empty workflow artifact allowlist")
-        if approved != sorted(set(approved)) or not all(_safe_path(x) for x in approved):
+        if not all(_safe_path(x) for x in approved) or approved != sorted(set(approved)):
             raise ValueError("unsafe, duplicate or unsorted permitted artifact paths")
         count += len(approved)
     if count != EXPECTED_FILES:
