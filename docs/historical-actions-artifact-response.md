@@ -94,3 +94,96 @@ python3 -m unittest discover -s tests -p 'test_historical_actions_metadata.py' -
 ```
 
 **Manual gate remains:** the reviewer must inspect actual historical ZIPs, job logs and exposure in approved restricted storage; metadata-only reconciliation cannot close Issue #30.
+
+## Historical job-log content triage — restricted operator only (P1 next slice)
+
+The previous metadata inventory and ZIP scanner do **not** cover GitHub Actions
+**job logs**. These may have disclosed environment variables, authentication
+headers, job/step output, Terraform state/plan paths, masked secrets, or protected
+identifiers even if no historical ZIP is available. The new
+`scripts/triage_historical_actions_job_logs.py` is **local-only** and accepts
+**only operator-supplied regular `job-<numeric GitHub job ID>.log` files**,
+already obtained under separately authorized incident investigation. It does
+not enumerate or download anything, call GitHub/Azure, or execute a log command.
+
+### Authorized workstation workflow (no auto-download)
+
+1. Have the repository security owner approve **which historical run/job IDs**
+   require investigation, log access, confidential storage and reviewers.
+   Confirm repository/account access limitations, retention, audit logs and
+   incident-preservation requirements. Historical log availability is not
+   guaranteed; missing logs remain unresolved.
+2. Only on an approved encrypted WSL ext4 or Linux restricted workstation,
+   prepare folders outside the public Git checkout:
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   mkdir -p "$ROOT/job-logs" "$ROOT/reports"
+   chmod 700 "$ROOT" "$ROOT/job-logs" "$ROOT/reports"
+   ```
+
+3. Once separately authorized and already authenticated with GitHub CLI,
+   an operator may obtain one explicitly approved job log using the
+   **owner-approved numeric GitHub Actions job ID**, with no token in a command
+   argument or log output. Do **not** run this against an arbitrary job or on
+   public CI.
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   JOB_ID="REPLACE_WITH_OWNER_APPROVED_NUMERIC_GITHUB_JOB_ID"
+   case "$JOB_ID" in ''|*[!0-9]*) echo 'Invalid job ID' >&2; exit 2;; esac
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   command -v gh >/dev/null
+   gh auth status >/dev/null
+   gh api "repos/tayoshik/azure-private-ai-assurance/actions/jobs/$JOB_ID/logs" \
+       > "$ROOT/job-logs/job-$JOB_ID.log"
+   chmod 600 "$ROOT/job-logs/job-$JOB_ID.log"
+   ```
+
+   This example accesses **job logs**, not the run-wide ZIP log bundle.
+   Follow the approved audit's ID inventory and document uncollected,
+   inaccessible, deleted or expired jobs separately. Never echo file contents
+   or transfer them into the public repo, chat, CI, or issue.
+
+4. Run the local-only scanner against the restricted directory; keep its
+   **new** report solely under the protected reports path:
+
+   ```bash
+   set -Eeuo pipefail
+   umask 077
+   cd "$HOME/azure-private-ai-assurance"
+   ROOT="$HOME/.local/share/private-actions-history-review"
+   python3 scripts/triage_historical_actions_job_logs.py \
+       --log-dir "$ROOT/job-logs" \
+       --report "$ROOT/reports/joblog-$(date -u +%Y%m%dT%H%M%SZ).json"
+   python3 -m unittest discover -s tests -p 'test_historical_actions_job_logs.py' -v
+   ```
+
+### Security properties and limitations
+
+- Each input must be a single permission-restricted (0600), non-symlink,
+  single-link, `job-<numeric>.log` file in a 0700 directory outside Git.
+  Reject extra file types, duplicate job IDs, nonregular inputs and insecure
+  permissions; at most 5,000 logs, 16 MiB per log, 128 MiB total. Oversize logs
+  are **unexamined**, not declared safe. An empty input is not successful.
+- The scanner checks high-confidence credential patterns (GitHub tokens,
+  JWTs, private keys, Authorization, SAS/storage keys, etc.) and additional
+  risk markers (OIDC runtime token environment, Azure/client-secret assignment,
+  GitHub masking workflow directives, Terraform state/plan references,
+  potential shell xtrace). It records only **indicator category names** and
+  content SHA-256 in a private 0600 report, and only counts in stdout.
+- An absent signature cannot establish that the log contains no PII,
+  private endpoints, secret material, output masking bypass or information
+  leakage. `***` masking alone is not confidentiality proof.
+  **All jobs require restricted manual review**, correlation to runs/artifacts
+  and a separate independent signed conclusion.
+- A clean CI run tests only **invented synthetic logs**. No actual historical
+  log has been read, scanned, retained, downloaded or approved by this change.
+  Do not close Issue #30 until owner-approved comprehensive content and
+  access/exposure assessment, remediation decisions and custody review.
+
+**Acceptance invariant:** Azure live PASS **0/1,716**, 1,716 **NOT_READY**,
+release **NO_GO**. The historical security issue remains **OPEN**.
