@@ -27,7 +27,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           mkdir -p artifacts/github-actions-source
-          python3 scripts/audit_github_actions_quality.py --out artifacts/github-actions-source/audit.json > /dev/null
+          python3 scripts/audit_github_actions_quality.py --out artifacts/github-actions-source/audit.json | tee artifacts/github-actions-source/audit-console.json
           python3 scripts/audit_github_actions_quality.py --summary-only > artifacts/github-actions-source/summary.json
           python3 - <<'PY'
           import json
