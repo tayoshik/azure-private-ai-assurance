@@ -7,6 +7,7 @@ A valid workflow audit is NOT evidence of application or live Azure acceptance.
 from __future__ import annotations
 
 import argparse
+from fnmatch import fnmatchcase
 from collections import Counter, defaultdict
 import json
 from pathlib import Path
@@ -191,9 +192,15 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
                     errors.append(name + ": preserve previously unfiltered PR coverage")
                 if pr_paths and push_paths != pr_paths:
                     errors.append(name + ": filtered PR must cover exact main push paths")
-                if pr_paths and WORKFLOWS + "/" + name not in pr_paths:
+                # GitHub Actions path filters accept glob patterns, such as
+                # .github/workflows/**, which must count as a self-trigger.
+                self_path = WORKFLOWS + "/" + name
+                def covers_self(patterns):
+                    return any(not p.startswith("!") and fnmatchcase(self_path, p)
+                               for p in patterns)
+                if pr_paths and not covers_self(pr_paths):
                     errors.append(name + ": PR filter must self-trigger on workflow changes")
-                if push_paths and WORKFLOWS + "/" + name not in push_paths:
+                if push_paths and not covers_self(push_paths):
                     errors.append(name + ": main push filter must self-trigger on workflow changes")
         for job in jobs:
             job_owners[job].append(name)
