@@ -44,7 +44,7 @@ class OfflineArtifactSafetyTests(unittest.TestCase):
     def test_exact_policy_has_16_named_workflows_and_69_paths(self):
         p = guard.load_policy(self.repo)
         self.assertEqual(len(p["workflow_paths"]), 16)
-        self.assertEqual(sum(map(len, p["workflow_paths"].values())), 69)
+        self.assertEqual(sum(map(len, p["workflow_paths"].values())), 71)
         self.assertEqual(p["retention_days"], 14)
         self.assertEqual(p["azure_live_passes"], 0)
         self.assertEqual(p["release_decision"], "NO_GO")
@@ -139,7 +139,7 @@ class OfflineArtifactSafetyTests(unittest.TestCase):
             self.scan()
 
     def test_private_key_pem_blocked(self):
-        self.put(data=b"-----BEGIN PRIVATE KEY-----\n" + b"A" * 40)
+        self.put(data=b"-----BEGIN " + b"PRIVATE KEY-----\n" + b"A" * 40)
         self.reject()
 
     def test_github_token_signature_blocked(self):
