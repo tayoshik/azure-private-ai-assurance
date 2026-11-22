@@ -11,7 +11,7 @@
 
 ## Implemented fail-closed policy
 
-`specs/github-actions-artifact-policy.json` is the reviewed, versioned inventory of exactly **16 producer workflows / 69 permitted relative file names**. All are offline JSON, text or logs; Terraform plan/state, tokens, Key Vault material, customer records, environment snapshots and real Azure operational evidence are not on the list.
+`specs/github-actions-artifact-policy.json` is the reviewed, versioned inventory of exactly **16 producer workflows / 71 permitted relative file names**. All are offline JSON, text or logs; Terraform plan/state, tokens, Key Vault material, customer records, environment snapshots and real Azure operational evidence are not on the list.
 
 `scripts/verify_offline_ci_artifacts.py` is a **stdlib-only, offline pre-upload scanner**. For the current workflow name it:
 
