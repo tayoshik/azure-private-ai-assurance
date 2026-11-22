@@ -39,7 +39,7 @@ The published Phase 2/6 canonical catalogue cites two unavailable Playwright ref
 - `approval_status: PROPOSED_NOT_APPROVED`; all 13 approval fields `PENDING_SCOPE_CHANGE_APPROVAL`.
 - API unit-test passes **0** in this crosswalk document (it is a specification/audit, **not an executable API unit-test suite**).
 - Azure accepted live passes **0**, release **NO_GO**.
-- Repo main branch protection remains an independent open task (Issue #17); this document cannot close it.
+- Main protection (ruleset `27836039`) was independently observed active on 2026-11-22. This does not resolve R41 scope or Azure acceptance.
 
 ## Reproducible local verification (no Azure environment)
 
@@ -57,11 +57,63 @@ test "$rc" -eq 2
 
 This produces an **offline source-crosswalk validation only**, not approval. A `0` exit from the ordinary audit means the proposal is internally consistent against the frozen records, never a REST functional pass.
 
+## R41-02 — evidence-bound owner decision packet (unapproved)
+
+After the existing 13-ID crosswalk and three-service Azure OpenAI, AI Search and
+Cosmos offline mock contract tests, the remaining high-priority gap is the
+**specific, independently reviewed requirement-scope decisions**. This addition
+does not duplicate the existing REST mock tests or silently replace the two
+unavailable Playwright source paths.
+
+`scripts/build_r41_owner_decision_packet.py` reads the exact existing
+`audit_rest_r41_rescope.py` result and source proposal and writes a per-ID,
+**metadata-only** decision queue. For each of the 13 original IDs, it records:
+the immutable SHA-256 of original command/expected criterion and proposed
+disposition, the owner and independent-review evidence needed, and **unselected**
+decision options. All owner decisions, health endpoints, N/A decisions,
+reviewer signatures, execution and Azure acceptance remain pending/false.
+
+### Specific decisions that cannot be inferred from mocks
+
+| Case | Decision required | Explicitly not accepted |
+| --- | --- | --- |
+| `AZ-T64-07` | Identify an **actual in-scope service** and applicable versioned health/readiness endpoint, or retain the original requirement | An invented universal ARM `/healthz` |
+| `AZ-T64-09` | Explicit owner-approved N/A with coverage impact, or a **new versioned schema requirement ID**, or retain the UI requirement | Substituting a JSON API response for DOM rendering |
+| `AZ-T64-11`, `AZ-T64-13` | Approve service/index/deployment, endpoint/API-version, Entra audience and expected data-plane behavior | Mistaking existing bounded mock contract tests for a private live invocation |
+| `AZ-T20-07`, `AZ-T20-09` | Independently approve external/private REST test origins, identities and route evidence | Inferring isolation from one mock 403 or NXDOMAIN |
+| Remaining 7 | Evidence format/custody, real route/TLS, RBAC, token validity, and error-redaction contracts | Claiming a JUnit/mock result validates a deployed Azure control |
+
+Every record has three explicit evidence/review prerequisites and cannot be
+promoted to an approval by the source-only tool. An approved change must be
+separately signed and captured through versioned change control with a new
+catalogue and compatibility map. Do not edit the original 1,716 cases.
+
+### Reproduce independently in WSL (offline-only)
+
+```bash
+set -Eeuo pipefail
+umask 077
+cd "$HOME/azure-private-ai-assurance"  # reviewed repository checkout
+OUT="$(mktemp -d "$HOME/r41-decision-review-XXXXXXXX")"
+chmod 700 "$OUT"
+python3 scripts/build_r41_owner_decision_packet.py --out "$OUT/packet.json"
+python3 -m unittest discover -s tests -p 'test_r41_owner_decision_packet.py' -v
+rc=0
+python3 scripts/build_r41_owner_decision_packet.py --summary-only --strict > "$OUT/strict.json" || rc=$?
+test "$rc" -eq 2
+```
+
+The packet does **not** read protected Azure evidence, generate requests,
+execute canonical test commands or change scope. The permanent safety
+invariants remain **0 approved changes, 0 Azure live PASS / 1,716 NOT_READY,
+NO_GO**. The R41 PR check validates only source consistency and a
+deliberately pending decision state.
+
 ## Change-control / next work
 
 - **R41-01 CLOSED when merged:** Preserve source-grounded 13-ID proposal and machine-audit exactly against frozen catalogue. Do not silently modify legacy test sources.
-- **R41-02 OPEN:** Independent owner approves or rejects each required disposition and its applicability. In particular, approve the `AZ-T64-09` N/A/substitution and the `AZ-T64-07` endpoint choice; no synthetic approval.
-- **R41-03 NEXT:** Implement independent Azure REST transport and data-plane mock contract tests with malformed data/negative cases (priority #3), without changing historical commands, live acceptance or release state.
+- **R41-02 OPEN:** The exact 13-ID decision packet is source-audited but independent owner approval is still required for each disposition and its applicability. In particular, approve the `AZ-T64-09` N/A/substitution and the `AZ-T64-07` endpoint choice; no synthetic approval.
+- **R41-03 PARTIAL:** Existing ARM transport and three-service data-plane mock contracts with negative tests are present; coverage of an approved target's real service version, endpoint, identity and transport remains unverified. Do not reimplement already covered mock tests.
 - **R41-04 LATER:** After explicit approval, prepare a **versioned** new canonical catalogue and compatibility crosswalk, preserved SHA, signed independent evidence requirements, and revised quality gates. Existing frozen files remain immutable.
 - **R41-05 DEFERRED:** Only when approved Azure nonproduction resources and independent private runner are available, execute read-only integration tests with actual resource scopes and evidence. Live PASS is never inferred from mock tests.
 
