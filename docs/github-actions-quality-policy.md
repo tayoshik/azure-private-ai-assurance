@@ -75,9 +75,9 @@ Follow-up to Issue #26. The 13 outstanding workflow files have been updated, **w
 | Action | Reviewed immutable commit | Upstream tag reference inspected |
 | --- | --- | --- |
 | `actions/checkout` | `93cb6efe18208431cddfb8368fd83d5badbf9bfd` | `v5.0.1` |
-| `actions/setup-python` | `a26af69be951a213d495a4c3e4e4022e16d87065` | `v5` and `v5.6.0`, same commit |
+| `actions/setup-python` | `a26af71be951a213d495a4c3e4e4022e16d87065` | `v5` and `v5.6.0`, same commit |
 | `actions/upload-artifact` | `ea165f8d65b6e75b540449e92b4886f43607fa02` | `v4.6.2` |
-| `hashicorp/setup-terraform` (v3) | `b9cd54a3c349d3f38e8881555d616ced269862dd` | `v3` (major alias at inspection date) |
+| `hashicorp/setup-terraform` (v3) | `b9cd54a3c349d3f38e8881555d616ced271862dd` | `v3` (major alias at inspection date) |
 | `hashicorp/setup-terraform` (v4) | `dfe3c3f87815947d99a8997f908cb6525fc44e9e` | `v4.0.1`, already used elsewhere |
 
 **Verification method:** queried each repository's official GitHub REST `git/ref/tags/<tag>` endpoint on 2026-11-22; the `object.type=commit` and `object.sha` values identify the exact version. A SHA is an immutable Git content reference and prevents future movement of a major tag from silently changing the runner's action. It is **not** a code signature, SBOM, vulnerability scan or proof that the publisher remains uncompromised.
@@ -130,3 +130,19 @@ python3 -m unittest discover -s tests -v
 ```
 
 A passing source audit demonstrates a **configured event-routing policy**, not billing reduction, full GitHub Actions runtime semantics, independent security review, Azure connectivity or Azure acceptance. The remaining part of Issue #26 is **standardizing artifact retention, safe outputs and confidentiality**, not trigger normalization. Existing synthetic tests and **1,716 original acceptance records remain unchanged**, Azure live passes **0**, release **NO_GO**.
+
+
+## P7.4 — Artifact retention and pre-upload safety
+
+The historic Action workflows used to upload many entire, writable `artifacts/` directories. Starting with the P7.4 security change, all **16 uploaders** use a common source-only policy with **71 exact approved offline paths** and a bounded credential/secret-signature inspection step before uploading an isolated byte-for-byte `artifacts-reviewed/` snapshot. Upload is forbidden if review fails; retention is **14 days**.
+
+The policy, tests and full procedural documentation are at:
+
+- `specs/github-actions-artifact-policy.json`
+- `scripts/verify_offline_ci_artifacts.py`
+- `tests/test_offline_ci_artifacts.py`
+- `docs/github-actions-artifact-safety.md`
+
+Each producer re-runs its PR checks whenever the scanner or policy changes. A cross-workflow audit now rejects unguarded uploads, unreviewed paths and retention changes. This is **a bounded signature guard, not complete DLP**: production Azure data, secrets, Terraform state/plans and personal information must not enter public artifacts or raw CI logs.
+
+The Ruleset statuses `offline-main-gate` and `offline-catalogue` remain unchanged and unfiltered. Existing 1,716 canonical tests remain NOT_READY, accepted live Azure results 0 and release NO_GO.

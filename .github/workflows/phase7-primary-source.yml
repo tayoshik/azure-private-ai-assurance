@@ -10,6 +10,8 @@ on:
       - 'tests/test_phase7_primary_source.py'
       - 'specs/test-automation-ledger.json'
       - '.github/workflows/phase7-primary-source.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   pull_request:
     paths:
       - 'specs/phase7_220.json'
@@ -19,6 +21,8 @@ on:
       - 'tests/test_phase7_primary_source.py'
       - 'specs/test-automation-ledger.json'
       - '.github/workflows/phase7-primary-source.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -87,11 +91,18 @@ jobs:
           assert x["decision"] == "NO_GO"
           assert x["verified_live_azure_passes"] == 0
           PY
-      - name: Preserve audit without credentials
-        uses: actions/upload-artifact@v4
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow phase7-primary-source.yml --root artifacts --stage artifacts-reviewed
+      - name: Preserve audit without credentials
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
         with:
           name: phase7-frozen-offline-audit
-          path: artifacts/
+          path: artifacts-reviewed/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: ignore

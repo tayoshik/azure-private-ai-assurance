@@ -12,6 +12,7 @@ from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import re
+from verify_offline_ci_artifacts import load_policy, POLICY_PATH as ARTIFACT_POLICY_PATH
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOWS = ".github/workflows"
@@ -126,6 +127,13 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
             errors.append("approved Action SHA pin manifest differs from reviewed baseline")
     except (OSError, UnicodeError, ValueError, AttributeError, TypeError):
         errors.append("approved Action SHA pin manifest absent or invalid")
+    try:
+        artifact_policy = load_policy(root)
+    except (OSError, ValueError) as exc:
+        errors.append("approved artifact upload policy absent or invalid: " + type(exc).__name__)
+        artifact_policy = {"workflow_paths": {}}
+    artifact_uploaders = set(artifact_policy["workflow_paths"])
+    validated_uploaders = set()
     files = sorted((root / WORKFLOWS).glob("*.yml"))
     if len(files) < EXPECTED_MIN_WORKFLOWS:
         errors.append("workflow inventory unexpectedly shrank below reviewed baseline")
@@ -152,6 +160,49 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
             errors.append(name + ": privileged trigger not allowed in offline workflows")
         if re.search(r"(?m)^\s+contents:\s*write\s*$", source):
             errors.append(name + ": write content permission not approved")
+        # Audit upload as a step, not a string elsewhere in the workflow.
+        steps = re.split(r"(?m)(?=^      - )", source.split("\njobs:\n", 1)[-1])
+        uploads = [block for block in steps if re.search(
+            r"(?m)^\s+(?:-\s*)?uses:\s+actions/upload-artifact@", block)]
+        has_upload = bool(uploads)
+        if has_upload != (name in artifact_uploaders):
+            errors.append(name + ": uploader/allowlist mismatch")
+        if uploads:
+            if len(uploads) != 1:
+                errors.append(name + ": more than one artifact uploader step")
+            upload = uploads[0]
+            required_props = [
+                "if: " + chr(36) + "{{ always() && steps.artifact_safety.outcome == 'success' }}",
+                "path: artifacts-reviewed/",
+                "retention-days: 14",
+                "if-no-files-found: ignore",
+            ]
+            if any(prop not in upload for prop in required_props):
+                errors.append(name + ": upload is not gated to 14-day reviewed snapshot")
+            if re.search(r"(?m)^\s+include-hidden-files:\s*true\s*$", upload):
+                errors.append(name + ": hidden files cannot be uploaded")
+            scan_command = ("python3 scripts/verify_offline_ci_artifacts.py --workflow " +
+                            name + " --root artifacts --stage artifacts-reviewed")
+            preflight_steps = [step for step in steps if
+                               re.search(r"(?m)^        id: artifact_safety\s*$", step)]
+            if len(preflight_steps) != 1 or not all(
+                    part in preflight_steps[0] for part in (
+                        "if: always()",
+                        "set -Eeuo pipefail",
+                        scan_command,
+                    )):
+                errors.append(name + ": upload lacks an always-run blocking scan")
+            source_inputs = [
+                "scripts/verify_offline_ci_artifacts.py",
+                "specs/github-actions-artifact-policy.json",
+            ]
+            events = events_of(source)
+            for ev in ("push", "pull_request"):
+                selected = event_paths(events.get(ev, []))
+                if (selected and
+                        any(required not in selected for required in source_inputs)):
+                    errors.append(name + ": scanner and manifest must trigger own regression checks")
+            validated_uploaders.add(name)
         action_refs = re.findall(r"(?m)^\s+- uses:\s+([^\s#]+)", source)
         bad_refs = [ref for ref in action_refs if
                     not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}", ref) or
@@ -227,6 +278,8 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
                 errors.append(name + ": PR path filter must match main push path filter")
             if WORKFLOWS + "/" + name not in pr_paths:
                 errors.append(name + ": workflow must trigger on its own changes")
+    if validated_uploaders != artifact_uploaders:
+        errors.append("artifact policy and uploading workflows diverge")
     for job, owners in sorted(job_owners.items()):
         if len(owners) > 1:
             errors.append(f"duplicate status context {job}: {', '.join(owners)}")
@@ -282,6 +335,10 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
             {j for j, owners in job_owners.items() if len(owners) > 1}),
         "remaining_unpinned_action_workflows": sorted(unpinned_action_files),
         "approved_sha_pin_count": len(APPROVED_ACTION_REFS),
+        "artifact_policy": ARTIFACT_POLICY_PATH,
+        "artifact_uploaders_guarded": len(validated_uploaders),
+        "approved_artifact_files": sum(len(v) for v in artifact_policy["workflow_paths"].values()),
+        "artifact_retention_days": 14,
         "sha_pin_manifest": PINS_MANIFEST,
         "remaining_unscoped_push_workflows": sorted(unscoped_push_files),
         "main_only_push_workflow_count": sum(

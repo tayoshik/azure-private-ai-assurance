@@ -7,12 +7,16 @@ on:
       - 'tests/test_p1_network_monitor.py'
       - 'docs/p1-network-monitor-ten.md'
       - '.github/workflows/p1-network-monitor.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   pull_request:
     paths:
       - 'scripts/review_p1_network_monitor.py'
       - 'tests/test_p1_network_monitor.py'
       - 'docs/p1-network-monitor-ten.md'
       - '.github/workflows/p1-network-monitor.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   workflow_dispatch:
 permissions:
   contents: read
@@ -92,11 +96,18 @@ jobs:
           r=json.load(open('artifacts/release.json',encoding='utf-8'))
           assert r['decision']=='NO_GO' and r['verified_live_azure_passes']==0
           PY
-      - name: Persist offline source analysis only
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow p1-network-monitor.yml --root artifacts --stage artifacts-reviewed
+      - name: Persist offline source analysis only
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: p1-network-monitor-review-only
-          path: artifacts/
+          path: artifacts-reviewed/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: ignore

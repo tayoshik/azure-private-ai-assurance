@@ -7,12 +7,18 @@ on:
       - 'scripts/audit_github_actions_quality.py'
       - 'tests/test_github_actions_quality.py'
       - 'specs/github-actions-approved-pins.json'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
+      - 'tests/test_offline_ci_artifacts.py'
   pull_request:
     paths:
       - '.github/workflows/**'
       - 'scripts/audit_github_actions_quality.py'
       - 'tests/test_github_actions_quality.py'
       - 'specs/github-actions-approved-pins.json'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
+      - 'tests/test_offline_ci_artifacts.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -45,6 +51,10 @@ jobs:
           assert p["remaining_unscoped_push_workflows"] == []
           assert p["main_only_push_workflow_count"] == 34
           assert p["sha_pin_manifest"] == "specs/github-actions-approved-pins.json"
+          assert p["artifact_uploaders_guarded"] == 16
+          assert p["approved_artifact_files"] == 71
+          assert p["artifact_retention_days"] == 14
+          assert p["artifact_policy"] == "specs/github-actions-artifact-policy.json"
           assert p["required_ruleset_status_contexts"] == ["offline-main-gate", "offline-catalogue"]
           assert p["source_workflows_executed"] == 0
           assert p["azure_live_passes_verified"] == 0
@@ -53,6 +63,8 @@ jobs:
           PY
       - name: Offline status, Action pins, main-only triggers and credential mutation tests
         run: python3 -m unittest discover -s tests -p 'test_github_actions_quality.py' -v
+      - name: Offline artifact safety and exfiltration negative tests
+        run: python3 -m unittest discover -s tests -p 'test_offline_ci_artifacts.py' -v
       - name: Strict mode refuses synthetic promotion to Azure acceptance
         shell: bash
         run: |
@@ -69,11 +81,18 @@ jobs:
           PY
       - name: Confirm source audit did not edit workflows
         run: git diff --exit-code -- .github/workflows/
-      - name: Retain sanitized source policy evidence for 14 days
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow github-actions-quality.yml --root artifacts --stage artifacts-reviewed
+      - name: Retain sanitized source policy evidence for 14 days
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: github-actions-source-policy-audit
-          path: artifacts/github-actions-source/
+          path: artifacts-reviewed/
           if-no-files-found: ignore
           retention-days: 14
