@@ -1,6 +1,7 @@
 name: 1716 execution routing inventory (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'specs/**'
       - 'scripts/audit_catalogue_dependencies.py'
