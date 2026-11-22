@@ -9,6 +9,8 @@ on:
       - 'scripts/audit_rest_r41_rescope.py'
       - 'scripts/build_execution_route_1716.py'
       - 'tests/test_execution_route_1716.py'
+      - 'scripts/triage_local_464.py'
+      - 'tests/test_local_review_464.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -21,6 +23,8 @@ on:
       - 'scripts/audit_rest_r41_rescope.py'
       - 'scripts/build_execution_route_1716.py'
       - 'tests/test_execution_route_1716.py'
+      - 'scripts/triage_local_464.py'
+      - 'tests/test_local_review_464.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -66,6 +70,15 @@ jobs:
           PY
       - name: Independent routing and fail-closed mutation tests
         run: python3 -m unittest discover -s tests -p 'test_execution_route_1716.py' -v
+      - name: Audit local 464 command review priorities without executing commands
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/triage_local_464.py --summary-only
+          python3 -m unittest discover -s tests -p 'test_local_review_464.py' -v
+          rc=0
+          python3 scripts/triage_local_464.py --summary-only --strict >/dev/null || rc=$?
+          test "$rc" -eq 2
       - name: Ensure strict mode refuses independent Azure acceptance
         shell: bash
         run: |
