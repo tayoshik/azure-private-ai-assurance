@@ -1,0 +1,80 @@
+{
+  "schema": "azure-private-ai-playwright-contract/v1",
+  "application": {
+    "source_repo": "TODO",
+    "commit_sha": "TODO",
+    "artifact_sha256": "TODO",
+    "private_base_url": "TODO",
+    "health_path": "TODO",
+    "login_path": "TODO"
+  },
+  "network": {
+    "tls_hostname": "TODO",
+    "internal_runner_group": "TODO",
+    "external_runner_group": "TODO",
+    "dns_owner": "TODO"
+  },
+  "identity": {
+    "auth_type": "EntraOIDC",
+    "protected_identity_ref": "TODO",
+    "session_revocation_method": "TODO"
+  },
+  "ui": {
+    "synthetic_test_data_id": "TODO",
+    "selectors": {
+      "main": "TODO",
+      "search_input": "TODO",
+      "search_result": "TODO",
+      "chat_input": "TODO",
+      "chat_result": "TODO",
+      "error_container": "TODO"
+    }
+  },
+  "evidence": {
+    "authorization_ticket": "TODO",
+    "approved_baseline_sha256": "TODO",
+    "retention_policy_ref": "TODO",
+    "reviewer_roles": [
+      "TODO",
+      "TODO"
+    ]
+  },
+  "scenarios": {
+    "AZ-T64-01": {
+      "assertion_kind": "internal_https_response",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-01"
+    },
+    "AZ-T64-03": {
+      "assertion_kind": "tls_chain_and_hostname",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-03"
+    },
+    "AZ-T64-05": {
+      "assertion_kind": "authorized_sign_in",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-05"
+    },
+    "AZ-T64-07": {
+      "assertion_kind": "authenticated_health_status",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-07"
+    },
+    "AZ-T64-09": {
+      "assertion_kind": "verified_dom_render",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-09"
+    },
+    "AZ-T64-11": {
+      "assertion_kind": "synthetic_search_result",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-11"
+    },
+    "AZ-T64-13": {
+      "assertion_kind": "safe_chat_and_redaction",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-13"
+    },
+    "AZ-T64-15": {
+      "assertion_kind": "expired_or_revoked_session_rejected",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-15"
+    },
+    "AZ-T64-17": {
+      "assertion_kind": "protected_data_absent_on_error",
+      "criterion_reference": "specs/phase6_220_en.json#AZ-T64-17"
+    }
+  }
+}
