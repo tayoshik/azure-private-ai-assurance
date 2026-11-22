@@ -104,11 +104,18 @@ jobs:
           d=json.load(open("artifacts/release-gate.json",encoding="utf-8"))
           assert d["decision"]=="NO_GO" and d["verified_live_azure_passes"]==0
           PY
-      - name: Store offline evidence
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
-        uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow phase4-guard-recovery.yml --root artifacts --stage artifacts-reviewed
+      - name: Store offline evidence
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: phase4-original-source-286-offline-evidence
-          path: artifacts/
+          path: artifacts-reviewed/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: ignore
