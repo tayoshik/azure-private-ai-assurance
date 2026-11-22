@@ -89,11 +89,18 @@ jobs:
           assert j["decision"] == "NO_GO" and j["verified_live_azure_passes"] == 0
           print("Expected release denial: NO_GO")
           PY
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow phase12-source-recovery.yml --root artifacts --stage artifacts-reviewed
       - name: Save sanitized audit evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
         with:
           name: phase12-canonical-offline-evidence
-          path: artifacts/
+          path: artifacts-reviewed/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: ignore
