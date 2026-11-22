@@ -171,7 +171,9 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         if CHECKOUT not in source or not re.search(
                 r"(?m)^\s+persist-credentials:\s+false\s*$", source):
             errors.append(f"{job}: credential-free full-SHA checkout required")
-        if re.search(r"(?m)^\s+continue-on-error:\s+true\s*$", source):
+        # Fail closed even when continue-on-error is supplied on the same
+        # YAML list item as "- name:" rather than a plain mapping key.
+        if re.search(r"(?m)^\s+(?:-\s*)?continue-on-error\s*:", source):
             errors.append(f"{job}: cannot ignore failures")
         for command in rule["commands"]:
             if command not in source:
