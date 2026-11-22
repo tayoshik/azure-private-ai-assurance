@@ -74,10 +74,10 @@ chmod 700 "$ROOT" "$ROOT/reports"
 command -v gh >/dev/null
 gh auth status >/dev/null
 gh api --paginate "repos/tayoshik/azure-private-ai-assurance/actions/artifacts?per_page=100" \
-  --jq '.artifacts[] | {id, size_in_bytes, created_at, expires_at, expired, workflow_run}' \
+  --jq '.artifacts[] | {id, size_in_bytes, created_at, expires_at, expired, workflow_run} | @json' \
   > "$ROOT/artifacts.ndjson"
 gh api --paginate "repos/tayoshik/azure-private-ai-assurance/actions/runs?per_page=100" \
-  --jq '.workflow_runs[] | {id, path, head_sha, created_at, status, conclusion}' \
+  --jq '.workflow_runs[] | {id, path, head_sha, created_at, status, conclusion} | @json' \
   > "$ROOT/runs.ndjson"
 chmod 600 "$ROOT/artifacts.ndjson" "$ROOT/runs.ndjson"
 python3 scripts/reconcile_historical_actions_inventory.py \
@@ -85,7 +85,7 @@ python3 scripts/reconcile_historical_actions_inventory.py \
   --report "$ROOT/reports/metadata-$(date -u +%Y%m%dT%H%M%SZ).json"
 ```
 
-The tool joins artifact workflow_run IDs to workflow run paths, compares each path to the **16 reviewed producer workflow file names**, and flags missing mappings or pre-guard source candidates. Classification after the 2026-11-22T12:24:44Z guard merge is **not a safe verdict**: a feature branch or rerun can use older workflow source. The private JSON contains artifact/run IDs for authorized follow-up; the console prints aggregate redacted counts only. The script will not overwrite existing results and requires private input files and a pre-existing private output directory.
+The `@json` serialization produces one compact object per line for the strict NDJSON reader. The tool joins artifact workflow_run IDs to workflow run paths, compares each path to the **16 reviewed producer workflow file names**, and flags missing mappings or pre-guard source candidates. Classification after the 2026-11-22T12:24:44Z guard merge is **not a safe verdict**: a feature branch or rerun can use older workflow source. The private JSON contains artifact/run IDs for authorized follow-up; the console prints aggregate redacted counts only. The script will not overwrite existing results and requires private input files and a pre-existing private output directory.
 
 **Evidence limits:** Listing accessible repository artifacts through the REST API does not recover permanently deleted or expired artifacts and cannot prove a complete historical inventory. An API result may also change while paginating. Re-run and reconcile counts in an approved review window. Confirm repository/account retention and historical artifact access independently. Never upload raw NDJSON or full per-artifact reports to a public PR or Issue.
 
