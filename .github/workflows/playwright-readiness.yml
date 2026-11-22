@@ -6,6 +6,8 @@ on:
       - 'tests/test_playwright_readiness.py'
       - 'docs/playwright-readiness-handoff.md'
       - '.github/workflows/playwright-readiness.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   push:
     branches: [main]
     paths:
@@ -13,6 +15,8 @@ on:
       - 'tests/test_playwright_readiness.py'
       - 'docs/playwright-readiness-handoff.md'
       - '.github/workflows/playwright-readiness.yml'
+      - 'scripts/verify_offline_ci_artifacts.py'
+      - 'specs/github-actions-artifact-policy.json'
   workflow_dispatch:
 permissions:
   contents: read
