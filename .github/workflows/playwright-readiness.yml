@@ -1,0 +1,81 @@
+name: Playwright contract readiness (offline only, no browser run)
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit_playwright_readiness.py'
+      - 'tests/test_playwright_readiness.py'
+      - 'docs/playwright-readiness-handoff.md'
+      - '.github/workflows/playwright-readiness.yml'
+  push:
+    paths:
+      - 'scripts/audit_playwright_readiness.py'
+      - 'tests/test_playwright_readiness.py'
+      - 'docs/playwright-readiness-handoff.md'
+      - '.github/workflows/playwright-readiness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Read-only preflight and adversarial regression
+        run: python3 -m unittest discover -s tests -p 'test_playwright_readiness.py' -v
+      - name: Document exactly 13 unresolved Playwright references
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          mkdir -p artifacts
+          python3 scripts/audit_playwright_readiness.py --out artifacts/playwright-readiness.json > /dev/null
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('artifacts/playwright-readiness.json').read_text())
+          assert d['canonical_case_ids']==1716 and d['case_references_reviewed']==13
+          assert d['case_path_missing']==13 and d['case_source_review_required']==0
+          assert not d['errors']
+          assert d['approved_live_azure_passes']==0 and d['release_decision']=='NO_GO'
+          assert d['readiness']=='BLOCKED_UNVERIFIED_APP_AND_RUNNERS'
+          print('Playwright missing paths: 13; no browser execution or Azure acceptance')
+          PY
+      - name: Strict preflight must reject and catalogue must remain truthful
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_playwright_readiness.py --strict > /dev/null || rc=$?
+          test "$rc" -eq 2
+          python3 scripts/build_test_automation_ledger.py --check
+          python3 scripts/audit_catalogue_dependencies.py > artifacts/catalogue-status.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('artifacts/catalogue-status.json',encoding='utf-8'))
+          assert d['canonical_test_ids']==1716 and not d['errors']
+          assert d['literal_script_reference']['MISSING_SCRIPT_REFERENCE']==13
+          assert d['cases_with_missing_input']==0
+          assert d['release_decision']=='NO_GO'
+          PY
+      - name: Release remains explicitly denied
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/release_gate.py > artifacts/release.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          r=json.load(open('artifacts/release.json',encoding='utf-8'))
+          assert r['decision']=='NO_GO' and r['verified_live_azure_passes']==0
+          PY
+      - name: Upload offline metadata only
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-readiness-offline-only
+          path: artifacts/
+          retention-days: 14
+          if-no-files-found: warn
