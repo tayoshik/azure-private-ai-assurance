@@ -192,6 +192,16 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
                         scan_command,
                     )):
                 errors.append(name + ": upload lacks an always-run blocking scan")
+            source_inputs = [
+                "scripts/verify_offline_ci_artifacts.py",
+                "specs/github-actions-artifact-policy.json",
+            ]
+            events = events_of(source)
+            for ev in ("push", "pull_request"):
+                selected = event_paths(events.get(ev, []))
+                if (selected and
+                        any(required not in selected for required in source_inputs)):
+                    errors.append(name + ": scanner and manifest must trigger own regression checks")
             validated_uploaders.add(name)
         action_refs = re.findall(r"(?m)^\s+- uses:\s+([^\s#]+)", source)
         bad_refs = [ref for ref in action_refs if
