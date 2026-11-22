@@ -82,7 +82,8 @@ def load_policy(repo_root: Path = ROOT) -> dict:
     return policy
 
 
-def scan(workflow: str, root: Path, repo_root: Path = ROOT) -> dict:
+def scan(workflow: str, root: Path, repo_root: Path = ROOT,
+         stage: Path | None = None) -> dict:
     """Return sanitized metadata; fail closed without printing evidence contents."""
     policy = load_policy(repo_root)
     allowed = policy["workflow_paths"].get(workflow)
@@ -103,8 +104,13 @@ def scan(workflow: str, root: Path, repo_root: Path = ROOT) -> dict:
         }
     if not root.is_dir():
         raise ValueError("artifact root is not a directory")
+    if stage is not None and (stage.name != "artifacts-reviewed" or
+                              stage.parent.resolve() != root.parent.resolve() or
+                              stage.exists() or stage.is_symlink()):
+        raise ValueError("isolated reviewed-artifact staging directory must be new and a sibling")
     approved = set(allowed)
     found = []
+    accepted_bytes: list[tuple[str, bytes]] = []
     total = 0
     for base, dirs, files in os.walk(root, followlinks=False):
         parent = Path(base)
@@ -136,11 +142,22 @@ def scan(workflow: str, root: Path, repo_root: Path = ROOT) -> dict:
                 if pattern.search(raw):
                     raise ValueError(
                         "artifact credential signature blocked (" + signature + "): " + relative)
+            accepted_bytes.append((relative, raw))
             found.append({
                 "path": relative,
                 "bytes": len(raw),
                 "sha256": hashlib.sha256(raw).hexdigest(),
             })
+    if stage is not None and accepted_bytes:
+        # Upload only the independently checked byte snapshot, never the original
+        # writable artifacts directory. Failed validation creates no upload.
+        stage.mkdir(mode=0o700)
+        for relative, raw in accepted_bytes:
+            target = stage / relative
+            target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            with target.open("xb") as out:
+                out.write(raw)
+            target.chmod(0o600)
     return {
         "classification": "OFFLINE_ARTIFACT_PREFLIGHT_PASS" if found else "SAFE_EMPTY_ARTIFACT_DIR",
         "workflow": workflow,
@@ -157,10 +174,11 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workflow", required=True)
     parser.add_argument("--root", type=Path, default=Path("artifacts"))
+    parser.add_argument("--stage", type=Path)
     parser.add_argument("--repo-root", type=Path, default=ROOT)
     args = parser.parse_args(argv)
     try:
-        result = scan(args.workflow, args.root, args.repo_root)
+        result = scan(args.workflow, args.root, args.repo_root, args.stage)
     except (OSError, ValueError) as exc:
         # Do not include the contents of untrusted files in logs.
         print(json.dumps({"classification": "BLOCKED_ARTIFACT_UPLOAD",
