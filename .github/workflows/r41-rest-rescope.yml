@@ -1,0 +1,76 @@
+name: R41 REST unit-test rescope crosswalk (offline proposal only)
+on:
+  push:
+    paths:
+      - 'specs/r41-rest-api-rescope-proposal.json'
+      - 'scripts/audit_rest_r41_rescope.py'
+      - 'tests/test_rest_r41_rescope.py'
+      - 'docs/r41-rest-api-rescope.md'
+      - '.github/workflows/r41-rest-rescope.yml'
+  pull_request:
+    paths:
+      - 'specs/r41-rest-api-rescope-proposal.json'
+      - 'scripts/audit_rest_r41_rescope.py'
+      - 'tests/test_rest_r41_rescope.py'
+      - 'docs/r41-rest-api-rescope.md'
+      - '.github/workflows/r41-rest-rescope.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r41-proposal-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+      - name: Verify exact frozen source correspondence, not approval
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_rest_r41_rescope.py > /tmp/r41-source-audit.json
+          python3 - <<'PY'
+          import json
+          r = json.load(open('/tmp/r41-source-audit.json', encoding='utf-8'))
+          assert r['result'] == 'CROSSWALK_VERIFIED_PROPOSAL_UNAPPROVED'
+          assert r['reviewed_case_count'] == 13
+          assert r['original_id_count'] == 1716
+          assert r['approved'] is False
+          assert r['source_change_approved'] is False
+          assert r['api_unit_test_passes'] == 0
+          assert r['azure_live_passes'] == 0
+          assert r['release_decision'] == 'NO_GO'
+          assert not r['errors']
+          PY
+      - name: R41 mutated-source and false-approval regressions
+        run: |
+          set -Eeuo pipefail
+          python3 -m unittest discover -s tests -p 'test_rest_r41_rescope.py' -v
+      - name: Verify original frozen 1716 catalogue and unchanged missing references
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_catalogue_dependencies.py > /tmp/r41-legacy.json
+          python3 - <<'PY'
+          import json
+          a = json.load(open('/tmp/r41-legacy.json', encoding='utf-8'))
+          assert a['canonical_test_ids'] == 1716
+          assert a['cases_with_unresolved_literal_dependencies'] == 13
+          assert a['missing_script_paths'] == {
+            'tests/phase6/phase6.spec.ts': 9,
+            'tests/playwright.config.ts': 4,
+          }
+          assert not a['errors']
+          assert a['azure_live_passes_verified'] == 0
+          assert a['release_decision'] == 'NO_GO'
+          PY
+      - name: Confirm strict R41 gate refuses unapproved replacement
+        run: |
+          set -Eeuo pipefail
+          rc=0
+          python3 scripts/audit_rest_r41_rescope.py --strict > /tmp/r41-strict.json || rc=$?
+          test "$rc" -eq 2
+          python3 - <<'PY'
+          import json
+          x = json.load(open('/tmp/r41-strict.json', encoding='utf-8'))
+          assert x['approved'] is False and x['release_decision'] == 'NO_GO'
+          PY
