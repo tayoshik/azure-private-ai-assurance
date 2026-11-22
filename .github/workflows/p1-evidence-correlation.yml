@@ -73,11 +73,18 @@ jobs:
           r=json.load(open('artifacts/release.json',encoding='utf-8'))
           assert r['decision']=='NO_GO' and r['verified_live_azure_passes']==0
           PY
-      - name: Upload sanitized offline status only
-        uses: actions/upload-artifact@v4
+      - name: Review offline artifact bytes and create sanitized upload snapshot
+        id: artifact_safety
         if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/verify_offline_ci_artifacts.py --workflow p1-evidence-correlation.yml --root artifacts --stage artifacts-reviewed
+      - name: Upload sanitized offline status only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ always() && steps.artifact_safety.outcome == 'success' }}
         with:
           name: p1-ten-evidence-offline-audit
-          path: artifacts/
+          path: artifacts-reviewed/
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: ignore
