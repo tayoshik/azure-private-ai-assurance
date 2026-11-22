@@ -1,6 +1,7 @@
 name: Phase 3 original-source and IPAM offline assurance
 on:
   push:
+    branches: [main]
     paths:
       - 'specs/phase3_264.json'
       - 'scripts/phase3_guard.py'
