@@ -60,7 +60,7 @@ class SyntheticSourceError(ValueError):
 def group_for(case_id: str, source: str) -> str:
     if not isinstance(case_id, str) or not isinstance(source, str):
         raise SyntheticSourceError("invalid canonical source or ID")
-    if not case_id.startswith("AZ-T") or len(case_id) != 8:
+    if not case_id.startswith("AZ-T") or len(case_id) != 9:
         raise SyntheticSourceError("malformed case ID")
     try:
         step = int(case_id[4:6])
@@ -123,7 +123,7 @@ def build_review(root: Path = ROOT, *, include_cases: bool = True) -> dict:
             raise SyntheticSourceError("canonical ID/command/expected digest mismatch")
         if (row["direct_command_family"] != "python3"
                 or row["semantic_readiness"] != "OFFLINE_SYNTHETIC_ONLY"
-                or row["case_polarity"] != "EVEN"
+                or row["case_polarity"] != "EVEN_SYNTHETIC"
                 or row["source_test_executed"] is not False
                 or row["azure_live_acceptance"] != "NOT_READY"):
             raise SyntheticSourceError("unapproved execution or acceptance state")
