@@ -38,8 +38,10 @@ class DependencyAuditTests(unittest.TestCase):
         self.assertGreater(self.report["cases_with_unresolved_literal_dependencies"], 0)
         self.assertNotIn("scripts/phase4_guard.py", self.report["missing_script_paths"])
         self.assertNotIn("specs/phase4_286.json", self.report["missing_input_paths"])
-        self.assertIn("fixtures/plan_app_pna_true.json", self.report["missing_input_paths"])
-        self.assertIn("fixtures/plan_nsg_any.json", self.report["missing_input_paths"])
+        self.assertNotIn("fixtures/plan_app_pna_true.json", self.report["missing_input_paths"])
+        self.assertNotIn("fixtures/plan_nsg_any.json", self.report["missing_input_paths"])
+        self.assertEqual(self.report["cases_with_missing_input"], 0)
+        self.assertIn("tests/playwright.config.ts", self.report["missing_script_paths"])
         self.assertNotIn("AZ-T33-02", self.report["unresolved_ids"])
 
     def test_literal_parser_does_not_misclassify_azure_cli(self):

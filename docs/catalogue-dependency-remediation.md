@@ -12,6 +12,8 @@ The former release_gate.py imported a nonexistent validate_catalogue.py and read
 
 > **Latest source restoration (Phase 6, 2026-11-19):** Current literal reference counts: **126 missing code**, **873 tracked code**, **717 with no direct script reference**, and **2 with missing input references**. These are file-path checks, not live control validation. See [Phase 6 source recovery](phase6-source-recovery-report.md). Phase 1–5 numbers below remain historical snapshots. Azure acceptance is 0/1,716 and release remains NO_GO.
 
+> **Latest Phase 7 original-source restoration (2026-11-19):** current literal dependency counts are **13 missing scripts/tests**, **986 existing local code/test paths**, **717 with no direct script path**, and **0 missing direct input paths**. The 13 outstanding references are Playwright-only; no application source, approved selectors or private runner were verified. This is a source/path inventory, not 986 passed security tests. See [Phase 7 source recovery](phase7-source-recovery-report.md). Azure acceptance remains **0/1,716** and release **NO_GO**.
+
 ## Initial snapshot: 2026-11-19
 
 | Literal command classification | Cases | Note |
