@@ -1,6 +1,7 @@
 name: English catalogue consistency
 on:
   push:
+    branches: [main]
     paths:
       - 'docs/phase1-220-english-tests.md'
       - 'docs/phase2-220-english-tests.md'
@@ -13,6 +14,7 @@ on:
       - 'docs/phase2-220-english-tests.md'
       - 'specs/english_tests_001_440.json'
       - 'scripts/verify_english_tests.py'
+      - '.github/workflows/english-catalogue-validation.yml'
 permissions:
   contents: read
 jobs:
