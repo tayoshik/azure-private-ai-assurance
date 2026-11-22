@@ -1,6 +1,7 @@
 name: Canonical 1716 dependency audit (offline only)
 on:
   push:
+    branches: [main]
     paths:
       - 'specs/**'
       - 'scripts/audit_catalogue_dependencies.py'
