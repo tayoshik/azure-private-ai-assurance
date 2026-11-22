@@ -42,6 +42,8 @@ jobs:
           assert p["duplicate_status_contexts"] == []
           assert p["approved_sha_pin_count"] == 5
           assert p["remaining_unpinned_action_workflows"] == []
+          assert p["remaining_unscoped_push_workflows"] == []
+          assert p["main_only_push_workflow_count"] == 34
           assert p["sha_pin_manifest"] == "specs/github-actions-approved-pins.json"
           assert p["required_ruleset_status_contexts"] == ["offline-main-gate", "offline-catalogue"]
           assert p["source_workflows_executed"] == 0
@@ -49,7 +51,7 @@ jobs:
           assert p["release_decision"] == "NO_GO"
           assert p["errors"] == []
           PY
-      - name: Offline status, Action pins and credential mutation regression tests
+      - name: Offline status, Action pins, main-only triggers and credential mutation tests
         run: python3 -m unittest discover -s tests -p 'test_github_actions_quality.py' -v
       - name: Strict mode refuses synthetic promotion to Azure acceptance
         shell: bash
