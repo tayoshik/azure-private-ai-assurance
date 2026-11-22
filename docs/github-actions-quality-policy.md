@@ -130,3 +130,19 @@ python3 -m unittest discover -s tests -v
 ```
 
 A passing source audit demonstrates a **configured event-routing policy**, not billing reduction, full GitHub Actions runtime semantics, independent security review, Azure connectivity or Azure acceptance. The remaining part of Issue #26 is **standardizing artifact retention, safe outputs and confidentiality**, not trigger normalization. Existing synthetic tests and **1,716 original acceptance records remain unchanged**, Azure live passes **0**, release **NO_GO**.
+
+
+## P7.4 — Artifact retention and pre-upload safety
+
+The historic Action workflows used to upload many entire, writable `artifacts/` directories. Starting with the P7.4 security change, all **16 uploaders** use a common source-only policy with **69 exact approved offline paths** and a bounded credential/secret-signature inspection step before uploading an isolated byte-for-byte `artifacts-reviewed/` snapshot. Upload is forbidden if review fails; retention is **14 days**.
+
+The policy, tests and full procedural documentation are at:
+
+- `specs/github-actions-artifact-policy.json`
+- `scripts/verify_offline_ci_artifacts.py`
+- `tests/test_offline_ci_artifacts.py`
+- `docs/github-actions-artifact-safety.md`
+
+Each producer re-runs its PR checks whenever the scanner or policy changes. A cross-workflow audit now rejects unguarded uploads, unreviewed paths and retention changes. This is **a bounded signature guard, not complete DLP**: production Azure data, secrets, Terraform state/plans and personal information must not enter public artifacts or raw CI logs.
+
+The Ruleset statuses `offline-main-gate` and `offline-catalogue` remain unchanged and unfiltered. Existing 1,716 canonical tests remain NOT_READY, accepted live Azure results 0 and release NO_GO.
