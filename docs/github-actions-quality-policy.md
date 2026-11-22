@@ -60,9 +60,36 @@ GitHub-side verification of the actual source checks:
 
 ## Remaining nonblocking quality backlog
 
-- Some other workflows still use mutable checkout/action tags. The audit **reports their filenames** under `remaining_unpinned_action_workflows`; review provider/action compatibility before pinning them all, rather than changing versions blindly.
+- **Closed by P7.2:** the previously reported 13 workflows with mutable Action tags now use repository-reviewed full SHA references; `remaining_unpinned_action_workflows` is required to be **empty** by CI. The full list and GitHub tag-reference provenance are fixed in `specs/github-actions-approved-pins.json`.
 - Some unrelated path-scoped workflows still run on both feature push and PR. The audit reports them in `remaining_unscoped_push_workflows`; each should be migrated to PR + main push only **after** verifying complete PR coverage and any intentional feature-push-only use.
 - Artifact policies differ in older workflows; future hardening should specify evidence class, retention, and confidential-data exclusion before unifying archives.
 - No Actions test produces independent deployment, network isolation, permission, health or release acceptance evidence. **1,716 canonical tests remain NOT_READY, Azure live accepted 0, release NO_GO**.
 
 **Exit criterion for this bounded P7 slice:** Required contexts remain stable and credential-free, the four duplicate optional contexts are unique, 35/37 workflow inventory is verified, 19 regressions and all required PR/main CI checks pass. Source-only quality improvement must not be misreported as live Azure security validation.
+
+
+## P7.2 — Approved full-SHA Action pins (2026-11-22)
+
+Follow-up to Issue #26. The 13 outstanding workflow files have been updated, **without changing the underlying Terraform CLI version or the setup-terraform v3 major series**. Every `actions/checkout` step now includes `persist-credentials: false`. This includes three independent checkout steps in the provider-schema workflow.
+
+| Action | Reviewed immutable commit | Upstream tag reference inspected |
+| --- | --- | --- |
+| `actions/checkout` | `93cb6efe18208431cddfb8368fd83d5badbf9bfd` | `v5.0.1` |
+| `actions/setup-python` | `a26af69be951a213d495a4c3e4e4022e16d87065` | `v5` and `v5.6.0`, same commit |
+| `actions/upload-artifact` | `ea165f8d65b6e75b540449e92b4886f43607fa02` | `v4.6.2` |
+| `hashicorp/setup-terraform` (v3) | `b9cd54a3c349d3f38e8881555d616ced269862dd` | `v3` (major alias at inspection date) |
+| `hashicorp/setup-terraform` (v4) | `dfe3c3f87815947d99a8997f908cb6525fc44e9e` | `v4.0.1`, already used elsewhere |
+
+**Verification method:** queried each repository's official GitHub REST `git/ref/tags/<tag>` endpoint on 2026-11-22; the `object.type=commit` and `object.sha` values identify the exact version. A SHA is an immutable Git content reference and prevents future movement of a major tag from silently changing the runner's action. It is **not** a code signature, SBOM, vulnerability scan or proof that the publisher remains uncompromised.
+
+The audit now uses a **fail-closed, reviewed SHA allowlist** plus the versioned JSON provenance manifest, rather than treating future tag references merely as advisory warnings. It rejects missing or altered pin manifests, unknown Action refs, mutable tags, and any checkout step that does not explicitly disable persisted credentials. Eight further adversarial unit tests were added, bringing the total workflow-policy regression tests to **27**. For any legitimate future Action upgrade, update the audited source, allowlist, manifest and tests together through a PR with all existing offline CI and relevant provider jobs green.
+
+**Validation commands:**
+
+```bash
+python3 scripts/audit_github_actions_quality.py --summary-only
+python3 -m unittest discover -s tests -p 'test_github_actions_quality.py' -v
+python3 -m unittest discover -s tests -v
+```
+
+The Ruleset's only globally required contexts remain `offline-main-gate` and `offline-catalogue`. Paths and credentials for actual Azure deployment are unchanged. Issue #26 remains OPEN for the 27 other workflows with feature-branch push triggers and evidence-retention standardization. All 1,716 original Azure cases remain NOT_READY; accepted live Azure evidence **0**, release **NO_GO**.
