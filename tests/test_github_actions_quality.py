@@ -273,7 +273,7 @@ class WorkflowQualityTests(unittest.TestCase):
         report = quality.inspect(self.root)
         self.assertEqual(report["errors"], [], report["errors"])
         self.assertEqual(report["artifact_uploaders_guarded"], 16)
-        self.assertEqual(report["approved_artifact_files"], 69)
+        self.assertEqual(report["approved_artifact_files"], 71)
         self.assertEqual(report["artifact_retention_days"], 14)
         self.assertEqual(report["artifact_policy"], quality.ARTIFACT_POLICY_PATH)
 
