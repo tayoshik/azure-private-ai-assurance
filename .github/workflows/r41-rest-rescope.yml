@@ -1,6 +1,7 @@
 name: R41 REST unit-test rescope crosswalk (offline proposal only)
 on:
   push:
+    branches: [main]
     paths:
       - 'specs/r41-rest-api-rescope-proposal.json'
       - 'scripts/audit_rest_r41_rescope.py'
