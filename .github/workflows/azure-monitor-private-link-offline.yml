@@ -28,7 +28,7 @@ on:
 permissions:
   contents: read
 jobs:
-  offline:
+  monitor-private-link-offline:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
