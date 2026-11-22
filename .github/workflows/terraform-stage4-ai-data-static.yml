@@ -18,7 +18,9 @@ jobs:
   static-source-review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
       - name: Existing Stage 1 regression
         run: python3 scripts/check_terraform_stage1.py
       - name: Existing N04 regression
