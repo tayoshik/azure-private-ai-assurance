@@ -15,6 +15,8 @@ on:
       - 'tests/test_shell_149_review.py'
       - 'scripts/audit_approved_input_283.py'
       - 'tests/test_approved_input_283.py'
+      - 'scripts/audit_tool_semantics_13.py'
+      - 'tests/test_tool_semantics_13.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -33,6 +35,8 @@ on:
       - 'tests/test_shell_149_review.py'
       - 'scripts/audit_approved_input_283.py'
       - 'tests/test_approved_input_283.py'
+      - 'scripts/audit_tool_semantics_13.py'
+      - 'tests/test_tool_semantics_13.py'
       - 'docs/execution-route-1716.md'
       - '.github/workflows/execution-route-inventory.yml'
       - 'scripts/verify_offline_ci_artifacts.py'
@@ -104,6 +108,15 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_approved_input_283.py' -v
           rc=0
           python3 scripts/audit_approved_input_283.py --summary-only --strict >/dev/null || rc=$?
+          test "$rc" -eq 2
+      - name: Audit 13 exact tool-semantic cases without running original commands
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 scripts/audit_tool_semantics_13.py --summary-only
+          python3 -m unittest discover -s tests -p 'test_tool_semantics_13.py' -v
+          rc=0
+          python3 scripts/audit_tool_semantics_13.py --summary-only --strict >/dev/null || rc=$?
           test "$rc" -eq 2
       - name: Ensure strict mode refuses independent Azure acceptance
         shell: bash
