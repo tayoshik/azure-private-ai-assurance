@@ -25,6 +25,30 @@ on:
       - 'tests/test_private_terraform_ci.py'
       - 'tests/test_rest04_private_dns_audit.py'
       - 'tests/test_terraform_*.py'
+  pull_request:
+    paths:
+      - '.github/workflows/azure-monitor-private-link-offline.yml'
+      - 'infra/**'
+      - 'scripts/azure_monitor_private_audit.py'
+      - 'scripts/azure_rest_reader.py'
+      - 'scripts/azure_private_dns_step30.py'
+      - 'scripts/azure_private_endpoint_step26.py'
+      - 'scripts/azure_gateway_step28.py'
+      - 'scripts/azure_entra_step29.py'
+      - 'scripts/private_terraform_ci.py'
+      - 'ci/private-terraform.CANDIDATE.yml'
+      - 'scripts/rest04_private_dns_audit.py'
+      - 'scripts/validate_package.py'
+      - 'scripts/build_test_automation_ledger.py'
+      - 'specs/**'
+      - 'tests/test_azure_monitor_private_audit.py'
+      - 'tests/test_azure_private_dns_step30.py'
+      - 'tests/test_azure_private_endpoint_step26.py'
+      - 'tests/test_azure_gateway_step28.py'
+      - 'tests/test_azure_entra_step29.py'
+      - 'tests/test_private_terraform_ci.py'
+      - 'tests/test_rest04_private_dns_audit.py'
+      - 'tests/test_terraform_*.py'
   workflow_dispatch:
 permissions:
   contents: read
