@@ -115,8 +115,13 @@ class WorkflowQualityTests(unittest.TestCase):
 
     def test_filtered_pr_must_self_trigger_on_workflow_edits(self):
         self.mutate("terraform-stage4-ai-data-static.yml",
-                    "      - '.github/workflows/terraform-stage4-ai-data-static.yml'\n  workflow_dispatch:",
-                    "  workflow_dispatch:")
+                    "  pull_request:\n    paths:\n      - 'infra/**'\n"
+                    "      - 'scripts/check_terraform*.py'\n"
+                    "      - 'tests/test_terraform*.py'\n"
+                    "      - '.github/workflows/terraform-stage4-ai-data-static.yml'\n",
+                    "  pull_request:\n    paths:\n      - 'infra/**'\n"
+                    "      - 'scripts/check_terraform*.py'\n"
+                    "      - 'tests/test_terraform*.py'\n")
         self.reject()
 
     def test_glob_self_trigger_is_valid_for_quality_workflow(self):
