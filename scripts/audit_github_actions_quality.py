@@ -17,6 +17,14 @@ WORKFLOWS = ".github/workflows"
 EXPECTED_MIN_WORKFLOWS = 35
 EXPECTED_MIN_JOBS = 37
 CHECKOUT = "actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd"
+PINS_MANIFEST = "specs/github-actions-approved-pins.json"
+APPROVED_ACTION_REFS = frozenset({
+    CHECKOUT,
+    "actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+    "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+    "hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd",
+    "hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e",
+})
 REQUIRED_GATES = {
     "offline-main-gate": {
         "workflow": "offline-validation.yml",
@@ -87,6 +95,23 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
     root = Path(root)
     errors: list[str] = []
     warnings: list[str] = []
+    try:
+        manifest = json.loads((root / PINS_MANIFEST).read_text(encoding="utf-8"))
+        records = manifest.get("approved_refs") if isinstance(manifest, dict) else None
+        if (manifest.get("schema") != "github-actions-approved-pins/v1" or
+                manifest.get("release_decision") != "NO_GO" or
+                manifest.get("azure_live_passes") != 0 or
+                not isinstance(records, list) or
+                len(records) != len(APPROVED_ACTION_REFS) or
+                not all(isinstance(item, dict) and
+                        isinstance(item.get("uses"), str) and
+                        isinstance(item.get("source"), str) and
+                        isinstance(item.get("tag_at_snapshot"), str)
+                        for item in records) or
+                {item["uses"] for item in records} != APPROVED_ACTION_REFS):
+            errors.append("approved Action SHA pin manifest differs from reviewed baseline")
+    except (OSError, UnicodeError, ValueError, AttributeError, TypeError):
+        errors.append("approved Action SHA pin manifest absent or invalid")
     files = sorted((root / WORKFLOWS).glob("*.yml"))
     if len(files) < EXPECTED_MIN_WORKFLOWS:
         errors.append("workflow inventory unexpectedly shrank below reviewed baseline")
@@ -114,8 +139,24 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         if re.search(r"(?m)^\s+contents:\s*write\s*$", source):
             errors.append(name + ": write content permission not approved")
         action_refs = re.findall(r"(?m)^\s+- uses:\s+([^\s#]+)", source)
-        if any(re.search(r"@v\d+(?:\.\d+)*$", x) for x in action_refs):
+        bad_refs = [ref for ref in action_refs if
+                    not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}", ref) or
+                    ref not in APPROVED_ACTION_REFS]
+        if bad_refs:
             unpinned_action_files.append(name)
+            errors.append(name + ": unapproved Action or non-SHA reference; full-SHA pin required")
+        # Check every checkout step individually, not merely one boolean per file.
+        for match in re.finditer(r"(?m)^([ ]*)- uses:\s+actions/checkout@[^\s#]+[^\n]*$", source):
+            step_indent = len(match.group(1))
+            trailing = []
+            for line in source[match.end():].splitlines():
+                leading = len(line) - len(line.lstrip(" "))
+                if line.strip() and leading <= step_indent:
+                    break
+                trailing.append(line)
+            if not re.search(r"(?m)^\s+persist-credentials:\s+false\s*$",
+                             "\n".join(trailing)):
+                errors.append(name + ": checkout step must disable persisted credentials")
         if "push" in gates and "branches: [main]" not in "\n".join(gates["push"]):
             unscoped_push_files.append(name)
         for job in jobs:
@@ -183,7 +224,7 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         errors.append("job count unexpectedly shrank below reviewed baseline")
     if unpinned_action_files:
         warnings.append(
-            "Other workflows still have version-tag action references; follow-up full-SHA pin review needed")
+            "Unapproved or unpinned Action reference is a blocking source-policy failure")
     if unscoped_push_files:
         warnings.append(
             "Other workflows still push on feature branches as well as PRs; follow-up trigger normalization needed")
@@ -198,6 +239,8 @@ def inspect(root: Path = ROOT, *, include_workflows: bool = True) -> dict:
         "duplicate_status_contexts": sorted(
             {j for j, owners in job_owners.items() if len(owners) > 1}),
         "remaining_unpinned_action_workflows": sorted(unpinned_action_files),
+        "approved_sha_pin_count": len(APPROVED_ACTION_REFS),
+        "sha_pin_manifest": PINS_MANIFEST,
         "remaining_unscoped_push_workflows": sorted(unscoped_push_files),
         "scope_approved": False,
         "source_workflows_executed": 0,
