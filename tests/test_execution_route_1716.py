@@ -36,6 +36,8 @@ class RoutingInventoryTests(unittest.TestCase):
         self.assertEqual(c[route.ROUTE_R41], 13)
         self.assertEqual(c[route.ROUTE_SELFTEST], 1)
         self.assertEqual(c[route.ROUTE_LIVE] + c[route.ROUTE_LOCAL], 844)
+        self.assertEqual(c[route.ROUTE_LOCAL], 464)
+        self.assertEqual(c[route.ROUTE_LIVE], 380)
         self.assertEqual(self.inventory["original_missing_script_count"], 13)
         self.assertEqual(self.inventory["r41_status"], "PROPOSED_NOT_APPROVED")
 
