@@ -52,6 +52,8 @@ jobs:
           assert r["route_counts"]["OFFLINE_SYNTHETIC_CANDIDATE"] == 858
           assert r["route_counts"]["LEGACY_R41_SCOPE_DECISION_REQUIRED"] == 13
           assert r["route_counts"]["ODD_SELFTEST_SEMANTIC_DECISION_REQUIRED"] == 1
+          assert r["route_counts"]["LOCAL_APPROVED_INPUT_AND_REVIEW"] == 464
+          assert r["route_counts"]["AZURE_OR_PRIVATE_RUNNER_REQUIRED"] == 380
           assert (r["route_counts"]["LOCAL_APPROVED_INPUT_AND_REVIEW"] +
                   r["route_counts"]["AZURE_OR_PRIVATE_RUNNER_REQUIRED"]) == 844
           assert r["source_cases_executed_by_this_report"] == 0
