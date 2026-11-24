@@ -21,6 +21,10 @@ resource "azurerm_key_vault" "workload" {
   lifecycle {
     prevent_destroy = true
     precondition {
+      condition     = var.app_principal_id != var.gateway_principal_id
+      error_message = "I02: application and gateway must use distinct managed identity principal IDs."
+    }
+    precondition {
       condition     = var.key_vault_configuration_approved
       error_message = "G07/I02: signed Key Vault name, retention, tenant, network and operations approval is required before an Azure plan."
     }

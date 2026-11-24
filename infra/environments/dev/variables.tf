@@ -35,6 +35,19 @@ variable "private_dns_zone_names" {
     "privatelink.documents.azure.com",
     "privatelink.vaultcore.azure.net"
   ]
+  # Dev-owned zones only. Hub-owned DNS needs a separate approved design.
+  validation {
+    condition = length(var.private_dns_zone_names) == 5 && length(distinct(var.private_dns_zone_names)) == 5 && alltrue([
+      for zone in [
+        "privatelink.azurewebsites.net",
+        "privatelink.openai.azure.com",
+        "privatelink.search.windows.net",
+        "privatelink.documents.azure.com",
+        "privatelink.vaultcore.azure.net"
+      ] : contains(var.private_dns_zone_names, zone)
+    ])
+    error_message = "D07: dev-owned DNS must contain exactly the 5 reviewed private zone names, without missing, extra or duplicate entries."
+  }
 }
 variable "common_tags" {
   type = map(string)
@@ -237,7 +250,14 @@ variable "web_private_dns_scm_approved" {
 # GW01-GW05 / O01: all deployment approvals start FALSE.
 variable "application_gateway_name" { type = string }
 variable "gateway_private_frontend_ip" { type = string }
-variable "gateway_certificate_secret_versionless_id" { type = string }
+variable "gateway_certificate_secret_versionless_id" {
+  type        = string
+  description = "Versionless Key Vault secret ID from the workload's own approved Key Vault."
+  validation {
+    condition     = startswith(lower(var.gateway_certificate_secret_versionless_id), "https://${lower(var.key_vault_name)}.vault.azure.net/secrets/") && can(regex("^https://[A-Za-z0-9-]+[.]vault[.]azure[.]net/secrets/[A-Za-z0-9-]+$", var.gateway_certificate_secret_versionless_id))
+    error_message = "GW02/I02: reference a versionless secret from this workload Key Vault; external vaults require a separately approved architecture."
+  }
+}
 variable "gateway_business_fqdn" { type = string }
 variable "application_gateway_capacity" {
   type    = number

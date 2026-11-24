@@ -21,7 +21,15 @@ variable "subnet_cidrs" {
     web_private_endpoint  = string
     data_private_endpoint = string
   })
-  # All subnet ranges must be approved and confirmed non-overlapping by IPAM.
+  # Structural validity only: containment/overlap require the independent
+  # D06 IPAM preflight and subsequently approved target-environment evidence.
+  validation {
+    condition = length(distinct(values(var.subnet_cidrs))) == 4 && alltrue([
+      for cidr in values(var.subnet_cidrs) :
+      can(cidrnetmask(cidr)) && can(cidrhost(cidr, 0)) && cidr != "0.0.0.0/0"
+    ])
+    error_message = "Supply 4 distinct valid IPv4 subnet CIDRs; overlap/containment still require approved IPAM review."
+  }
 }
 variable "tags" {
   type = map(string)

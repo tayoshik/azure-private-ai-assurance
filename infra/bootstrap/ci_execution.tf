@@ -2,6 +2,13 @@ variable "manage_ci_identities" {
   description = "Opt into three dedicated GitHub OIDC identities and container-scoped RBAC."
   type        = bool
   default     = false
+
+  # Terraform 1.9+ supports variable validations referring to other variables.
+  # Do not establish split CI grants before the legacy grant is decommissioned.
+  validation {
+    condition     = !(var.manage_ci_identities && var.ci_principal_object_id != null)
+    error_message = "Legacy CI principal and split CI identities must not coexist; complete an approved state/RBAC migration first."
+  }
 }
 
 variable "existing_blob_dns_zone_id" {
@@ -49,7 +56,7 @@ resource "azurerm_federated_identity_credential" "ci" {
 
 resource "azurerm_role_assignment" "ci_container" {
   for_each             = local.ci_state_roles
-  scope                = "${azurerm_storage_account.state.id}/blobServices/default/containers/${azurerm_storage_container.state.name}"
+  scope                = azurerm_storage_container.state.resource_manager_id
   role_definition_name = each.value
   principal_id         = azurerm_user_assigned_identity.ci[each.key].principal_id
 }

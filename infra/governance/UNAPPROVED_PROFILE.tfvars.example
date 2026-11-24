@@ -1,0 +1,10 @@
+# NON-DEPLOYABLE EXAMPLE: these are dummy values, not approvals.
+subscription_id                                    = "00000000-0000-0000-0000-000000000000"
+resource_group_id                                  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/REPLACE"
+enable_audit_assignments                           = false
+scope_owner_approved                               = false
+policy_definition_effects_verified                 = false
+independent_review_approved                        = false
+d15_no_diagnostic_ownership_collision_approved      = false
+approved_evidence_sha256                           = ""
+audit_policies                                     = {}
