@@ -42,6 +42,13 @@ resource "azurerm_application_gateway" "private_web" {
     key_vault_secret_id = var.key_vault_certificate_secret_versionless_id
   }
 
+  # D08: explicit TLS security baseline. Review client compatibility and pinned
+  # AzureRM provider schema before any plan; candidate only, no authorization.
+  ssl_policy {
+    policy_type = "Predefined"
+    policy_name = "AppGwSslPolicy20220101S"
+  }
+
   backend_address_pool {
     name  = local.web_backend_pool_name
     fqdns = [var.backend_app_fqdn]

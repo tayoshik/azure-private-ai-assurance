@@ -24,5 +24,9 @@ resource "azurerm_private_endpoint" "web_app" {
       condition     = var.web_inbound_pe_subnet_id != var.app_outbound_subnet_id
       error_message = "W04: inbound PE must not share the outbound integration subnet."
     }
+    precondition {
+      condition     = endswith(lower(var.webapp_private_dns_zone_id), "/privatelink.azurewebsites.net")
+      error_message = "W04: Web App PE requires the exact privatelink.azurewebsites.net zone ID."
+    }
   }
 }
